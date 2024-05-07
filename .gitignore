@@ -1,0 +1,15 @@
+# Build results
+MyBasePlugin/[Dd]ebug/
+MyBasePlugin/[Dd]ebugPublic/
+MyBasePlugin/[Rr]elease/
+MyBasePlugin/[Rr]eleases/
+MyBasePlugin/x64/
+MyBasePlugin/x86/
+MyBasePlugin/[Ww][Ii][Nn]32/
+MyBasePlugin/[Aa][Rr][Mm]/
+MyBasePlugin/[Aa][Rr][Mm]64/
+MyBasePlugin/bld/
+MyBasePlugin/[Bb]in/
+MyBasePlugin/[Oo]bj/
+MyBasePlugin/[Ll]og/
+MyBasePlugin/[Ll]ogs/
