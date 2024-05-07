@@ -5,6 +5,7 @@ using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Commands;
 using Microsoft.Extensions.Logging;
 using CounterStrikeSharp.API;
+using CounterStrikeSharp.API.Modules.Timers;
 
 namespace MyBasePlugin;
 
@@ -15,8 +16,12 @@ public class MyBasePlugin : BasePlugin
     public override string ModuleVersion => "0.87";
     public override string ModuleDescription => "My base plugin";
 
+    public int PlayerCount => _playerCount;
+
     private readonly ILogger<MyBasePlugin> _logger;
     private Dictionary<int, string> _players;
+    private int _playerCount = 0;
+    private string _mapName = ""; // I wish I can delete this
 
     public MyBasePlugin(ILogger<MyBasePlugin> logger)
     {
@@ -37,13 +42,13 @@ public class MyBasePlugin : BasePlugin
         else
             _logger.LogInformation("Server name: {serverName}", hostnameCvar.StringValue);
 
-        RegisterListener<Listeners.OnClientConnect>(ConnectHandler);
+        RegisterListener<Listeners.OnClientConnected>(ConnectHandler);
         RegisterListener<Listeners.OnClientDisconnect>(DisconnectHandler);
     }
 
     [RequiresPermissions("@css/kick")]
     [ConsoleCommand("css_kick", "Kick player")]
-    public void OnCommand(CCSPlayerController client, CommandInfo command)
+    public void OnKickCommand(CCSPlayerController client, CommandInfo command)
     {
         if(command.ArgCount < 2)
         {
@@ -51,40 +56,128 @@ public class MyBasePlugin : BasePlugin
             return;
         }
 
-        string targetName = GetTargetName(command.GetArg(1));
+        string targetName = GetPlayerName(command.GetArg(1));
 
         if(string.IsNullOrEmpty(targetName))
         {
-            command.ReplyToCommand("[css] target not found.");
+            command.ReplyToCommand("[css] Target not found.");
             return;
         }
 
         Server.ExecuteCommand($"kick {targetName}");
-        command.ReplyToCommand($"[css]You kick {targetName}");
-        _logger.LogInformation("[css] {targetName} has been kicked at {DT}", targetName, DateTime.Now);
+        command.ReplyToCommand($"[css] You kick {targetName}");
+        _logger.LogInformation("[css] {admin} kicked {targetName} at {DT}", client.PlayerName, targetName, DateTime.Now);
         Server.PrintToChatAll($"Admin kicked {targetName}");
     }
 
-    private void ConnectHandler(int slot, string name, string ipAddress)
+    [ConsoleCommand("css_info", "Current counts of player")]
+    public void OnInfoCommand(CCSPlayerController client, CommandInfo command)
     {
+        command.ReplyToCommand("----------");
+        command.ReplyToCommand($"Server local time: {DateTime.Now}");
+        command.ReplyToCommand($"Current map: {Server.MapName}");
+        command.ReplyToCommand($"Player: {PlayerCount}/{Server.MaxPlayers}");
+        command.ReplyToCommand("----------");
+    }
+
+    [RequiresPermissions("@css/changemap")]
+    [ConsoleCommand("css_map", "Change map")]
+    public void OnChangeMapCommand(CCSPlayerController client, CommandInfo command)
+    {
+        if(command.ArgCount < 2)
+        {
+            command.ReplyToCommand("[css] Usage: css_map <map name>");
+            return;
+        }
+
+        string mapName = GetMapName(command.GetArg(1));
+
+        if(string.IsNullOrEmpty(mapName))
+        {
+            command.ReplyToCommand($"[css] Map not found: {command.GetArg(1)}");
+            return;
+        }
+
+        Server.PrintToChatAll($"Admin changed map to {mapName}");
+        _mapName = mapName;
+        AddTimer(2.0f, ChangeMapTimer, TimerFlags.STOP_ON_MAPCHANGE);
+    }
+
+    private void ConnectHandler(int slot)
+    {
+        var playerController = new CCSPlayerController(NativeAPI.GetEntityFromIndex(slot + 1));
+
+        if(playerController.IsValid && !playerController.IsBot)
+        {
+            _playerCount++;
+            _logger.LogInformation("{client} has connected at {DT}, IP: {ipAddress}", playerController.PlayerName, DateTime.Now, playerController.IpAddress);
+        }
+
         if(!_players.ContainsKey(slot))
-            _players.Add(slot, name);
+            _players.Add(slot, playerController.PlayerName);
         else
-            _players[slot] = name;
+            _players[slot] = playerController.PlayerName;
     }
 
     private void DisconnectHandler(int slot)
     {
+        var playerController = new CCSPlayerController(NativeAPI.GetEntityFromIndex(slot + 1));
+
+        if(playerController.IsValid && !playerController.IsBot)
+        {
+            _playerCount--;
+            _logger.LogInformation("{client} has disconnected at {DT}", playerController.PlayerName, DateTime.Now);
+        }
+
         _players.Remove(slot);
     }
 
-    private string GetTargetName(string arg)
+    private string GetPlayerName(string arg)
     {
-        foreach(var pair in _players){
+        foreach(var pair in _players)
+        {
+            Console.WriteLine(pair.Key + " " + pair.Value);
             if(pair.Value == arg)
                 return pair.Value;
         }
 
         return "";
+    }
+
+    private string GetMapName(string arg)
+    {
+        string gameRootPath = Server.GameDirectory;
+
+        gameRootPath += "\\csgo\\maps";
+
+        List<string> maps = new();
+
+        foreach(var mapPath in Directory.GetFiles(gameRootPath))
+        {
+            string[] arr = mapPath.Split("\\");
+            string mapName = arr[arr.Length - 1].Substring(0, arr[arr.Length - 1].Length - 4);
+
+            if(mapName.Contains("vanity") || 
+               mapName.Contains("workshop_preview") ||
+               mapName == "graphics_settings" ||
+               mapName == "lobby_mapveto") continue;
+
+            maps.Add(mapName);
+        }
+
+        maps.Sort();
+
+        foreach(var map in maps)
+        {
+            if(map.Contains(arg))
+                return map;
+        }
+
+        return "";
+    }
+
+    private void ChangeMapTimer()
+    {
+        Server.ExecuteCommand($"changelevel {_mapName}");
     }
 }
