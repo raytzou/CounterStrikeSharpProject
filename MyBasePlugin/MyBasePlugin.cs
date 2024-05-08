@@ -22,6 +22,7 @@ public class MyBasePlugin : BasePlugin
     private Dictionary<int, string> _players;
     private int _playerCount = 0;
     private string _mapName = ""; // I wish I can delete this
+    private static bool _restart = false;
 
     public MyBasePlugin(ILogger<MyBasePlugin> logger)
     {
@@ -44,6 +45,7 @@ public class MyBasePlugin : BasePlugin
 
         RegisterListener<Listeners.OnClientConnected>(ConnectHandler);
         RegisterListener<Listeners.OnClientDisconnect>(DisconnectHandler);
+        RegisterListener<Listeners.OnMapStart>(MapStartHandler);
     }
 
     [RequiresPermissions("@css/kick")]
@@ -132,6 +134,17 @@ public class MyBasePlugin : BasePlugin
         _players.Remove(slot);
     }
 
+    private void MapStartHandler(string mapName)
+    {
+        if (!_restart)
+        {
+            _mapName = mapName;
+            AddTimer(1.0f, RestartTimer, TimerFlags.STOP_ON_MAPCHANGE);
+        }
+
+        _logger.LogInformation("has restart: {restart}", _restart);
+    }
+
     private string GetPlayerName(string arg)
     {
         foreach(var pair in _players)
@@ -179,5 +192,11 @@ public class MyBasePlugin : BasePlugin
     private void ChangeMapTimer()
     {
         Server.ExecuteCommand($"changelevel {_mapName}");
+    }
+
+    private void RestartTimer()
+    {
+        Server.ExecuteCommand($"changelevel {_mapName}");
+        _restart = true;
     }
 }
