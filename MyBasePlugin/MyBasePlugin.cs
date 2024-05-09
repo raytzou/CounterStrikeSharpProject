@@ -105,6 +105,126 @@ public class MyBasePlugin : BasePlugin
         AddTimer(2.0f, ChangeMapTimer, TimerFlags.STOP_ON_MAPCHANGE);
     }
 
+    [RequiresPermissions("@css/cvar")]
+    [ConsoleCommand("css_cvar", "Modify cvar")]
+    public void OnCvarCommand(CCSPlayerController client, CommandInfo command)
+    {
+        if(command.ArgCount < 2)
+        {
+            command.ReplyToCommand("[css] Usage: css_cvar <ConVar> <Value>");
+            return;
+        }
+
+        var cvar = ConVar.Find(command.GetArg(1));
+
+        if (cvar is null)
+        {
+            command.ReplyToCommand($"[css] Cannot find the ConVar: {command.GetArg(1)}");
+            return;
+        }
+        else if (command.ArgCount == 2)
+        {
+            switch (cvar.Type)
+            {
+                case ConVarType.Int16:
+                case ConVarType.Int32:
+                case ConVarType.Int64:
+                case ConVarType.UInt16:
+                case ConVarType.UInt32:
+                case ConVarType.UInt64:
+                    command.ReplyToCommand($"{cvar.Name}: {cvar.GetPrimitiveValue<int>()}");
+                    break;
+                case ConVarType.Float32:
+                case ConVarType.Float64:
+                    command.ReplyToCommand($"{cvar.Name}: {cvar.GetPrimitiveValue<float>()}");
+                    break;
+                case ConVarType.Bool:
+                    command.ReplyToCommand($"{cvar.Name}: {cvar.GetPrimitiveValue<bool>()}");
+                    break;
+                default:
+                    command.ReplyToCommand($"[css] Cannot identify the type of ConVar");
+                    break;
+            }
+
+            return;
+        }
+
+        string value;
+
+        switch (cvar.Type)
+        {
+            case ConVarType.Int16:
+            case ConVarType.Int32:
+            case ConVarType.Int64:
+            case ConVarType.UInt16: 
+            case ConVarType.UInt32:
+            case ConVarType.UInt64:
+                if (int.TryParse(command.GetArg(2), out int parseInt))
+                {
+                    cvar.SetValue(parseInt);
+                    value = parseInt.ToString();
+                }
+                else
+                {
+                    command.ReplyToCommand("[css] Value type error!");
+                    return;
+                }
+                break;
+            case ConVarType.Float32:
+            case ConVarType.Float64:
+                if (float.TryParse(command.GetArg(2), out float parseFloat))
+                {
+                    cvar.SetValue(parseFloat);
+                    value = parseFloat.ToString();
+                }
+                else
+                {
+                    command.ReplyToCommand("[css] Value type error!");
+                    return;
+                }
+                break;
+            case ConVarType.Bool:
+                if (command.GetArg(2) == "0")
+                {
+                    cvar.SetValue(false);
+                    value = "false";
+                }
+                else if (command.GetArg(2) == "1")
+                {
+                    cvar.SetValue(true);
+                    value = "true";
+                }
+                else
+                {
+                    string arg = command.GetArg(2).ToLower();
+
+                    if (arg == "false")
+                    {
+                        cvar.SetValue(false);
+                        value = "false";
+                    }
+                    else if (arg == "true")
+                    {
+                        cvar.SetValue(true);
+                        value = "true";
+                    }
+                    else
+                    {
+                        command.ReplyToCommand("[css] Value type error!");
+                        return;
+                    }
+                }
+                break;
+            default:
+                command.ReplyToCommand($"[css] Cannot identify the type of ConVar");
+                return;
+        }
+
+        Server.PrintToChatAll($"{cvar.Name} changed to {value}");
+        _logger.LogInformation("{admin} changed {cvar} to {value} at {DT}", client.PlayerName, cvar.Name, value, DateTime.Now);
+    }
+    
+
     private void ConnectHandler(int slot)
     {
         var playerController = new CCSPlayerController(NativeAPI.GetEntityFromIndex(slot + 1));
