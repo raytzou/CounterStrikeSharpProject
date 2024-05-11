@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Modules.Timers;
 
-namespace MyBasePlugin;
+namespace MyProject;
 
 public class MyBasePlugin : BasePlugin
 {
@@ -17,12 +17,14 @@ public class MyBasePlugin : BasePlugin
     public override string ModuleDescription => "My base plugin";
 
     public int PlayerCount => _playerCount;
+    public int RoundNum => _roundNum;
 
     private readonly ILogger<MyBasePlugin> _logger;
     private Dictionary<int, string> _players;
     private int _playerCount = 0;
-    private string _mapName = ""; // I wish I can delete this
+    private string _mapName = ""; 
     private static bool _restart = false;
+    private int _roundNum = 0;
 
     public MyBasePlugin(ILogger<MyBasePlugin> logger)
     {
@@ -35,7 +37,7 @@ public class MyBasePlugin : BasePlugin
         var hostnameCvar = ConVar.Find("hostname");
 
         _logger.LogInformation("Server host time: {DT}", DateTime.Now);
-        
+
         if(hostnameCvar is null)
             _logger.LogError("Cannot find the hostname CVAR");
         else if(string.IsNullOrEmpty(hostnameCvar.StringValue))
@@ -43,9 +45,10 @@ public class MyBasePlugin : BasePlugin
         else
             _logger.LogInformation("Server name: {serverName}", hostnameCvar.StringValue);
 
-        RegisterListener<Listeners.OnClientConnected>(ConnectHandler);
-        RegisterListener<Listeners.OnClientDisconnect>(DisconnectHandler);
-        RegisterListener<Listeners.OnMapStart>(MapStartHandler);
+        RegisterListener<Listeners.OnClientConnected>(ConnectListener);
+        RegisterListener<Listeners.OnClientDisconnect>(DisconnectListener);
+        RegisterListener<Listeners.OnMapStart>(MapStartListener);
+        RegisterEventHandler<EventRoundStart>(RoundStartHandler);
     }
 
     [RequiresPermissions("@css/kick")]
@@ -79,6 +82,7 @@ public class MyBasePlugin : BasePlugin
         command.ReplyToCommand($"Server local time: {DateTime.Now}");
         command.ReplyToCommand($"Current map: {Server.MapName}");
         command.ReplyToCommand($"Player: {PlayerCount}/{Server.MaxPlayers}");
+        command.ReplyToCommand($"Round: {RoundNum - 1}/8");
         command.ReplyToCommand("----------");
     }
 
@@ -223,9 +227,15 @@ public class MyBasePlugin : BasePlugin
         Server.PrintToChatAll($"{cvar.Name} changed to {value}");
         _logger.LogInformation("{admin} changed {cvar} to {value} at {DT}", client.PlayerName, cvar.Name, value, DateTime.Now);
     }
-    
 
-    private void ConnectHandler(int slot)
+    private HookResult RoundStartHandler(EventRoundStart eventRoundStart, GameEventInfo gameEventInfo)
+    {
+        _roundNum++;
+
+        return HookResult.Continue;
+    }
+
+    private void ConnectListener(int slot)
     {
         var playerController = new CCSPlayerController(NativeAPI.GetEntityFromIndex(slot + 1));
 
@@ -241,7 +251,7 @@ public class MyBasePlugin : BasePlugin
             _players[slot] = playerController.PlayerName;
     }
 
-    private void DisconnectHandler(int slot)
+    private void DisconnectListener(int slot)
     {
         var playerController = new CCSPlayerController(NativeAPI.GetEntityFromIndex(slot + 1));
 
@@ -254,8 +264,12 @@ public class MyBasePlugin : BasePlugin
         _players.Remove(slot);
     }
 
-    private void MapStartHandler(string mapName)
+    private void MapStartListener(string mapName)
     {
+        _roundNum = 0;
+        _playerCount = 0;
+        _players.Clear();
+
         if (!_restart)
         {
             _mapName = mapName;
