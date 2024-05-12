@@ -16,9 +16,6 @@ public class MyBasePlugin : BasePlugin
     public override string ModuleVersion => "0.87";
     public override string ModuleDescription => "My base plugin";
 
-    public int PlayerCount => _playerCount;
-    public int RoundNum => _roundNum;
-
     private readonly ILogger<MyBasePlugin> _logger;
     private Dictionary<int, string> _players;
     private int _playerCount = 0;
@@ -81,8 +78,8 @@ public class MyBasePlugin : BasePlugin
         command.ReplyToCommand("----------");
         command.ReplyToCommand($"Server local time: {DateTime.Now}");
         command.ReplyToCommand($"Current map: {Server.MapName}");
-        command.ReplyToCommand($"Player: {PlayerCount}/{Server.MaxPlayers}");
-        command.ReplyToCommand($"Round: {RoundNum - 1}/8");
+        command.ReplyToCommand($"Player: {_playerCount}/{Server.MaxPlayers}");
+        command.ReplyToCommand($"Round: {_roundNum - 1}/8");
         command.ReplyToCommand("----------");
     }
 
@@ -146,7 +143,7 @@ public class MyBasePlugin : BasePlugin
                     command.ReplyToCommand($"{cvar.Name}: {cvar.GetPrimitiveValue<bool>()}");
                     break;
                 default:
-                    command.ReplyToCommand($"[css] Cannot identify the type of ConVar");
+                    command.ReplyToCommand($"[css] ConVar: {cvar.Name}, type: {cvar.Type}");
                     break;
             }
 
@@ -220,7 +217,16 @@ public class MyBasePlugin : BasePlugin
                 }
                 break;
             default:
-                command.ReplyToCommand($"[css] Cannot identify the type of ConVar");
+                try
+                {
+                    cvar.SetValue($"{command.GetArg(2)}");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError("{ex}", ex.Message);
+                    _logger.LogError("cvar: {name}, type: {type}, arg: {arg}", cvar.Name, cvar.Type, command.GetArg(2));
+                }
+
                 return;
         }
 
