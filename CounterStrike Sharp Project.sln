@@ -7,6 +7,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyBot", "MyBot\MyBot.csproj
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyBasePlugin", "MyBasePlugin\MyBasePlugin.csproj", "{6F756E71-D9FB-42F9-A3BA-30B6C0C6B21F}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "方案項目", "方案項目", "{494492C9-A60A-424D-8F93-074455C92675}"
+	ProjectSection(SolutionItems) = preProject
+		code text.txt = code text.txt
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +29,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DA507FB7-8D1C-4BCC-9307-9A2A04A6A5CD}
 	EndGlobalSection
 EndGlobal
