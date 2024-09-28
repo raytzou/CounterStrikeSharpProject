@@ -1,22 +1,25 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
-using CounterStrikeSharp.API.Modules.Cvars;
-using CounterStrikeSharp.API.Modules.Memory;
-using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
 using Microsoft.Extensions.Logging;
-using System.Reflection;
 
 namespace MyProject;
-public class MyBot(ILogger<MyBot> logger) : BasePlugin
+public class MyBot : MyBasePlugin
 {
+    #region plugin info
     public override string ModuleAuthor => "cynic";
     public override string ModuleName => "MyBot";
     public override string ModuleVersion => "0.87";
     public override string ModuleDescription => "My Bot Plugin";
+    #endregion plugin info
 
-    private readonly ILogger<MyBot> _logger = logger;
-    private int _roundNum = 0;
+    public MyBot(ILogger<MyBot> logger) : base(logger)
+    {
+        _logger = logger;
+    }
 
+    private readonly ILogger<MyBot> _logger;
+
+    private bool _fillBot = false;
 
     public override void Load(bool hotreload)
     {
@@ -26,24 +29,51 @@ public class MyBot(ILogger<MyBot> logger) : BasePlugin
 
     private void MapStartListener(string mapName)
     {
-        _roundNum = 0;
+        _fillBot = false;
     }
 
     private HookResult RoundStartHandler(EventRoundStart eventRoundStart, GameEventInfo gameEventInfo)
     {
-        _roundNum++;
-
-        if(_roundNum <= 1)
+        if (RoundNum <= 1)
         {
             Server.ExecuteCommand("sv_cheats 1");
             Server.ExecuteCommand("bot_stop 1");
-        }    
+        }
         else
         {
             Server.ExecuteCommand("sv_cheats 0");
             Server.ExecuteCommand("bot_stop 0");
+
+            if (!_fillBot)
+            {
+                var botTeam = BotJoinTeam(CurrentMap);
+
+                if (string.IsNullOrEmpty(botTeam))
+                {
+                    _logger.LogInformation("Cannot identify the category of map: {mapName}", CurrentMap);
+
+                    return HookResult.Continue;
+                }
+
+                for (int i = 0; i < 10; i++)
+                {
+                    Server.ExecuteCommand($"bot_add {botTeam}");
+                }
+
+                _fillBot = true;
+            }
         }
 
         return HookResult.Continue;
+    }
+
+    private string BotJoinTeam(string mapName)
+    {
+        return mapName[..2] switch
+        {
+            "cs" => "T",
+            "de" => "CT",
+            _ => string.Empty,
+        };
     }
 }
