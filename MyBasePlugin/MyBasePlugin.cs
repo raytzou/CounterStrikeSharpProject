@@ -1,25 +1,29 @@
-﻿using CounterStrikeSharp.API.Core;
+﻿using CounterStrikeSharp.API;
+using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Admin;
-using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Commands;
-using Microsoft.Extensions.Logging;
-using CounterStrikeSharp.API;
+using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Timers;
+using Microsoft.Extensions.Logging;
 
 namespace MyProject;
 
 public class MyBasePlugin : BasePlugin
 {
+    #region plugin info
     public override string ModuleAuthor => "cynic";
     public override string ModuleName => "MyBasePlugin";
     public override string ModuleVersion => "0.87";
     public override string ModuleDescription => "My base plugin";
+    #endregion plugin info
+
+    public int RoundNum => _roundNum;
 
     private readonly ILogger<MyBasePlugin> _logger;
     private Dictionary<int, string> _players;
     private int _playerCount = 0;
-    private string _mapName = ""; 
+    private string _mapName = "";
     private static bool _restart = false;
     private int _roundNum = 0;
 
@@ -35,9 +39,9 @@ public class MyBasePlugin : BasePlugin
 
         _logger.LogInformation("Server host time: {DT}", DateTime.Now);
 
-        if(hostnameCvar is null)
+        if (hostnameCvar is null)
             _logger.LogError("Cannot find the hostname CVAR");
-        else if(string.IsNullOrEmpty(hostnameCvar.StringValue))
+        else if (string.IsNullOrEmpty(hostnameCvar.StringValue))
             _logger.LogError("Cannot find the hostname");
         else
             _logger.LogInformation("Server name: {serverName}", hostnameCvar.StringValue);
@@ -45,14 +49,14 @@ public class MyBasePlugin : BasePlugin
         RegisterListener<Listeners.OnClientConnected>(ConnectListener);
         RegisterListener<Listeners.OnClientDisconnect>(DisconnectListener);
         RegisterListener<Listeners.OnMapStart>(MapStartListener);
-        RegisterEventHandler<EventRoundStart>(RoundStartHandler);
+        RegisterEventHandler<EventRoundEnd>(RoundEndHandler);
     }
 
     [RequiresPermissions("@css/kick")]
     [ConsoleCommand("css_kick", "Kick player")]
     public void OnKickCommand(CCSPlayerController client, CommandInfo command)
     {
-        if(command.ArgCount < 2)
+        if (command.ArgCount < 2)
         {
             command.ReplyToCommand("[css] Usage: css_kick <target>");
             return;
@@ -60,7 +64,7 @@ public class MyBasePlugin : BasePlugin
 
         string targetName = GetPlayerName(command.GetArg(1));
 
-        if(string.IsNullOrEmpty(targetName))
+        if (string.IsNullOrEmpty(targetName))
         {
             command.ReplyToCommand("[css] Target not found.");
             return;
@@ -79,7 +83,7 @@ public class MyBasePlugin : BasePlugin
         command.ReplyToCommand($"Server local time: {DateTime.Now}");
         command.ReplyToCommand($"Current map: {Server.MapName}");
         command.ReplyToCommand($"Player: {_playerCount}/{Server.MaxPlayers}");
-        command.ReplyToCommand($"Round: {_roundNum - 1}/8");
+        command.ReplyToCommand($"Round: {_roundNum}/8");
         command.ReplyToCommand("----------");
     }
 
@@ -87,7 +91,7 @@ public class MyBasePlugin : BasePlugin
     [ConsoleCommand("css_map", "Change map")]
     public void OnChangeMapCommand(CCSPlayerController client, CommandInfo command)
     {
-        if(command.ArgCount < 2)
+        if (command.ArgCount < 2)
         {
             command.ReplyToCommand("[css] Usage: css_map <map name>");
             return;
@@ -95,7 +99,7 @@ public class MyBasePlugin : BasePlugin
 
         string mapName = GetMapName(command.GetArg(1));
 
-        if(string.IsNullOrEmpty(mapName))
+        if (string.IsNullOrEmpty(mapName))
         {
             command.ReplyToCommand($"[css] Map not found: {command.GetArg(1)}");
             return;
@@ -110,7 +114,7 @@ public class MyBasePlugin : BasePlugin
     [ConsoleCommand("css_cvar", "Modify cvar")]
     public void OnCvarCommand(CCSPlayerController client, CommandInfo command)
     {
-        if(command.ArgCount < 2)
+        if (command.ArgCount < 2)
         {
             command.ReplyToCommand("[css] Usage: css_cvar <ConVar> <Value>");
             return;
@@ -157,7 +161,7 @@ public class MyBasePlugin : BasePlugin
             case ConVarType.Int16:
             case ConVarType.Int32:
             case ConVarType.Int64:
-            case ConVarType.UInt16: 
+            case ConVarType.UInt16:
             case ConVarType.UInt32:
             case ConVarType.UInt64:
                 if (int.TryParse(command.GetArg(2), out int parseInt))
@@ -234,10 +238,9 @@ public class MyBasePlugin : BasePlugin
         _logger.LogInformation("{admin} changed {cvar} to {value} at {DT}", client.PlayerName, cvar.Name, value, DateTime.Now);
     }
 
-    private HookResult RoundStartHandler(EventRoundStart eventRoundStart, GameEventInfo gameEventInfo)
+    private HookResult RoundEndHandler(EventRoundEnd eventRoundStart, GameEventInfo gameEventInfo)
     {
         _roundNum++;
-
         return HookResult.Continue;
     }
 
@@ -245,13 +248,13 @@ public class MyBasePlugin : BasePlugin
     {
         var playerController = new CCSPlayerController(NativeAPI.GetEntityFromIndex(slot + 1));
 
-        if(playerController.IsValid && !playerController.IsBot)
+        if (playerController.IsValid && !playerController.IsBot)
         {
             _playerCount++;
             _logger.LogInformation("{client} has connected at {DT}, IP: {ipAddress}", playerController.PlayerName, DateTime.Now, playerController.IpAddress);
         }
 
-        if(!_players.ContainsKey(slot))
+        if (!_players.ContainsKey(slot))
             _players.Add(slot, playerController.PlayerName);
         else
             _players[slot] = playerController.PlayerName;
@@ -261,7 +264,7 @@ public class MyBasePlugin : BasePlugin
     {
         var playerController = new CCSPlayerController(NativeAPI.GetEntityFromIndex(slot + 1));
 
-        if(playerController.IsValid && !playerController.IsBot)
+        if (playerController.IsValid && !playerController.IsBot)
         {
             _playerCount--;
             _logger.LogInformation("{client} has disconnected at {DT}", playerController.PlayerName, DateTime.Now);
@@ -283,14 +286,28 @@ public class MyBasePlugin : BasePlugin
         }
 
         _logger.LogInformation("has restart: {restart}", _restart);
+
+        switch (mapName[..2])
+        {
+            case "cs":
+                Server.ExecuteCommand("mp_humanteam CT");
+                break;
+            case "de":
+                Server.ExecuteCommand("mp_humanteam T");
+                break;
+            default:
+                Server.ExecuteCommand("mp_humanteam T");
+                _logger.LogInformation("Cannot identify the category of map: {mapName}", mapName);
+                break;
+        }
     }
 
     private string GetPlayerName(string arg)
     {
-        foreach(var pair in _players)
+        foreach (var pair in _players)
         {
             Console.WriteLine(pair.Key + " " + pair.Value);
-            if(pair.Value == arg)
+            if (pair.Value == arg)
                 return pair.Value;
         }
 
@@ -305,12 +322,12 @@ public class MyBasePlugin : BasePlugin
 
         List<string> maps = new();
 
-        foreach(var mapPath in Directory.GetFiles(gameRootPath))
+        foreach (var mapPath in Directory.GetFiles(gameRootPath))
         {
             string[] arr = mapPath.Split("\\");
             string mapName = arr[arr.Length - 1].Substring(0, arr[arr.Length - 1].Length - 4);
 
-            if(mapName.Contains("vanity") || 
+            if (mapName.Contains("vanity") ||
                mapName.Contains("workshop_preview") ||
                mapName == "graphics_settings" ||
                mapName == "lobby_mapveto") continue;
@@ -320,9 +337,9 @@ public class MyBasePlugin : BasePlugin
 
         maps.Sort();
 
-        foreach(var map in maps)
+        foreach (var map in maps)
         {
-            if(map.Contains(arg))
+            if (map.Contains(arg))
                 return map;
         }
 
