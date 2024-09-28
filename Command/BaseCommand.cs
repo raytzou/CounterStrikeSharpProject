@@ -11,13 +11,15 @@ namespace MyProject
 {
     public class BaseCommand : MyBasePlugin
     {
+        #region plugin info
+        public override string ModuleName => "Base Command";
+        public override string ModuleVersion => "0.87";
+        #endregion plugin info
+
         public BaseCommand(ILogger<BaseCommand> logger) : base(logger)
         {
             _logger = logger;
         }
-
-        public override string ModuleName => "Base Command";
-        public override string ModuleVersion => "0.87";
 
         private readonly ILogger<BaseCommand> _logger;
 
@@ -204,7 +206,7 @@ namespace MyProject
                     break;
             }
 
-            if(!string.IsNullOrEmpty(value))
+            if (!string.IsNullOrEmpty(value))
             {
                 Server.PrintToChatAll($"{cvar.Name} changed to {value}");
                 _logger.LogInformation("{admin} changed {cvar} to {value} at {DT}", client.PlayerName, cvar.Name, value, DateTime.Now);
