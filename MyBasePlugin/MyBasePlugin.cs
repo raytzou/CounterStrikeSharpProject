@@ -17,7 +17,7 @@ public class MyBasePlugin : BasePlugin
 
     public int RoundNum => _roundNum;
     public int PlayerCount => _playerCount;
-    public string CurrentMap => _currentMap;
+    public static MyBasePlugin Instance => _instance;
 
     private readonly ILogger<MyBasePlugin> _logger;
     private Dictionary<int, string> _players;
@@ -25,6 +25,8 @@ public class MyBasePlugin : BasePlugin
     private string _currentMap = string.Empty;
     private static bool _restart = false;
     private int _roundNum = 0;
+    private static MyBasePlugin _instance;
+    private static readonly object _lock = new object();
 
     public MyBasePlugin(ILogger<MyBasePlugin> logger)
     {
@@ -34,6 +36,15 @@ public class MyBasePlugin : BasePlugin
 
     public override void Load(bool hotReload)
     {
+        if (_instance is null)
+        {
+            lock (_lock)
+            {
+                _instance = this;
+            }
+        }
+
+        _logger.LogInformation("instance init: " + (_instance != null));
         var hostnameCvar = ConVar.Find("hostname");
 
         _logger.LogInformation("Server host time: {DT}", DateTime.Now);
@@ -50,6 +61,18 @@ public class MyBasePlugin : BasePlugin
         RegisterListener<Listeners.OnMapStart>(MapStartListener);
         RegisterEventHandler<EventRoundStart>(RoundStartHandler);
         RegisterEventHandler<EventRoundEnd>(RoundEndHandler);
+    }
+
+    public string GetTargetName(string name)
+    {
+        foreach (var pair in _players)
+        {
+            Console.WriteLine(pair.Key + " " + pair.Value);
+            if (pair.Value == name)
+                return pair.Value;
+        }
+
+        return string.Empty;
     }
 
     private HookResult RoundStartHandler(EventRoundStart eventRoundStart, GameEventInfo gameEventInfo)
@@ -105,7 +128,7 @@ public class MyBasePlugin : BasePlugin
         }
 
         _currentMap = mapName;
-        //_logger.LogInformation("has restart: {restart}", _restart);
+        _logger.LogInformation("server has restarted: {restart}", _restart);
 
         switch (mapName[..2])
         {
@@ -120,18 +143,6 @@ public class MyBasePlugin : BasePlugin
                 _logger.LogInformation("Cannot identify the category of map: {mapName}", mapName);
                 break;
         }
-    }
-
-    public string GetTargetName(string name)
-    {
-        foreach (var pair in _players)
-        {
-            Console.WriteLine(pair.Key + " " + pair.Value);
-            if (pair.Value == name)
-                return pair.Value;
-        }
-
-        return string.Empty;
     }
 
     private void RestartTimer()
