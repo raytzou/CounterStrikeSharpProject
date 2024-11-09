@@ -20,7 +20,7 @@ public class MyBasePlugin : BasePlugin
     public static MyBasePlugin Instance => _instance;
 
     private readonly ILogger<MyBasePlugin> _logger;
-    private Dictionary<int, string> _players;
+    private Dictionary<ulong, string> _players;
     private int _playerCount = 0;
     private string _currentMap = string.Empty;
     private static bool _restart = false;
@@ -56,9 +56,9 @@ public class MyBasePlugin : BasePlugin
         else
             _logger.LogInformation("Server name: {serverName}", hostnameCvar.StringValue);
 
-        RegisterListener<Listeners.OnClientConnected>(ConnectListener);
-        RegisterListener<Listeners.OnClientDisconnect>(DisconnectListener);
         RegisterListener<Listeners.OnMapStart>(MapStartListener);
+        RegisterEventHandler<EventPlayerConnectFull>(ConnectHandler);
+        RegisterEventHandler<EventPlayerDisconnect>(DisconnectHandler);
         RegisterEventHandler<EventRoundStart>(RoundStartHandler);
         RegisterEventHandler<EventRoundEnd>(RoundEndHandler);
     }
@@ -87,33 +87,37 @@ public class MyBasePlugin : BasePlugin
         return HookResult.Continue;
     }
 
-    private void ConnectListener(int slot)
+    private HookResult ConnectHandler(EventPlayerConnectFull @event, GameEventInfo info)
     {
-        var playerController = new CCSPlayerController(NativeAPI.GetEntityFromIndex(slot + 1));
+        var player = @event.Userid;
 
-        if (playerController.IsValid && !playerController.IsBot)
+        if (player.IsValid && !player.IsBot)
         {
             _playerCount++;
-            _logger.LogInformation("{client} has connected at {DT}, IP: {ipAddress}", playerController.PlayerName, DateTime.Now, playerController.IpAddress);
+            _logger.LogInformation("{client} has connected at {DT}, IP: {ipAddress}, SteamID: {steamID}", player.PlayerName, DateTime.Now, player.IpAddress, player.SteamID);
         }
 
-        if (!_players.ContainsKey(slot))
-            _players.Add(slot, playerController.PlayerName);
+        if (!_players.ContainsKey(player.SteamID))
+            _players.Add(player.SteamID, player.PlayerName);
         else
-            _players[slot] = playerController.PlayerName;
+            _players[player.SteamID] = player.PlayerName;
+
+        return HookResult.Continue;
     }
 
-    private void DisconnectListener(int slot)
+    private HookResult DisconnectHandler(EventPlayerDisconnect @event, GameEventInfo info)
     {
-        var playerController = new CCSPlayerController(NativeAPI.GetEntityFromIndex(slot + 1));
+        var player = @event.Userid;
 
-        if (playerController.IsValid && !playerController.IsBot)
+        if (player.IsValid && !player.IsBot)
         {
             _playerCount--;
-            _logger.LogInformation("{client} has disconnected at {DT}", playerController.PlayerName, DateTime.Now);
+            _logger.LogInformation("{client} has disconnected at {DT}", player.PlayerName, DateTime.Now);
         }
 
-        _players.Remove(slot);
+        _players.Remove(player.SteamID);
+
+        return HookResult.Continue;
     }
 
     private void MapStartListener(string mapName)
