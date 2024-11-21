@@ -3,16 +3,16 @@ using CounterStrikeSharp.API.Core;
 using Microsoft.Extensions.Logging;
 
 namespace MyProject;
-public class MyBot : MyBasePlugin
+public class MyBot : BasePlugin
 {
     #region plugin info
     public override string ModuleAuthor => "cynic";
     public override string ModuleName => "MyBot";
     public override string ModuleVersion => "0.87";
-    public override string ModuleDescription => "My Bot Plugin";
+    public override string ModuleDescription => "My Bot plugin";
     #endregion plugin info
 
-    public MyBot(ILogger<MyBot> logger) : base(logger)
+    public MyBot(ILogger<MyBot> logger)
     {
         _logger = logger;
     }
@@ -34,35 +34,35 @@ public class MyBot : MyBasePlugin
 
     private HookResult RoundStartHandler(EventRoundStart eventRoundStart, GameEventInfo gameEventInfo)
     {
-        if (RoundNum <= 1)
-        {
-            Server.ExecuteCommand("sv_cheats 1");
-            Server.ExecuteCommand("bot_stop 1");
-        }
-        else
-        {
-            Server.ExecuteCommand("sv_cheats 0");
-            Server.ExecuteCommand("bot_stop 0");
+        //if (RoundNum <= 1)
+        //{
+        //    Server.ExecuteCommand("sv_cheats 1");
+        //    Server.ExecuteCommand("bot_stop 1");
+        //}
+        //else
+        //{
+        //    Server.ExecuteCommand("sv_cheats 0");
+        //    Server.ExecuteCommand("bot_stop 0");
 
-            if (!_fillBot)
-            {
-                var botTeam = BotJoinTeam(CurrentMap);
+        //    if (!_fillBot)
+        //    {
+        //        var botTeam = BotJoinTeam(CurrentMap);
 
-                if (string.IsNullOrEmpty(botTeam))
-                {
-                    _logger.LogInformation("Cannot identify the category of map: {mapName}", CurrentMap);
+        //        if (string.IsNullOrEmpty(botTeam))
+        //        {
+        //            _logger.LogInformation("Cannot identify the category of map: {mapName}", CurrentMap);
 
-                    return HookResult.Continue;
-                }
+        //            return HookResult.Continue;
+        //        }
 
-                for (int i = 0; i < 10; i++)
-                {
-                    Server.ExecuteCommand($"bot_add {botTeam}");
-                }
+        //        for (int i = 0; i < 10; i++)
+        //        {
+        //            Server.ExecuteCommand($"bot_add {botTeam}");
+        //        }
 
-                _fillBot = true;
-            }
-        }
+        //        _fillBot = true;
+        //    }
+        //}
 
         return HookResult.Continue;
     }

@@ -5,7 +5,9 @@ using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Timers;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Reflection;
 
 namespace MyProject;
 
@@ -18,16 +20,19 @@ public class BaseCommand : BasePlugin
     public override string ModuleDescription => "base command plugin";
     #endregion plugin info
 
-    public BaseCommand(ILogger<BaseCommand> logger)
+    private MyBasePlugin _myBase;
+
+    public BaseCommand(ILogger<BaseCommand> logger, MyBasePlugin myBasePlugin)
     {
         _logger = logger;
+        _myBase = myBasePlugin;
     }
 
     private readonly ILogger<BaseCommand> _logger;
 
     public override void Load(bool hotreload)
     {
-        _logger.LogInformation("singleton init: " + (MyBasePlugin.Instance != null));
+        
     }
 
     [RequiresPermissions("@css/kick")]
@@ -40,7 +45,7 @@ public class BaseCommand : BasePlugin
             return;
         }
 
-        string targetName = MyBasePlugin.Instance.GetTargetName(command.GetArg(1));
+        string targetName = _myBase.GetTargetName(command.GetArg(1));
 
         if (string.IsNullOrEmpty(targetName))
         {
@@ -60,8 +65,16 @@ public class BaseCommand : BasePlugin
         command.ReplyToCommand("----------");
         command.ReplyToCommand($"Server local time: {DateTime.Now}");
         command.ReplyToCommand($"Current map: {Server.MapName}");
-        command.ReplyToCommand($"Player: {MyBasePlugin.Instance.PlayerCount}/{Server.MaxPlayers}");
-        command.ReplyToCommand($"Round: {MyBasePlugin.Instance.RoundNum}/8");
+        try
+        {
+            command.ReplyToCommand($"Player: {_myBase.PlayerCount}/{Server.MaxPlayers}");
+            command.ReplyToCommand($"Round: {_myBase.RoundNum}/8");
+        }
+        catch (TargetInvocationException ex)
+        {
+            Console.WriteLine(ex.InnerException?.Message ?? "Cannot get the inner exception msg");
+            Console.WriteLine(ex.InnerException?.StackTrace ?? "Cannot get the inner StackTrace");
+        }
         command.ReplyToCommand("----------");
     }
 
@@ -255,5 +268,13 @@ public class BaseCommand : BasePlugin
         }
 
         return string.Empty;
+    }
+
+    public class ServiceCollectionExtensions : IPluginServiceCollection<MyBasePlugin>
+    {
+        public void ConfigureServices(IServiceCollection services)
+        {
+            services.AddSingleton<MyBasePlugin>();
+        }
     }
 }

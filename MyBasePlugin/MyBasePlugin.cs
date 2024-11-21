@@ -17,7 +17,6 @@ public class MyBasePlugin : BasePlugin
 
     public int RoundNum => _roundNum;
     public int PlayerCount => _playerCount;
-    public static MyBasePlugin Instance => _instance;
 
     private readonly ILogger<MyBasePlugin> _logger;
     private Dictionary<ulong, string> _players;
@@ -25,8 +24,6 @@ public class MyBasePlugin : BasePlugin
     private string _currentMap = string.Empty;
     private static bool _restart = false;
     private int _roundNum = 0;
-    private static MyBasePlugin _instance;
-    private static readonly object _lock = new object();
 
     public MyBasePlugin(ILogger<MyBasePlugin> logger)
     {
@@ -36,15 +33,6 @@ public class MyBasePlugin : BasePlugin
 
     public override void Load(bool hotReload)
     {
-        if (_instance is null)
-        {
-            lock (_lock)
-            {
-                _instance = this;
-            }
-        }
-
-        _logger.LogInformation("instance init: " + (_instance != null));
         var hostnameCvar = ConVar.Find("hostname");
 
         _logger.LogInformation("Server host time: {DT}", DateTime.Now);
