@@ -9,7 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
 
-namespace MyProject;
+namespace MyProject.Plugins;
 
 public class BaseCommand : BasePlugin
 {
@@ -20,9 +20,9 @@ public class BaseCommand : BasePlugin
     public override string ModuleDescription => "base command plugin";
     #endregion plugin info
 
-    private MyBasePlugin _myBase;
+    private MyBase _myBase;
 
-    public BaseCommand(ILogger<BaseCommand> logger, MyBasePlugin myBasePlugin)
+    public BaseCommand(ILogger<BaseCommand> logger, MyBase myBasePlugin)
     {
         _logger = logger;
         _myBase = myBasePlugin;
@@ -32,7 +32,7 @@ public class BaseCommand : BasePlugin
 
     public override void Load(bool hotreload)
     {
-        
+
     }
 
     [RequiresPermissions("@css/kick")]
@@ -270,11 +270,11 @@ public class BaseCommand : BasePlugin
         return string.Empty;
     }
 
-    public class ServiceCollectionExtensions : IPluginServiceCollection<MyBasePlugin>
+    public class ServiceCollectionExtensions : IPluginServiceCollection<MyBase>
     {
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton<MyBasePlugin>();
+            services.AddSingleton<MyBase>();
         }
     }
 }

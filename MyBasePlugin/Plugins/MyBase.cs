@@ -4,9 +4,9 @@ using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Timers;
 using Microsoft.Extensions.Logging;
 
-namespace MyProject;
+namespace MyProject.Plugins;
 
-public class MyBasePlugin : BasePlugin
+public class MyBase : BasePlugin
 {
     #region plugin info
     public override string ModuleAuthor => "cynic";
@@ -18,14 +18,14 @@ public class MyBasePlugin : BasePlugin
     public int RoundNum => _roundNum;
     public int PlayerCount => _playerCount;
 
-    private readonly ILogger<MyBasePlugin> _logger;
+    private readonly ILogger<MyBase> _logger;
     private Dictionary<ulong, string> _players;
     private int _playerCount = 0;
     private string _currentMap = string.Empty;
     private static bool _restart = false;
     private int _roundNum = 0;
 
-    public MyBasePlugin(ILogger<MyBasePlugin> logger)
+    public MyBase(ILogger<MyBase> logger)
     {
         _logger = logger;
         _players = new();

@@ -2,7 +2,7 @@
 using CounterStrikeSharp.API.Core;
 using Microsoft.Extensions.Logging;
 
-namespace MyProject;
+namespace MyProject.Plugins;
 public class MyBot : BasePlugin
 {
     #region plugin info

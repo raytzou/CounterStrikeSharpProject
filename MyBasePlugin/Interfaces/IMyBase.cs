@@ -1,6 +1,6 @@
-﻿namespace MyProject
+﻿namespace MyProject.Interface
 {
-    public interface IMyBasePlugin
+    public interface IMyBase
     {
         int PlayerCount { get; }
         int RoundNum { get; }
