@@ -32,7 +32,7 @@ public class MyCommand : BasePlugin
 
     public override void Load(bool hotreload)
     {
-
+        
     }
 
     [RequiresPermissions("@css/kick")]
@@ -268,13 +268,5 @@ public class MyCommand : BasePlugin
         }
 
         return string.Empty;
-    }
-
-    public class ServiceCollectionExtensions : IPluginServiceCollection<MyBase>
-    {
-        public void ConfigureServices(IServiceCollection services)
-        {
-            services.AddSingleton<MyBase>();
-        }
     }
 }
