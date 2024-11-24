@@ -10,7 +10,7 @@ using System.Reflection;
 
 namespace MyProject.Plugins;
 
-public class BaseCommand : BasePlugin
+public class MyCommand : BasePlugin
 {
     #region plugin info
     public override string ModuleAuthor => "cynic";
@@ -21,13 +21,13 @@ public class BaseCommand : BasePlugin
 
     private MyBase _myBase;
 
-    public BaseCommand(ILogger<BaseCommand> logger, MyBase myBasePlugin)
+    public MyCommand(ILogger<MyCommand> logger, MyBase myBasePlugin)
     {
         _logger = logger;
         _myBase = myBasePlugin;
     }
 
-    private readonly ILogger<BaseCommand> _logger;
+    private readonly ILogger<MyCommand> _logger;
 
     public override void Load(bool hotreload)
     {
