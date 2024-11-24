@@ -5,9 +5,7 @@ using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Timers;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using MyProject.Interface;
 using System.Reflection;
 
 namespace MyProject.Plugins;
@@ -33,7 +31,7 @@ public class BaseCommand : BasePlugin
 
     public override void Load(bool hotreload)
     {
-        
+
     }
 
     [RequiresPermissions("@css/kick")]
