@@ -7,11 +7,12 @@ using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Timers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using MyProject.Interface;
 using System.Reflection;
 
 namespace MyProject.Plugins;
 
-public class MyCommand : BasePlugin
+public class BaseCommand : BasePlugin
 {
     #region plugin info
     public override string ModuleAuthor => "cynic";
@@ -22,13 +23,13 @@ public class MyCommand : BasePlugin
 
     private MyBase _myBase;
 
-    public MyCommand(ILogger<MyCommand> logger, MyBase myBasePlugin)
+    public BaseCommand(ILogger<BaseCommand> logger, MyBase myBasePlugin)
     {
         _logger = logger;
         _myBase = myBasePlugin;
     }
 
-    private readonly ILogger<MyCommand> _logger;
+    private readonly ILogger<BaseCommand> _logger;
 
     public override void Load(bool hotreload)
     {
