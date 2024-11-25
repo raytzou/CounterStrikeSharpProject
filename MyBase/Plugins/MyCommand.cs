@@ -5,29 +5,28 @@ using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Timers;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
 
-namespace MyProject.Plugins;
+namespace MyBase.Plugins;
 
-public class MyCommand : BasePlugin
+/// <summary>
+/// put all CS into one project, there is only one plugin will work, even main plugin is loading, but still in loading.
+/// </summary>
+/// <param name="logger"></param>
+/// <param name="myBase"></param>
+public class MyCommand(ILogger<MyCommand> logger, MyBase myBase) : MyBase (logger)
 {
     #region plugin info
     public override string ModuleAuthor => "cynic";
-    public override string ModuleName => "Base Command";
+    public override string ModuleName => "MyCommand";
     public override string ModuleVersion => "0.87";
     public override string ModuleDescription => "base command plugin";
     #endregion plugin info
 
-    private MyBase _myBase;
-
-    public MyCommand(ILogger<MyCommand> logger, MyBase myBasePlugin)
-    {
-        _logger = logger;
-        _myBase = myBasePlugin;
-    }
-
-    private readonly ILogger<MyCommand> _logger;
+    private readonly MyBase _myBase = myBase;
+    private readonly ILogger<MyCommand> _logger = logger;
 
     public override void Load(bool hotreload)
     {
@@ -232,23 +231,23 @@ public class MyCommand : BasePlugin
         }
     }
 
-    private void ChangeMapTimer(string mapName)
+    private static void ChangeMapTimer(string mapName)
     {
         Server.ExecuteCommand($"changelevel {mapName}");
     }
 
-    private string GetMapNameInPhysicalDirectory(string name)
+    private static string GetMapNameInPhysicalDirectory(string name)
     {
         string gameRootPath = Server.GameDirectory;
 
         gameRootPath += "\\csgo\\maps";
 
-        List<string> maps = new();
+        List<string> maps = [];
 
         foreach (var mapPath in Directory.GetFiles(gameRootPath))
         {
             string[] arr = mapPath.Split("\\");
-            string mapName = arr[arr.Length - 1].Substring(0, arr[arr.Length - 1].Length - 4);
+            string mapName = arr[^1][..(arr[^1].Length - 4)];
 
             if (mapName.Contains("vanity") ||
                mapName.Contains("workshop_preview") ||
@@ -268,4 +267,12 @@ public class MyCommand : BasePlugin
 
         return string.Empty;
     }
+
+    //public class ServiceCollectionExtensions : IPluginServiceCollection<MyBase>
+    //{
+    //    public void ConfigureServices(IServiceCollection services)
+    //    {
+    //        services.AddSingleton<MyBase>();
+    //    }
+    //}
 }

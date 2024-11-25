@@ -4,13 +4,13 @@ using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Timers;
 using Microsoft.Extensions.Logging;
 
-namespace MyProject.Plugins;
+namespace MyBase.Plugins;
 
-public class MyBase : BasePlugin
+public class MyBase(ILogger<MyBase> logger) : BasePlugin
 {
     #region plugin info
     public override string ModuleAuthor => "cynic";
-    public override string ModuleName => "MyBasePlugin";
+    public override string ModuleName => "MyBase";
     public override string ModuleVersion => "0.87";
     public override string ModuleDescription => "My base plugin";
     #endregion plugin info
@@ -18,18 +18,12 @@ public class MyBase : BasePlugin
     public int RoundNum => _roundNum;
     public int PlayerCount => _playerCount;
 
-    private readonly ILogger<MyBase> _logger;
-    private Dictionary<ulong, string> _players;
+    private readonly ILogger<MyBase> _logger = logger;
+    private Dictionary<ulong, string> _players = [];
     private int _playerCount = 0;
     private string _currentMap = string.Empty;
     private static bool _restart = false;
     private int _roundNum = 0;
-
-    public MyBase(ILogger<MyBase> logger)
-    {
-        _logger = logger;
-        _players = new();
-    }
 
     public override void Load(bool hotReload)
     {
@@ -79,11 +73,10 @@ public class MyBase : BasePlugin
     {
         var player = @event.Userid;
 
-        if (player.IsValid && !player.IsBot)
-        {
-            _playerCount++;
-            _logger.LogInformation("{client} has connected at {DT}, IP: {ipAddress}, SteamID: {steamID}", player.PlayerName, DateTime.Now, player.IpAddress, player.SteamID);
-        }
+        if(player is null || !player.IsValid || player.IsBot) return HookResult.Continue;
+
+        _playerCount++;
+        _logger.LogInformation("{client} has connected at {DT}, IP: {ipAddress}, SteamID: {steamID}", player.PlayerName, DateTime.Now, player.IpAddress, player.SteamID);
 
         if (!_players.ContainsKey(player.SteamID))
             _players.Add(player.SteamID, player.PlayerName);
@@ -97,11 +90,10 @@ public class MyBase : BasePlugin
     {
         var player = @event.Userid;
 
-        if (player.IsValid && !player.IsBot)
-        {
-            _playerCount--;
-            _logger.LogInformation("{client} has disconnected at {DT}", player.PlayerName, DateTime.Now);
-        }
+        if (player is null || !player.IsValid || player.IsBot) return HookResult.Continue;
+
+        _playerCount--;
+        _logger.LogInformation("{client} has disconnected at {DT}", player.PlayerName, DateTime.Now);
 
         _players.Remove(player.SteamID);
 
@@ -114,26 +106,30 @@ public class MyBase : BasePlugin
         _playerCount = 0;
         _players.Clear();
 
+        _logger.LogInformation("server has restarted: {restart}", _restart);
+
         if (!_restart)
         {
             AddTimer(1.0f, RestartTimer, TimerFlags.STOP_ON_MAPCHANGE);
         }
-
-        _currentMap = mapName;
-        _logger.LogInformation("server has restarted: {restart}", _restart);
-
-        switch (mapName[..2])
+        else
         {
-            case "cs":
-                Server.ExecuteCommand("mp_humanteam CT");
-                break;
-            case "de":
-                Server.ExecuteCommand("mp_humanteam T");
-                break;
-            default:
-                Server.ExecuteCommand("mp_humanteam T");
-                _logger.LogInformation("Cannot identify the category of map: {mapName}", mapName);
-                break;
+            _currentMap = mapName;
+
+
+            switch (mapName[..2])
+            {
+                case "cs":
+                    Server.ExecuteCommand("mp_humanteam CT");
+                    break;
+                case "de":
+                    Server.ExecuteCommand("mp_humanteam T");
+                    break;
+                default:
+                    Server.ExecuteCommand("mp_humanteam T");
+                    _logger.LogInformation("Cannot identify the category of map: {mapName}", mapName);
+                    break;
+            }
         }
     }
 

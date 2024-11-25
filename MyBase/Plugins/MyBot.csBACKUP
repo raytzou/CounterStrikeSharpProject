@@ -1,7 +1,8 @@
 ﻿using CounterStrikeSharp.API.Core;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace MyProject.Plugins;
+namespace MyBase.Plugins;
 public class MyBot : BasePlugin
 {
     #region plugin info
@@ -11,14 +12,17 @@ public class MyBot : BasePlugin
     public override string ModuleDescription => "My Bot plugin";
     #endregion plugin info
 
+    //private MyBase _myBase;
+
     public MyBot(ILogger<MyBot> logger)
     {
         _logger = logger;
+        //_myBase = myBase;
     }
 
     private readonly ILogger<MyBot> _logger;
 
-    private bool _fillBot = false;
+    //private bool _fillBot = false;
 
     public override void Load(bool hotreload)
     {
@@ -28,7 +32,7 @@ public class MyBot : BasePlugin
 
     private void MapStartListener(string mapName)
     {
-        _fillBot = false;
+        //_fillBot = false;
     }
 
     private HookResult RoundStartHandler(EventRoundStart eventRoundStart, GameEventInfo gameEventInfo)
