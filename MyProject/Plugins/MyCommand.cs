@@ -9,14 +9,14 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
 
-namespace MyBase.Plugins;
+namespace MyBasePlugin.Plugins;
 
 /// <summary>
 /// put all CS into one project, there is only one plugin will work, even main plugin is loading, but still in loading.
 /// </summary>
 /// <param name="logger"></param>
 /// <param name="myBase"></param>
-public class MyCommand(ILogger<MyCommand> logger, MyBase myBase) : MyBase (logger)
+public class MyCommand(ILogger<MyCommand> logger, MyBase myBase) : MyBase(logger)
 {
     #region plugin info
     public override string ModuleAuthor => "cynic";

@@ -4,7 +4,7 @@ using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Timers;
 using Microsoft.Extensions.Logging;
 
-namespace MyBase.Plugins;
+namespace MyBasePlugin.Plugins;
 
 public class MyBase(ILogger<MyBase> logger) : BasePlugin
 {
@@ -73,7 +73,7 @@ public class MyBase(ILogger<MyBase> logger) : BasePlugin
     {
         var player = @event.Userid;
 
-        if(player is null || !player.IsValid || player.IsBot) return HookResult.Continue;
+        if (player is null || !player.IsValid || player.IsBot) return HookResult.Continue;
 
         _playerCount++;
         _logger.LogInformation("{client} has connected at {DT}, IP: {ipAddress}, SteamID: {steamID}", player.PlayerName, DateTime.Now, player.IpAddress, player.SteamID);
