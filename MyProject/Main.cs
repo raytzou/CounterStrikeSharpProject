@@ -28,7 +28,7 @@ public class Main(ILogger<Main> logger, Command commmand) : BasePlugin
     private static bool _restart = false;
     private int _roundNum = 0;
 
-    private Command _command = commmand;
+    private readonly Command _command = commmand;
 
     public override void Load(bool hotreload)
     {
@@ -102,7 +102,7 @@ public class Main(ILogger<Main> logger, Command commmand) : BasePlugin
 
         if (!_restart)
         {
-            AddTimer(1.0f, RestartTimer, TimerFlags.STOP_ON_MAPCHANGE);
+            RestartServer();
             return;
         }
         
@@ -120,6 +120,12 @@ public class Main(ILogger<Main> logger, Command commmand) : BasePlugin
                 Server.ExecuteCommand("mp_humanteam T");
                 _logger.LogInformation("Cannot identify the category of map: {mapName}", mapName);
                 break;
+        }
+
+        void RestartServer()
+        {
+            Server.ExecuteCommand($"changelevel {mapName}");
+            _restart = true;
         }
     }
 
@@ -142,7 +148,7 @@ public class Main(ILogger<Main> logger, Command commmand) : BasePlugin
     [ConsoleCommand("css_map", "Change map")]
     public void OnChangeMapCommand(CCSPlayerController client, CommandInfo command)
     {
-        AddTimer(changeMapTime, () => _command.OnChangeMapCommand(client, command), TimerFlags.STOP_ON_MAPCHANGE);
+        _command.OnChangeMapCommand(client, command);
     }
 
     [RequiresPermissions("@css/cvar")]
@@ -150,12 +156,6 @@ public class Main(ILogger<Main> logger, Command commmand) : BasePlugin
     public void OnCvarCommand(CCSPlayerController client, CommandInfo command)
     {
         _command.OnCvarCommand(client, command);
-    }
-
-    private void RestartTimer()
-    {
-        Server.ExecuteCommand($"changelevel {_currentMap}");
-        _restart = true;
     }
 
     private string GetTargetName(string name)
