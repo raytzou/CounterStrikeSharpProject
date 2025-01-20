@@ -1,15 +1,23 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Core.Attributes.Registration;
+using CounterStrikeSharp.API.Modules.Admin;
+using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Timers;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace MyProject;
 
-public class Main(ILogger<Main> logger)
+public class Main(ILogger<Main> logger, Command commmand) : BasePlugin
 {
-    public int RoundNum => _roundNum;
-    public int PlayerCount => _playerCount;
+    #region plugin info
+    public override string ModuleAuthor => "cynicat";
+    public override string ModuleName => "MyMain";
+    public override string ModuleVersion => "0.87";
+    public override string ModuleDescription => "My main plugin";
+    #endregion plugin info
 
     private readonly ILogger<Main> _logger = logger;
     private Dictionary<ulong, string> _players = [];
@@ -18,7 +26,9 @@ public class Main(ILogger<Main> logger)
     private static bool _restart = false;
     private int _roundNum = 0;
 
-    public void Prepare()
+    private Command _command = commmand;
+
+    public override void Load(bool hotreload)
     {
         var hostnameCvar = ConVar.Find("hostname");
 
@@ -30,33 +40,27 @@ public class Main(ILogger<Main> logger)
             _logger.LogError("Cannot find the hostname");
         else
             _logger.LogInformation("Server name: {serverName}", hostnameCvar.StringValue);
+
+        RegisterListener<Listeners.OnMapStart>(MapStartListener);
+        RegisterEventHandler<EventPlayerConnectFull>(ConnectHandler);
+        RegisterEventHandler<EventPlayerDisconnect>(DisconnectHandler);
+        RegisterEventHandler<EventRoundStart>(RoundStartHandler);
+        RegisterEventHandler<EventRoundEnd>(RoundEndHandler);
     }
 
-    public string GetTargetName(string name)
-    {
-        foreach (var pair in _players)
-        {
-            Console.WriteLine(pair.Key + " " + pair.Value);
-            if (pair.Value == name)
-                return pair.Value;
-        }
-
-        return string.Empty;
-    }
-
-    public HookResult RoundStartHandler(EventRoundStart eventRoundStart, GameEventInfo gameEventInfo)
+    private HookResult RoundStartHandler(EventRoundStart eventRoundStart, GameEventInfo gameEventInfo)
     {
         Server.PrintToChatAll($"Round: {_roundNum}");
         return HookResult.Continue;
     }
 
-    public HookResult RoundEndHandler(EventRoundEnd eventRoundEnd, GameEventInfo gameEventInfo)
+    private HookResult RoundEndHandler(EventRoundEnd eventRoundEnd, GameEventInfo gameEventInfo)
     {
         _roundNum++;
         return HookResult.Continue;
     }
 
-    public HookResult ConnectHandler(EventPlayerConnectFull @event, GameEventInfo info)
+    private HookResult ConnectHandler(EventPlayerConnectFull @event, GameEventInfo info)
     {
         var player = @event.Userid;
 
@@ -73,7 +77,7 @@ public class Main(ILogger<Main> logger)
         return HookResult.Continue;
     }
 
-    public HookResult DisconnectHandler(EventPlayerDisconnect @event, GameEventInfo info)
+    private HookResult DisconnectHandler(EventPlayerDisconnect @event, GameEventInfo info)
     {
         var player = @event.Userid;
 
@@ -87,7 +91,7 @@ public class Main(ILogger<Main> logger)
         return HookResult.Continue;
     }
 
-    public void MapStartListener(string mapName)
+    private void MapStartListener(string mapName)
     {
         _roundNum = 0;
         _playerCount = 0;
@@ -97,7 +101,7 @@ public class Main(ILogger<Main> logger)
 
         if (!_restart)
         {
-            //AddTimer(1.0f, RestartTimer, TimerFlags.STOP_ON_MAPCHANGE);
+            AddTimer(1.0f, RestartTimer, TimerFlags.STOP_ON_MAPCHANGE);
         }
         else
         {
@@ -120,9 +124,58 @@ public class Main(ILogger<Main> logger)
         }
     }
 
-    public void RestartTimer()
+    [RequiresPermissions("@css/kick")]
+    [ConsoleCommand("css_kick", "Kick player")]
+    public void OnKickCommand(CCSPlayerController client, CommandInfo command)
+    {
+        string targetName = GetTargetName(command.GetArg(1));
+
+        _command.OnKickCommand(client, command, targetName);
+    }
+
+    [ConsoleCommand("css_info", "Current counts of player")]
+    public void OnInfoCommand(CCSPlayerController client, CommandInfo command)
+    {
+        _command.OnInfoCommand(client, command, _playerCount, _roundNum);
+    }
+
+    [RequiresPermissions("@css/changemap")]
+    [ConsoleCommand("css_map", "Change map")]
+    public void OnChangeMapCommand(CCSPlayerController client, CommandInfo command)
+    {
+        _command.OnChangeMapCommand(client, command);
+    }
+
+    [RequiresPermissions("@css/cvar")]
+    [ConsoleCommand("css_cvar", "Modify cvar")]
+    public void OnCvarCommand(CCSPlayerController client, CommandInfo command)
+    {
+        _command.OnCvarCommand(client, command);
+    }
+
+    private void RestartTimer()
     {
         Server.ExecuteCommand($"changelevel {_currentMap}");
         _restart = true;
+    }
+
+    private string GetTargetName(string name)
+    {
+        foreach (var pair in _players)
+        {
+            Console.WriteLine(pair.Key + " " + pair.Value);
+            if (pair.Value == name)
+                return pair.Value;
+        }
+
+        return string.Empty;
+    }
+
+    public class ServiceCollection : IPluginServiceCollection<Main>
+    {
+        public void ConfigureServices(IServiceCollection services)
+        {
+            services.AddSingleton<Command>();
+        }
     }
 }

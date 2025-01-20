@@ -15,46 +15,17 @@ namespace MyProject;
 /// put all CS into one project, only one plugin will be loaded. which one? let's ask God
 /// </summary>
 /// <param name="logger"></param>
-/// <param name="myBase"></param>
-public class Command : BasePlugin
+public class Command(ILogger<Command> logger)
 {
-	public Command(ILogger<Command> logger, Main myBase)
-	{
-		_logger = logger;
-		_myBase = myBase;
-	}
+	private readonly ILogger<Command> _logger = logger;
 
-	#region plugin info
-	public override string ModuleAuthor => "cynic";
-	public override string ModuleName => "MyCommand";
-	public override string ModuleVersion => "0.87";
-	public override string ModuleDescription => "base command plugin";
-	#endregion plugin info
-
-	private readonly Main _myBase;
-	private readonly ILogger<Command> _logger;
-
-	public override void Load(bool hotreload)
-	{
-		_myBase.Prepare();
-		RegisterListener<Listeners.OnMapStart>(_myBase.MapStartListener);
-		RegisterEventHandler<EventPlayerConnectFull>(_myBase.ConnectHandler);
-		RegisterEventHandler<EventPlayerDisconnect>(_myBase.DisconnectHandler);
-		RegisterEventHandler<EventRoundStart>(_myBase.RoundStartHandler);
-		RegisterEventHandler<EventRoundEnd>(_myBase.RoundEndHandler);
-	}
-
-	[RequiresPermissions("@css/kick")]
-	[ConsoleCommand("css_kick", "Kick player")]
-	public void OnKickCommand(CCSPlayerController client, CommandInfo command)
+	public void OnKickCommand(CCSPlayerController client, CommandInfo command, string targetName)
 	{
 		if (command.ArgCount < 2)
 		{
 			command.ReplyToCommand("[css] Usage: css_kick <target>");
 			return;
 		}
-
-		string targetName = _myBase.GetTargetName(command.GetArg(1));
 
 		if (string.IsNullOrEmpty(targetName))
 		{
@@ -68,16 +39,15 @@ public class Command : BasePlugin
 		Server.PrintToChatAll($"Admin kicked {targetName}");
 	}
 
-	[ConsoleCommand("css_info", "Current counts of player")]
-	public void OnInfoCommand(CCSPlayerController client, CommandInfo command)
+	public void OnInfoCommand(CCSPlayerController client, CommandInfo command, int playerCount, int roundNum)
 	{
 		command.ReplyToCommand("----------");
 		command.ReplyToCommand($"Server local time: {DateTime.Now}");
 		command.ReplyToCommand($"Current map: {Server.MapName}");
 		try
 		{
-			command.ReplyToCommand($"Player: {_myBase.PlayerCount}/{Server.MaxPlayers}");
-			command.ReplyToCommand($"Round: {_myBase.RoundNum}/8");
+			command.ReplyToCommand($"Player: {playerCount}/{Server.MaxPlayers}");
+			command.ReplyToCommand($"Round: {roundNum}/8");
 		}
 		catch (TargetInvocationException ex)
 		{
@@ -87,10 +57,10 @@ public class Command : BasePlugin
 		command.ReplyToCommand("----------");
 	}
 
-	[RequiresPermissions("@css/changemap")]
-	[ConsoleCommand("css_map", "Change map")]
 	public void OnChangeMapCommand(CCSPlayerController client, CommandInfo command)
 	{
+		//const float changeMapBufferTime = 2f;
+
 		if (command.ArgCount < 2)
 		{
 			command.ReplyToCommand("[css] Usage: css_map <map name>");
@@ -108,11 +78,47 @@ public class Command : BasePlugin
 		Server.PrintToChatAll($"Admin changed map to {mapName}");
 
 		// LOL, take that, delegate syntax
-		AddTimer(2.0f, () => ChangeMapTimer(mapName), TimerFlags.STOP_ON_MAPCHANGE);
+		//AddTimer(changeMapBufferTime, () => ChangeMapTimer(), TimerFlags.STOP_ON_MAPCHANGE);
+		ChangeMapTimer();
+
+		void ChangeMapTimer()
+		{
+			Server.ExecuteCommand($"changelevel {mapName}");
+		}
+
+		string GetMapNameInPhysicalDirectory(string name)
+		{
+			string gameRootPath = Server.GameDirectory;
+
+			gameRootPath += "\\csgo\\maps";
+
+			List<string> maps = [];
+
+			foreach (var mapPath in Directory.GetFiles(gameRootPath))
+			{
+				string[] arr = mapPath.Split("\\");
+				string mapName = arr[^1][..(arr[^1].Length - 4)];
+
+				if (mapName.Contains("vanity") ||
+				   mapName.Contains("workshop_preview") ||
+				   mapName == "graphics_settings" ||
+				   mapName == "lobby_mapveto") continue;
+
+				maps.Add(mapName);
+			}
+
+			maps.Sort();
+
+			foreach (var map in maps) // should and can be optimized
+			{
+				if (map.Contains(name))
+					return map;
+			}
+
+			return string.Empty;
+		}
 	}
 
-	[RequiresPermissions("@css/cvar")]
-	[ConsoleCommand("css_cvar", "Modify cvar")]
 	public void OnCvarCommand(CCSPlayerController client, CommandInfo command)
 	{
 		if (command.ArgCount < 2)
@@ -239,51 +245,6 @@ public class Command : BasePlugin
 		{
 			Server.PrintToChatAll($"{cvar.Name} changed to {value}");
 			_logger.LogInformation("{admin} changed {cvar} to {value} at {DT}", client.PlayerName, cvar.Name, value, DateTime.Now);
-		}
-	}
-
-	private static void ChangeMapTimer(string mapName)
-	{
-		Server.ExecuteCommand($"changelevel {mapName}");
-	}
-
-	private static string GetMapNameInPhysicalDirectory(string name)
-	{
-		string gameRootPath = Server.GameDirectory;
-
-		gameRootPath += "\\csgo\\maps";
-
-		List<string> maps = [];
-
-		foreach (var mapPath in Directory.GetFiles(gameRootPath))
-		{
-			string[] arr = mapPath.Split("\\");
-			string mapName = arr[^1][..(arr[^1].Length - 4)];
-
-			if (mapName.Contains("vanity") ||
-			   mapName.Contains("workshop_preview") ||
-			   mapName == "graphics_settings" ||
-			   mapName == "lobby_mapveto") continue;
-
-			maps.Add(mapName);
-		}
-
-		maps.Sort();
-
-		foreach (var map in maps) // should and can be optimized
-		{
-			if (map.Contains(name))
-				return map;
-		}
-
-		return string.Empty;
-	}
-
-	public class ServiceCollection : IPluginServiceCollection<Command>
-	{
-		public void ConfigureServices(IServiceCollection services)
-		{
-			services.AddSingleton<Main>();
 		}
 	}
 }
