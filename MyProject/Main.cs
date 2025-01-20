@@ -19,6 +19,8 @@ public class Main(ILogger<Main> logger, Command commmand) : BasePlugin
     public override string ModuleDescription => "My main plugin";
     #endregion plugin info
 
+    private const float changeMapTime = 2f;
+
     private readonly ILogger<Main> _logger = logger;
     private Dictionary<ulong, string> _players = [];
     private int _playerCount = 0;
@@ -96,31 +98,28 @@ public class Main(ILogger<Main> logger, Command commmand) : BasePlugin
         _roundNum = 0;
         _playerCount = 0;
         _players.Clear();
-
         _logger.LogInformation("server has restarted: {restart}", _restart);
 
         if (!_restart)
         {
             AddTimer(1.0f, RestartTimer, TimerFlags.STOP_ON_MAPCHANGE);
+            return;
         }
-        else
+        
+        _currentMap = mapName;
+
+        switch (mapName[..2])
         {
-            _currentMap = mapName;
-
-
-            switch (mapName[..2])
-            {
-                case "cs":
-                    Server.ExecuteCommand("mp_humanteam CT");
-                    break;
-                case "de":
-                    Server.ExecuteCommand("mp_humanteam T");
-                    break;
-                default:
-                    Server.ExecuteCommand("mp_humanteam T");
-                    _logger.LogInformation("Cannot identify the category of map: {mapName}", mapName);
-                    break;
-            }
+            case "cs":
+                Server.ExecuteCommand("mp_humanteam CT");
+                break;
+            case "de":
+                Server.ExecuteCommand("mp_humanteam T");
+                break;
+            default:
+                Server.ExecuteCommand("mp_humanteam T");
+                _logger.LogInformation("Cannot identify the category of map: {mapName}", mapName);
+                break;
         }
     }
 
@@ -143,7 +142,7 @@ public class Main(ILogger<Main> logger, Command commmand) : BasePlugin
     [ConsoleCommand("css_map", "Change map")]
     public void OnChangeMapCommand(CCSPlayerController client, CommandInfo command)
     {
-        _command.OnChangeMapCommand(client, command);
+        AddTimer(changeMapTime, () => _command.OnChangeMapCommand(client, command), TimerFlags.STOP_ON_MAPCHANGE);
     }
 
     [RequiresPermissions("@css/cvar")]
