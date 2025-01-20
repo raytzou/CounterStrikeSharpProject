@@ -7,12 +7,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Bot.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="CounterStrikeSharp.API" Version="1.0.290" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="MyBot.cs" />
-    <None Include="MyCommand.cs" />
+    <None Include="Bot.cs" />
+    <None Include="Command.cs" />
   </ItemGroup>
 
 </Project>

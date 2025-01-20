@@ -16,9 +16,9 @@ namespace MyProject;
 /// </summary>
 /// <param name="logger"></param>
 /// <param name="myBase"></param>
-public class MyCommand : BasePlugin
+public class Command : BasePlugin
 {
-	public MyCommand(ILogger<MyCommand> logger, MyBase myBase)
+	public Command(ILogger<Command> logger, Main myBase)
 	{
 		_logger = logger;
 		_myBase = myBase;
@@ -31,12 +31,17 @@ public class MyCommand : BasePlugin
 	public override string ModuleDescription => "base command plugin";
 	#endregion plugin info
 
-	private readonly MyBase _myBase;
-	private readonly ILogger<MyCommand> _logger;
+	private readonly Main _myBase;
+	private readonly ILogger<Command> _logger;
 
 	public override void Load(bool hotreload)
 	{
-		_logger.LogInformation("my command loaded");
+		_myBase.Prepare();
+		RegisterListener<Listeners.OnMapStart>(_myBase.MapStartListener);
+		RegisterEventHandler<EventPlayerConnectFull>(_myBase.ConnectHandler);
+		RegisterEventHandler<EventPlayerDisconnect>(_myBase.DisconnectHandler);
+		RegisterEventHandler<EventRoundStart>(_myBase.RoundStartHandler);
+		RegisterEventHandler<EventRoundEnd>(_myBase.RoundEndHandler);
 	}
 
 	[RequiresPermissions("@css/kick")]
@@ -274,11 +279,11 @@ public class MyCommand : BasePlugin
 		return string.Empty;
 	}
 
-	public class ServiceCollection : IPluginServiceCollection<MyCommand>
+	public class ServiceCollection : IPluginServiceCollection<Command>
 	{
 		public void ConfigureServices(IServiceCollection services)
 		{
-			services.AddSingleton<MyBase>();
+			services.AddSingleton<Main>();
 		}
 	}
 }

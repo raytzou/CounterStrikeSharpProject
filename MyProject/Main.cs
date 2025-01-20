@@ -6,35 +6,19 @@ using Microsoft.Extensions.Logging;
 
 namespace MyProject;
 
-public interface IMyBase
+public class Main(ILogger<Main> logger)
 {
-
-}
-
-/// <summary>
-/// idk
-/// </summary>
-/// <param name="logger"></param>
-public class MyBase(ILogger<MyBase> logger) : BasePlugin, IMyBase
-{
-    #region plugin info
-    public override string ModuleAuthor => "cynic";
-    public override string ModuleName => "MyBase";
-    public override string ModuleVersion => "0.87";
-    public override string ModuleDescription => "My base plugin";
-    #endregion plugin info
-
     public int RoundNum => _roundNum;
     public int PlayerCount => _playerCount;
 
-    private readonly ILogger<MyBase> _logger = logger;
+    private readonly ILogger<Main> _logger = logger;
     private Dictionary<ulong, string> _players = [];
     private int _playerCount = 0;
     private string _currentMap = string.Empty;
     private static bool _restart = false;
     private int _roundNum = 0;
 
-    public override void Load(bool hotReload)
+    public void Prepare()
     {
         var hostnameCvar = ConVar.Find("hostname");
 
@@ -46,12 +30,6 @@ public class MyBase(ILogger<MyBase> logger) : BasePlugin, IMyBase
             _logger.LogError("Cannot find the hostname");
         else
             _logger.LogInformation("Server name: {serverName}", hostnameCvar.StringValue);
-
-        RegisterListener<Listeners.OnMapStart>(MapStartListener);
-        RegisterEventHandler<EventPlayerConnectFull>(ConnectHandler);
-        RegisterEventHandler<EventPlayerDisconnect>(DisconnectHandler);
-        RegisterEventHandler<EventRoundStart>(RoundStartHandler);
-        RegisterEventHandler<EventRoundEnd>(RoundEndHandler);
     }
 
     public string GetTargetName(string name)
@@ -66,19 +44,19 @@ public class MyBase(ILogger<MyBase> logger) : BasePlugin, IMyBase
         return string.Empty;
     }
 
-    private HookResult RoundStartHandler(EventRoundStart eventRoundStart, GameEventInfo gameEventInfo)
+    public HookResult RoundStartHandler(EventRoundStart eventRoundStart, GameEventInfo gameEventInfo)
     {
         Server.PrintToChatAll($"Round: {_roundNum}");
         return HookResult.Continue;
     }
 
-    private HookResult RoundEndHandler(EventRoundEnd eventRoundEnd, GameEventInfo gameEventInfo)
+    public HookResult RoundEndHandler(EventRoundEnd eventRoundEnd, GameEventInfo gameEventInfo)
     {
         _roundNum++;
         return HookResult.Continue;
     }
 
-    private HookResult ConnectHandler(EventPlayerConnectFull @event, GameEventInfo info)
+    public HookResult ConnectHandler(EventPlayerConnectFull @event, GameEventInfo info)
     {
         var player = @event.Userid;
 
@@ -95,7 +73,7 @@ public class MyBase(ILogger<MyBase> logger) : BasePlugin, IMyBase
         return HookResult.Continue;
     }
 
-    private HookResult DisconnectHandler(EventPlayerDisconnect @event, GameEventInfo info)
+    public HookResult DisconnectHandler(EventPlayerDisconnect @event, GameEventInfo info)
     {
         var player = @event.Userid;
 
@@ -109,7 +87,7 @@ public class MyBase(ILogger<MyBase> logger) : BasePlugin, IMyBase
         return HookResult.Continue;
     }
 
-    private void MapStartListener(string mapName)
+    public void MapStartListener(string mapName)
     {
         _roundNum = 0;
         _playerCount = 0;
@@ -119,7 +97,7 @@ public class MyBase(ILogger<MyBase> logger) : BasePlugin, IMyBase
 
         if (!_restart)
         {
-            AddTimer(1.0f, RestartTimer, TimerFlags.STOP_ON_MAPCHANGE);
+            //AddTimer(1.0f, RestartTimer, TimerFlags.STOP_ON_MAPCHANGE);
         }
         else
         {
@@ -142,7 +120,7 @@ public class MyBase(ILogger<MyBase> logger) : BasePlugin, IMyBase
         }
     }
 
-    private void RestartTimer()
+    public void RestartTimer()
     {
         Server.ExecuteCommand($"changelevel {_currentMap}");
         _restart = true;
