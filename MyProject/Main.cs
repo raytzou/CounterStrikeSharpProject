@@ -4,7 +4,6 @@ using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
-using CounterStrikeSharp.API.Modules.Timers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -19,12 +18,9 @@ public class Main(ILogger<Main> logger, Command commmand) : BasePlugin
     public override string ModuleDescription => "My main plugin";
     #endregion plugin info
 
-    private const float changeMapTime = 2f;
-
     private readonly ILogger<Main> _logger = logger;
     private Dictionary<ulong, string> _players = [];
     private int _playerCount = 0;
-    private string _currentMap = string.Empty;
     private static bool _restart = false;
     private int _roundNum = 0;
 
@@ -105,8 +101,6 @@ public class Main(ILogger<Main> logger, Command commmand) : BasePlugin
             RestartServer();
             return;
         }
-        
-        _currentMap = mapName;
 
         switch (mapName[..2])
         {
