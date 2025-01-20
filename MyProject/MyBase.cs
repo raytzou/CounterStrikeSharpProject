@@ -4,9 +4,18 @@ using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Timers;
 using Microsoft.Extensions.Logging;
 
-namespace MyBasePlugin.Plugins;
+namespace MyProject;
 
-public class MyBase(ILogger<MyBase> logger) : BasePlugin
+public interface IMyBase
+{
+
+}
+
+/// <summary>
+/// idk
+/// </summary>
+/// <param name="logger"></param>
+public class MyBase(ILogger<MyBase> logger) : BasePlugin, IMyBase
 {
     #region plugin info
     public override string ModuleAuthor => "cynic";

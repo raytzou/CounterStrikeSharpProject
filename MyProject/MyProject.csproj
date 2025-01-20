@@ -7,15 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Plugins\MyBot.csBACKUP" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="Plugins\MyCommand.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="CounterStrikeSharp.API" Version="1.0.290" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="MyBot.cs" />
+    <None Include="MyCommand.cs" />
   </ItemGroup>
 
 </Project>

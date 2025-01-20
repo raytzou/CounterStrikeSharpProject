@@ -2,7 +2,11 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace MyBase.Plugins;
+namespace MyProject;
+
+/// <summary>
+/// dead
+/// </summary>
 public class MyBot : BasePlugin
 {
     #region plugin info
