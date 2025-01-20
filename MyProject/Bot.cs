@@ -7,15 +7,8 @@ namespace MyProject;
 /// <summary>
 /// dead
 /// </summary>
-public class MyBot : BasePlugin
+public class MyBot
 {
-    #region plugin info
-    public override string ModuleAuthor => "cynic";
-    public override string ModuleName => "MyBot";
-    public override string ModuleVersion => "0.87";
-    public override string ModuleDescription => "My Bot plugin";
-    #endregion plugin info
-
     //private MyBase _myBase;
 
     public MyBot(ILogger<MyBot> logger)
@@ -30,8 +23,8 @@ public class MyBot : BasePlugin
 
     public override void Load(bool hotreload)
     {
-        RegisterListener<Listeners.OnMapStart>(MapStartListener);
-        RegisterEventHandler<EventRoundStart>(RoundStartHandler);
+        //RegisterListener<Listeners.OnMapStart>(MapStartListener);
+        //RegisterEventHandler<EventRoundStart>(RoundStartHandler);
     }
 
     private void MapStartListener(string mapName)
