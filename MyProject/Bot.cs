@@ -4,28 +4,9 @@ using Microsoft.Extensions.Logging;
 
 namespace MyProject;
 
-/// <summary>
-/// dead
-/// </summary>
-public class MyBot
+public class MyBot(ILogger<MyBot> logger)
 {
-    //private MyBase _myBase;
-
-    public MyBot(ILogger<MyBot> logger)
-    {
-        _logger = logger;
-        //_myBase = myBase;
-    }
-
-    private readonly ILogger<MyBot> _logger;
-
-    //private bool _fillBot = false;
-
-    public override void Load(bool hotreload)
-    {
-        //RegisterListener<Listeners.OnMapStart>(MapStartListener);
-        //RegisterEventHandler<EventRoundStart>(RoundStartHandler);
-    }
+    private readonly ILogger<MyBot> _logger = logger;
 
     private void MapStartListener(string mapName)
     {
