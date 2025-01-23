@@ -3,15 +3,12 @@ using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
 using Microsoft.Extensions.Logging;
+using MyProject.PluginsInterfaces;
 using System.Reflection;
 
 namespace MyProject.PluginClasses;
 
-/// <summary>
-/// put all CS into one project, only one plugin will be loaded. which one? let's ask God
-/// </summary>
-/// <param name="logger"></param>
-public class Command(ILogger<Command> logger)
+public class Command(ILogger<Command> logger) : ICommand
 {
     private readonly ILogger<Command> _logger = logger;
 

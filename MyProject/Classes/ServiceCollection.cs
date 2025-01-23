@@ -1,6 +1,7 @@
 ﻿using CounterStrikeSharp.API.Core;
 using Microsoft.Extensions.DependencyInjection;
 using MyProject.PluginClasses;
+using MyProject.PluginsInterfaces;
 
 namespace MyProject.Classes
 {
@@ -8,7 +9,7 @@ namespace MyProject.Classes
     {
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton<Command>();
+            services.AddSingleton<ICommand, Command>();
         }
     }
 }

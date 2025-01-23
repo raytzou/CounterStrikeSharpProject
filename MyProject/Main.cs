@@ -5,11 +5,11 @@ using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
 using Microsoft.Extensions.Logging;
-using MyProject.PluginClasses;
+using MyProject.PluginsInterfaces;
 
 namespace MyProject;
 
-public class Main(ILogger<Main> logger, Command commmand) : BasePlugin
+public class Main(ILogger<Main> logger, ICommand commmand) : BasePlugin
 {
     #region plugin info
     public override string ModuleAuthor => "cynicat";
@@ -24,7 +24,7 @@ public class Main(ILogger<Main> logger, Command commmand) : BasePlugin
     private static bool _restart = false;
     private int _roundNum = 0;
 
-    private readonly Command _command = commmand;
+    private readonly ICommand _command = commmand;
 
     public override void Load(bool hotreload)
     {
