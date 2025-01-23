@@ -4,8 +4,8 @@ using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using MyProject.PluginClasses;
 
 namespace MyProject;
 
@@ -167,13 +167,5 @@ public class Main(ILogger<Main> logger, Command commmand) : BasePlugin
         }
 
         return string.Empty;
-    }
-
-    public class ServiceCollection : IPluginServiceCollection<Main>
-    {
-        public void ConfigureServices(IServiceCollection services)
-        {
-            services.AddSingleton<Command>();
-        }
     }
 }

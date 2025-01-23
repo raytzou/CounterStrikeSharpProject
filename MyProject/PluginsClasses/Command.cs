@@ -5,7 +5,7 @@ using CounterStrikeSharp.API.Modules.Cvars;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
 
-namespace MyProject;
+namespace MyProject.PluginClasses;
 
 /// <summary>
 /// put all CS into one project, only one plugin will be loaded. which one? let's ask God

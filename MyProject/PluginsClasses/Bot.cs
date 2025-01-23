@@ -2,7 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace MyProject;
+namespace MyProject.PluginClasses;
 
 public class MyBot(ILogger<MyBot> logger)
 {
