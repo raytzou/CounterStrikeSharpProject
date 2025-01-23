@@ -118,6 +118,7 @@ public class Main(ILogger<Main> logger, Command commmand) : BasePlugin
 
         void RestartServer()
         {
+            _logger.LogInformation("restarting server");
             Server.ExecuteCommand($"changelevel {mapName}");
             _restart = true;
         }
