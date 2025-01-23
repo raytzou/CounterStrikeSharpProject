@@ -10,6 +10,7 @@ namespace MyProject.Classes
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddSingleton<ICommand, Command>();
+            services.AddSingleton<IBot, Bot>();
         }
     }
 }

@@ -9,7 +9,11 @@ using MyProject.PluginsInterfaces;
 
 namespace MyProject;
 
-public class Main(ILogger<Main> logger, ICommand commmand) : BasePlugin
+public class Main(
+    ILogger<Main> logger,
+    ICommand commmand,
+    IBot bot
+    ) : BasePlugin
 {
     #region plugin info
     public override string ModuleAuthor => "cynicat";
@@ -25,6 +29,7 @@ public class Main(ILogger<Main> logger, ICommand commmand) : BasePlugin
     private int _roundCount = 0;
 
     private readonly ICommand _command = commmand;
+    private readonly IBot _bot;
 
     public override void Load(bool hotreload)
     {

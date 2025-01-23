@@ -1,10 +1,10 @@
 ﻿using CounterStrikeSharp.API.Core;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using MyProject.PluginsInterfaces;
 
 namespace MyProject.PluginClasses;
 
-public class Bot(ILogger<Bot> logger)
+public class Bot(ILogger<Bot> logger) : IBot
 {
     private readonly ILogger<Bot> _logger = logger;
 
