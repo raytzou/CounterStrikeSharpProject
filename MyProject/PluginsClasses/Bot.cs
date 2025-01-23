@@ -4,9 +4,9 @@ using Microsoft.Extensions.Logging;
 
 namespace MyProject.PluginClasses;
 
-public class MyBot(ILogger<MyBot> logger)
+public class Bot(ILogger<Bot> logger)
 {
-    private readonly ILogger<MyBot> _logger = logger;
+    private readonly ILogger<Bot> _logger = logger;
 
     private void MapStartListener(string mapName)
     {
