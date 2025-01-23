@@ -1,4 +1,5 @@
-﻿using CounterStrikeSharp.API.Core;
+﻿using CounterStrikeSharp.API;
+using CounterStrikeSharp.API.Core;
 using Microsoft.Extensions.Logging;
 using MyProject.PluginsInterfaces;
 
@@ -8,47 +9,41 @@ public class Bot(ILogger<Bot> logger) : IBot
 {
     private readonly ILogger<Bot> _logger = logger;
 
-    private void MapStartListener(string mapName)
+    public void RoundStartBehavior(int roundCount, ref bool isBotFilled, int botQuota, string currentMap)
     {
-        //_fillBot = false;
+        if (roundCount <= 1)
+        {
+            Server.ExecuteCommand("sv_cheats 1");
+            Server.ExecuteCommand("bot_stop 1");
+            Server.ExecuteCommand("sv_cheats 0");
+        }
+        else
+        {
+            Server.ExecuteCommand("sv_cheats 0");
+            Server.ExecuteCommand("bot_stop 0");
+
+            if (!isBotFilled)
+            {
+                var botTeam = GetBotTeam(currentMap);
+
+                if (string.IsNullOrEmpty(botTeam))
+                {
+                    _logger.LogInformation("Cannot identify the category of map: {currentMap}", currentMap);
+
+                    return;
+                }
+
+                for (int i = 0; i < botQuota; i++)
+                {
+                    Server.ExecuteCommand($"bot_add {botTeam}");
+                }
+
+                isBotFilled = true;
+            }
+        }
     }
 
-    private HookResult RoundStartHandler(EventRoundStart eventRoundStart, GameEventInfo gameEventInfo)
-    {
-        //if (RoundNum <= 1)
-        //{
-        //    Server.ExecuteCommand("sv_cheats 1");
-        //    Server.ExecuteCommand("bot_stop 1");
-        //}
-        //else
-        //{
-        //    Server.ExecuteCommand("sv_cheats 0");
-        //    Server.ExecuteCommand("bot_stop 0");
-
-        //    if (!_fillBot)
-        //    {
-        //        var botTeam = BotJoinTeam(CurrentMap);
-
-        //        if (string.IsNullOrEmpty(botTeam))
-        //        {
-        //            _logger.LogInformation("Cannot identify the category of map: {mapName}", CurrentMap);
-
-        //            return HookResult.Continue;
-        //        }
-
-        //        for (int i = 0; i < 10; i++)
-        //        {
-        //            Server.ExecuteCommand($"bot_add {botTeam}");
-        //        }
-
-        //        _fillBot = true;
-        //    }
-        //}
-
-        return HookResult.Continue;
-    }
-
-    private string BotJoinTeam(string mapName)
+    private string GetBotTeam(string mapName)
     {
         return mapName[..2] switch
         {

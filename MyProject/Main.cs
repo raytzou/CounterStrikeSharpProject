@@ -22,14 +22,21 @@ public class Main(
     public override string ModuleDescription => "My main plugin";
     #endregion plugin info
 
+    // fields
     private readonly ILogger<Main> _logger = logger;
     private Dictionary<ulong, string> _players = [];
     private int _playerCount = 0;
     private static bool _restart = false;
     private int _roundCount = 0;
+    private static bool _isBotFilled = false;
+    private string _mapName = string.Empty;
 
+    // plugins
     private readonly ICommand _command = commmand;
-    private readonly IBot _bot;
+    private readonly IBot _bot = bot;
+
+    // constants
+    private int BotQuota = 10; // should I write a cfg file? .Net way or plugin way? or probably a .txt with IO API lol?
 
     public override void Load(bool hotreload)
     {
@@ -55,6 +62,7 @@ public class Main(
     private HookResult RoundStartHandler(EventRoundStart eventRoundStart, GameEventInfo gameEventInfo)
     {
         Server.PrintToChatAll($"Round: {_roundCount}");
+        _bot.RoundStartBehavior(_roundCount, ref _isBotFilled, BotQuota, _mapName);
         return HookResult.Continue;
     }
 
@@ -98,9 +106,8 @@ public class Main(
 
     private void MapStartListener(string mapName)
     {
-        _roundCount = 0;
-        _playerCount = 0;
-        _players.Clear();
+        initialize(mapName);
+
         _logger.LogInformation("server has restarted: {restart}", _restart);
 
         if (!_restart)
@@ -161,6 +168,15 @@ public class Main(
         _command.OnCvarCommand(client, command);
     }
     #endregion commands
+
+    private void initialize(string mapName)
+    {
+        _roundCount = 0;
+        _playerCount = 0;
+        _players.Clear();
+        _isBotFilled = false;
+        _mapName = mapName;
+    }
 
     private string GetTargetName(string name)
     {
