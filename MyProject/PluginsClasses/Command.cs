@@ -32,7 +32,7 @@ public class Command(ILogger<Command> logger) : ICommand
         Server.PrintToChatAll($"Admin kicked {targetName}");
     }
 
-    public void OnInfoCommand(CCSPlayerController client, CommandInfo command, int playerCount, int roundNum)
+    public void OnInfoCommand(CCSPlayerController client, CommandInfo command, int playerCount, int roundCount)
     {
         command.ReplyToCommand("----------");
         command.ReplyToCommand($"Server local time: {DateTime.Now}");
@@ -40,7 +40,7 @@ public class Command(ILogger<Command> logger) : ICommand
         try
         {
             command.ReplyToCommand($"Player: {playerCount}/{Server.MaxPlayers}");
-            command.ReplyToCommand($"Round: {roundNum}/8");
+            command.ReplyToCommand($"Round: {roundCount}/8");
         }
         catch (TargetInvocationException ex)
         {

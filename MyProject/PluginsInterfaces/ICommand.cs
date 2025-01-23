@@ -7,7 +7,7 @@ namespace MyProject.PluginsInterfaces
     {
         void OnKickCommand(CCSPlayerController client, CommandInfo command, string targetName);
 
-        void OnInfoCommand(CCSPlayerController client, CommandInfo command, int playerCount, int roundNum);
+        void OnInfoCommand(CCSPlayerController client, CommandInfo command, int playerCount, int roundCount);
 
         void OnChangeMapCommand(CCSPlayerController client, CommandInfo command);
 

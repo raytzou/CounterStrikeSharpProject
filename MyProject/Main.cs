@@ -22,7 +22,7 @@ public class Main(ILogger<Main> logger, ICommand commmand) : BasePlugin
     private Dictionary<ulong, string> _players = [];
     private int _playerCount = 0;
     private static bool _restart = false;
-    private int _roundNum = 0;
+    private int _roundCount = 0;
 
     private readonly ICommand _command = commmand;
 
@@ -49,13 +49,13 @@ public class Main(ILogger<Main> logger, ICommand commmand) : BasePlugin
     #region hook result
     private HookResult RoundStartHandler(EventRoundStart eventRoundStart, GameEventInfo gameEventInfo)
     {
-        Server.PrintToChatAll($"Round: {_roundNum}");
+        Server.PrintToChatAll($"Round: {_roundCount}");
         return HookResult.Continue;
     }
 
     private HookResult RoundEndHandler(EventRoundEnd eventRoundEnd, GameEventInfo gameEventInfo)
     {
-        _roundNum++;
+        _roundCount++;
         return HookResult.Continue;
     }
 
@@ -93,7 +93,7 @@ public class Main(ILogger<Main> logger, ICommand commmand) : BasePlugin
 
     private void MapStartListener(string mapName)
     {
-        _roundNum = 0;
+        _roundCount = 0;
         _playerCount = 0;
         _players.Clear();
         _logger.LogInformation("server has restarted: {restart}", _restart);
@@ -139,7 +139,7 @@ public class Main(ILogger<Main> logger, ICommand commmand) : BasePlugin
     [ConsoleCommand("css_info", "Current counts of player")]
     public void OnInfoCommand(CCSPlayerController client, CommandInfo command)
     {
-        _command.OnInfoCommand(client, command, _playerCount, _roundNum);
+        _command.OnInfoCommand(client, command, _playerCount, _roundCount);
     }
 
     [RequiresPermissions("@css/changemap")]
