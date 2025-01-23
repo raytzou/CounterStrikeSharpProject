@@ -46,6 +46,7 @@ public class Main(ILogger<Main> logger, Command commmand) : BasePlugin
         RegisterEventHandler<EventRoundEnd>(RoundEndHandler);
     }
 
+    #region hook result
     private HookResult RoundStartHandler(EventRoundStart eventRoundStart, GameEventInfo gameEventInfo)
     {
         Server.PrintToChatAll($"Round: {_roundNum}");
@@ -88,6 +89,7 @@ public class Main(ILogger<Main> logger, Command commmand) : BasePlugin
 
         return HookResult.Continue;
     }
+    #endregion hook result
 
     private void MapStartListener(string mapName)
     {
@@ -124,6 +126,7 @@ public class Main(ILogger<Main> logger, Command commmand) : BasePlugin
         }
     }
 
+    #region commands
     [RequiresPermissions("@css/kick")]
     [ConsoleCommand("css_kick", "Kick player")]
     public void OnKickCommand(CCSPlayerController client, CommandInfo command)
@@ -152,6 +155,7 @@ public class Main(ILogger<Main> logger, Command commmand) : BasePlugin
     {
         _command.OnCvarCommand(client, command);
     }
+    #endregion commands
 
     private string GetTargetName(string name)
     {
