@@ -69,6 +69,7 @@ public class Main(
     private HookResult RoundEndHandler(EventRoundEnd eventRoundEnd, GameEventInfo gameEventInfo)
     {
         _roundCount++;
+        _bot.RoundEndBehavior(ref _isBotFilled);
         return HookResult.Continue;
     }
 
