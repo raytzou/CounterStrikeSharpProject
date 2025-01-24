@@ -1,7 +1,7 @@
 ﻿using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Commands;
 
-namespace MyProject.PluginsInterfaces
+namespace MyProject.PluginInterfaces
 {
     public interface ICommand
     {

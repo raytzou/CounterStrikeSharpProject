@@ -1,7 +1,7 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using Microsoft.Extensions.Logging;
-using MyProject.PluginsInterfaces;
+using MyProject.PluginInterfaces;
 
 namespace MyProject.PluginClasses;
 

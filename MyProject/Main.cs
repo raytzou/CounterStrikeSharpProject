@@ -5,7 +5,7 @@ using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
 using Microsoft.Extensions.Logging;
-using MyProject.PluginsInterfaces;
+using MyProject.PluginInterfaces;
 
 namespace MyProject;
 
@@ -22,8 +22,9 @@ public class Main(
     public override string ModuleDescription => "My main plugin";
     #endregion plugin info
 
-    // fields
     private readonly ILogger<Main> _logger = logger;
+
+    // fields
     private Dictionary<ulong, string> _players = [];
     private int _playerCount = 0;
     private static bool _restart = false;
@@ -36,7 +37,7 @@ public class Main(
     private readonly IBot _bot = bot;
 
     // constants
-    private int BotQuota = 10; // should I write a cfg file? .Net way or plugin way? or probably a .txt with IO API lol?
+    private readonly int BotQuota = 10; // should I write a cfg file? .Net way or plugin way? or probably a .txt with IO API lol?
 
     public override void Load(bool hotreload)
     {
@@ -107,7 +108,7 @@ public class Main(
 
     private void MapStartListener(string mapName)
     {
-        initialize(mapName);
+        InitializeFileds(mapName);
 
         _logger.LogInformation("server has restarted: {restart}", _restart);
 
@@ -170,7 +171,7 @@ public class Main(
     }
     #endregion commands
 
-    private void initialize(string mapName)
+    private void InitializeFileds(string mapName)
     {
         _roundCount = 0;
         _playerCount = 0;

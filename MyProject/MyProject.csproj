@@ -15,8 +15,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="PluginsClasses\Bot.cs" />
-    <None Include="PluginsClasses\Command.cs" />
+    <None Include="PluginClasses\Bot.cs" />
+    <None Include="PluginClasses\Command.cs" />
   </ItemGroup>
 
 </Project>

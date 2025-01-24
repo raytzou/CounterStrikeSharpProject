@@ -1,4 +1,4 @@
-﻿namespace MyProject.PluginsInterfaces
+﻿namespace MyProject.PluginInterfaces
 {
     public interface IBot
     {

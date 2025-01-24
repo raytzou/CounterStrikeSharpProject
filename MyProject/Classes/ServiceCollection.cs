@@ -1,7 +1,7 @@
 ﻿using CounterStrikeSharp.API.Core;
 using Microsoft.Extensions.DependencyInjection;
 using MyProject.PluginClasses;
-using MyProject.PluginsInterfaces;
+using MyProject.PluginInterfaces;
 
 namespace MyProject.Classes
 {
