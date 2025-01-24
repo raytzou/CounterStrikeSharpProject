@@ -38,29 +38,29 @@ public class Bot(ILogger<Bot> logger) : IBot
                 isBotFilled = true;
             }
         }
+
+        static string GetBotTeam(string mapName)
+        {
+            return mapName[..2] switch
+            {
+                "cs" => "T",
+                "de" => "CT",
+                _ => string.Empty,
+            };
+        }
+
+        static void AddBot(int number, string botTeam)
+        {
+            for (int i = 0; i < number; i++)
+            {
+                Server.ExecuteCommand($"bot_add {botTeam}");
+            }
+        }
     }
 
     public void RoundEndBehavior(ref bool isBotFilled)
     {
         isBotFilled = false;
         Server.ExecuteCommand("bot_kick");
-    }
-
-    private string GetBotTeam(string mapName)
-    {
-        return mapName[..2] switch
-        {
-            "cs" => "T",
-            "de" => "CT",
-            _ => string.Empty,
-        };
-    }
-
-    private void AddBot(int number, string botTeam)
-    {
-        for (int i = 0; i < number; i++)
-        {
-            Server.ExecuteCommand($"bot_add {botTeam}");
-        }
     }
 }

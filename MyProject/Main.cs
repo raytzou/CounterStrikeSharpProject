@@ -25,7 +25,7 @@ public class Main(
     private readonly ILogger<Main> _logger = logger;
 
     // fields
-    private Dictionary<ulong, string> _players = [];
+    private readonly Dictionary<ulong, string> _players = [];
     private int _playerCount = 0;
     private static bool _restart = false;
     private int _roundCount = 0;
