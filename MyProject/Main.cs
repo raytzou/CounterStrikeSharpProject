@@ -41,16 +41,14 @@ public class Main(
 
     public override void Load(bool hotreload)
     {
-        var hostnameCvar = ConVar.Find("hostname");
+        var hostname = ConVar.Find("hostname");
         
         _logger.LogInformation("Server host time: {DT}", DateTime.Now);
 
-        if (hostnameCvar is null)
-            _logger.LogError("Cannot find the hostname CVAR");
-        else if (string.IsNullOrEmpty(hostnameCvar.StringValue))
-            _logger.LogError("Cannot find the hostname");
+        if (string.IsNullOrEmpty(hostname?.StringValue))
+            _logger.LogError("hostname is not be set");
         else
-            _logger.LogInformation("Server name: {serverName}", hostnameCvar.StringValue);
+            _logger.LogInformation("Server name: {serverName}", hostname.StringValue);
 
         RegisterListener<Listeners.OnMapStart>(MapStartListener);
         RegisterEventHandler<EventPlayerConnectFull>(ConnectHandler);
