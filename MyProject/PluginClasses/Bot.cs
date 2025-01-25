@@ -1,5 +1,4 @@
 ﻿using CounterStrikeSharp.API;
-using CounterStrikeSharp.API.Core;
 using Microsoft.Extensions.Logging;
 using MyProject.PluginInterfaces;
 
@@ -9,52 +8,37 @@ public class Bot(ILogger<Bot> logger) : IBot
 {
     private readonly ILogger<Bot> _logger = logger;
 
+    private const int NumberOfSpawnBotAtBeginning = 5;
+
+    public void WarmupBehavior(string currentMap)
+    {
+        var botTeam = GetBotTeam(currentMap);
+
+        Server.ExecuteCommand("sv_cheats 1");
+        Server.ExecuteCommand("bot_stop 1");
+
+        if(botTeam != string.Empty)
+            AddBot(NumberOfSpawnBotAtBeginning, botTeam);
+    }
+
+    public void WarmupEndBehavior()
+    {
+        Server.ExecuteCommand("sv_cheats 0");
+        Server.ExecuteCommand("bot_stop 0");
+        Server.ExecuteCommand("bot_kick");
+    }
+
     public void RoundStartBehavior(int roundCount, ref bool isBotFilled, int botQuota, string currentMap)
     {
         var botTeam = GetBotTeam(currentMap);
 
-        if (roundCount <= 1)
+        if (string.IsNullOrEmpty(botTeam))
+            return;
+
+        if (!isBotFilled)
         {
-            Server.ExecuteCommand("sv_cheats 1");
-            Server.ExecuteCommand("bot_stop 1");
-            Server.ExecuteCommand("sv_cheats 0");
-            AddBot(5, botTeam);
-        }
-        else
-        {
-            Server.ExecuteCommand("sv_cheats 0");
-            Server.ExecuteCommand("bot_stop 0"); // bot not move in my dedicated server idk why
-
-            if (!isBotFilled)
-            {
-                if (string.IsNullOrEmpty(botTeam))
-                {
-                    _logger.LogInformation("Cannot identify the category of map: {currentMap}", currentMap);
-
-                    return;
-                }
-
-                AddBot(botQuota, botTeam);
-                isBotFilled = true;
-            }
-        }
-
-        static string GetBotTeam(string mapName)
-        {
-            return mapName[..2] switch
-            {
-                "cs" => "T",
-                "de" => "CT",
-                _ => string.Empty,
-            };
-        }
-
-        static void AddBot(int number, string botTeam)
-        {
-            for (int i = 0; i < number; i++)
-            {
-                Server.ExecuteCommand($"bot_add {botTeam}");
-            }
+            AddBot(botQuota, botTeam);
+            isBotFilled = true;
         }
     }
 
@@ -62,5 +46,20 @@ public class Bot(ILogger<Bot> logger) : IBot
     {
         isBotFilled = false;
         Server.ExecuteCommand("bot_kick");
+    }
+
+    private static string GetBotTeam(string mapName) => mapName[..2] switch
+    {
+        "cs" => "T",
+        "de" => "CT",
+        _ => string.Empty,
+    };
+
+    private static void AddBot(int number, string botTeam)
+    {
+        for (int i = 0; i < number; i++)
+        {
+            Server.ExecuteCommand($"bot_add {botTeam}");
+        }
     }
 }

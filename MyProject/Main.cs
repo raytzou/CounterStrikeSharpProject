@@ -42,7 +42,7 @@ public class Main(
     public override void Load(bool hotreload)
     {
         var hostnameCvar = ConVar.Find("hostname");
-
+        
         _logger.LogInformation("Server host time: {DT}", DateTime.Now);
 
         if (hostnameCvar is null)
@@ -55,6 +55,8 @@ public class Main(
         RegisterListener<Listeners.OnMapStart>(MapStartListener);
         RegisterEventHandler<EventPlayerConnectFull>(ConnectHandler);
         RegisterEventHandler<EventPlayerDisconnect>(DisconnectHandler);
+        RegisterEventHandler<EventRoundAnnounceWarmup>(WarmupHandler);
+        RegisterEventHandler<EventWarmupEnd>(WarmupEndHandler);
         RegisterEventHandler<EventRoundStart>(RoundStartHandler);
         RegisterEventHandler<EventRoundEnd>(RoundEndHandler);
     }
@@ -71,6 +73,20 @@ public class Main(
     {
         _roundCount++;
         _bot.RoundEndBehavior(ref _isBotFilled);
+        return HookResult.Continue;
+    }
+
+    private HookResult WarmupHandler(EventRoundAnnounceWarmup @event, GameEventInfo info)
+    {
+        _roundCount = 0;
+        _bot.WarmupBehavior(_mapName);
+        return HookResult.Continue;
+    }
+
+    private HookResult WarmupEndHandler(EventWarmupEnd @event, GameEventInfo info)
+    {
+        _roundCount = 1;
+        _bot.WarmupEndBehavior();
         return HookResult.Continue;
     }
 
