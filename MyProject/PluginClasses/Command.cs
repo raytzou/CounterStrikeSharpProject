@@ -34,21 +34,13 @@ public class Command(ILogger<Command> logger) : ICommand
 
     public void OnInfoCommand(CCSPlayerController client, CommandInfo command, int playerCount, int roundCount)
     {
+        var maxRounds = (ConVar.Find("mp_maxrounds") is null) ? 0 : ConVar.Find("mp_maxrounds").GetPrimitiveValue<int>();
+
         command.ReplyToCommand("----------");
         command.ReplyToCommand($"Server local time: {DateTime.Now}");
         command.ReplyToCommand($"Current map: {Server.MapName}");
-        try
-        {
-            var maxRounds = (ConVar.Find("mp_maxrounds") is null) ? "NaN" : ConVar.Find("mp_maxrounds")?.StringValue;
-
-            command.ReplyToCommand($"Player: {playerCount}/{Server.MaxPlayers}");
-            command.ReplyToCommand($"Round: {roundCount}/{maxRounds}");
-        }
-        catch (TargetInvocationException ex)
-        {
-            Console.WriteLine(ex.InnerException?.Message ?? "Cannot get the inner exception msg");
-            Console.WriteLine(ex.InnerException?.StackTrace ?? "Cannot get the inner StackTrace");
-        }
+        command.ReplyToCommand($"Player: {playerCount}/{Server.MaxPlayers}");
+        command.ReplyToCommand($"Round: {roundCount}/{maxRounds}");
         command.ReplyToCommand("----------");
     }
 
