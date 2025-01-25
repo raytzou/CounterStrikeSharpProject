@@ -39,8 +39,10 @@ public class Command(ILogger<Command> logger) : ICommand
         command.ReplyToCommand($"Current map: {Server.MapName}");
         try
         {
+            var maxRounds = (ConVar.Find("mp_maxrounds") is null) ? "NaN" : ConVar.Find("mp_maxrounds")?.StringValue;
+
             command.ReplyToCommand($"Player: {playerCount}/{Server.MaxPlayers}");
-            command.ReplyToCommand($"Round: {roundCount}/8");
+            command.ReplyToCommand($"Round: {roundCount}/{maxRounds}");
         }
         catch (TargetInvocationException ex)
         {
@@ -52,8 +54,6 @@ public class Command(ILogger<Command> logger) : ICommand
 
     public void OnChangeMapCommand(CCSPlayerController client, CommandInfo command)
     {
-        //const float changeMapBufferTime = 2f;
-
         if (command.ArgCount < 2)
         {
             command.ReplyToCommand("[css] Usage: css_map <map name>");
@@ -220,6 +220,8 @@ public class Command(ILogger<Command> logger) : ICommand
                 catch (Exception ex)
                 {
                     _logger.LogError("{ex}", ex.Message);
+                    //bot_stop 1
+                    //Reference types must be accessed using `GetReferenceValue`
                     _logger.LogError("cvar: {name}, type: {type}, arg: {arg}", cvar.Name, cvar.Type, command.GetArg(2));
                     return;
                 }
