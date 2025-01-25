@@ -2,12 +2,12 @@
 {
     public interface IBot
     {
-        void WarmupBehavior(string currentMap);
+        void WarmupBehavior();
 
-        void WarmupEndBehavior();
+        void WarmupEndBehavior(int botQuota);
 
-        void RoundStartBehavior(int roundCount, ref bool isBotFilled, int botQuota, string currentMap);
+        void RoundStartBehavior(int roundCount, ref bool isBotFilled, int botQuota);
 
-        void RoundEndBehavior(ref bool isBotFilled);
+        void RoundEndBehavior(int botQuota);
     }
 }

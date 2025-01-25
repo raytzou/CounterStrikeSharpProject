@@ -30,14 +30,13 @@ public class Main(
     private static bool _restart = false;
     private int _roundCount = 0;
     private static bool _isBotFilled = false;
-    private string _mapName = string.Empty;
 
     // plugins
     private readonly ICommand _command = commmand;
     private readonly IBot _bot = bot;
 
     // constants
-    private readonly int BotQuota = 10; // should I write a cfg file? .Net way or plugin way? or probably a .txt with IO API lol?
+    private readonly int BotQuota = 8; // should I write a cfg file? .Net way or plugin way? or probably a .txt with IO API lol?
 
     public override void Load(bool hotreload)
     {
@@ -63,28 +62,28 @@ public class Main(
     private HookResult RoundStartHandler(EventRoundStart eventRoundStart, GameEventInfo gameEventInfo)
     {
         Server.PrintToChatAll($"Round: {_roundCount}");
-        _bot.RoundStartBehavior(_roundCount, ref _isBotFilled, BotQuota, _mapName);
+        _bot.RoundStartBehavior(_roundCount, ref _isBotFilled, BotQuota);
         return HookResult.Continue;
     }
 
     private HookResult RoundEndHandler(EventRoundEnd eventRoundEnd, GameEventInfo gameEventInfo)
     {
         _roundCount++;
-        _bot.RoundEndBehavior(ref _isBotFilled);
+        _bot.RoundEndBehavior(BotQuota);
         return HookResult.Continue;
     }
 
     private HookResult WarmupHandler(EventRoundAnnounceWarmup @event, GameEventInfo info)
     {
         _roundCount = 0;
-        _bot.WarmupBehavior(_mapName);
+        _bot.WarmupBehavior();
         return HookResult.Continue;
     }
 
     private HookResult WarmupEndHandler(EventWarmupEnd @event, GameEventInfo info)
     {
         _roundCount = 1;
-        _bot.WarmupEndBehavior();
+        _bot.WarmupEndBehavior(BotQuota);
         return HookResult.Continue;
     }
 
@@ -191,7 +190,6 @@ public class Main(
         _playerCount = 0;
         _players.Clear();
         _isBotFilled = false;
-        _mapName = mapName;
     }
 
     private string GetTargetName(string name)

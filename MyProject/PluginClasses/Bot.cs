@@ -10,42 +10,37 @@ public class Bot(ILogger<Bot> logger) : IBot
 
     private const int NumberOfSpawnBotAtBeginning = 5;
 
-    public void WarmupBehavior(string currentMap)
+    public void WarmupBehavior()
     {
-        var botTeam = GetBotTeam(currentMap);
-
         Server.ExecuteCommand("sv_cheats 1");
         Server.ExecuteCommand("bot_stop 1");
-
-        if(botTeam != string.Empty)
-            AddBot(NumberOfSpawnBotAtBeginning, botTeam);
+        KickAndFillBot(NumberOfSpawnBotAtBeginning);
     }
 
-    public void WarmupEndBehavior()
+    public void WarmupEndBehavior(int botQuota)
     {
         Server.ExecuteCommand("sv_cheats 0");
         Server.ExecuteCommand("bot_stop 0");
-        Server.ExecuteCommand("bot_kick");
+        KickAndFillBot(botQuota);
     }
 
-    public void RoundStartBehavior(int roundCount, ref bool isBotFilled, int botQuota, string currentMap)
+    public void RoundStartBehavior(int roundCount, ref bool isBotFilled, int botQuota)
     {
-        var botTeam = GetBotTeam(currentMap);
+        //var botTeam = GetBotTeam(currentMap);
 
-        if (string.IsNullOrEmpty(botTeam))
-            return;
+        //if (string.IsNullOrEmpty(botTeam))
+        //    return;
 
-        if (!isBotFilled)
-        {
-            AddBot(botQuota, botTeam);
-            isBotFilled = true;
-        }
+        //if (!isBotFilled)
+        //{
+        //    AddBot(botQuota, botTeam);
+        //    isBotFilled = true;
+        //}
     }
 
-    public void RoundEndBehavior(ref bool isBotFilled)
+    public void RoundEndBehavior(int botQuota)
     {
-        isBotFilled = false;
-        Server.ExecuteCommand("bot_kick");
+        KickAndFillBot(botQuota);
     }
 
     private static string GetBotTeam(string mapName) => mapName[..2] switch
@@ -55,9 +50,14 @@ public class Bot(ILogger<Bot> logger) : IBot
         _ => string.Empty,
     };
 
-    private static void AddBot(int number, string botTeam)
+    private static void KickAndFillBot(int quota)
     {
-        for (int i = 0; i < number; i++)
+        var botTeam = GetBotTeam(Server.MapName);
+        if(botTeam == string.Empty) return;
+
+        Server.ExecuteCommand("bot_kick");
+
+        for (int i = 0; i < quota; i++)
         {
             Server.ExecuteCommand($"bot_add {botTeam}");
         }
