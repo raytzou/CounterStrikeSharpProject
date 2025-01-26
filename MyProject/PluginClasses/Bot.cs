@@ -14,14 +14,14 @@ public class Bot(ILogger<Bot> logger) : IBot
     {
         Server.ExecuteCommand("sv_cheats 1");
         Server.ExecuteCommand("bot_stop 1");
-        KickAndFillBot(NumberOfSpawnBotAtBeginning);
+        KickAndFillBot(NumberOfSpawnBotAtBeginning, BotDifficulty.hard.ToString(), BotNameGroup.fumo.ToString(), BotGrade.A.ToString());
     }
 
     public void WarmupEndBehavior(int botQuota)
     {
         Server.ExecuteCommand("sv_cheats 0");
         Server.ExecuteCommand("bot_stop 0");
-        KickAndFillBot(botQuota);
+        //KickAndFillBot(botQuota, nameof(BotProfile.Grade_A), nameof(BotNameGroup.fumo));
     }
 
     public void RoundStartBehavior(int roundCount, ref bool isBotFilled, int botQuota)
@@ -40,7 +40,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
     public void RoundEndBehavior(int botQuota)
     {
-        KickAndFillBot(botQuota);
+        //KickAndFillBot(botQuota);
     }
 
     private static string GetBotTeam(string mapName) => mapName[..2] switch
@@ -50,16 +50,47 @@ public class Bot(ILogger<Bot> logger) : IBot
         _ => string.Empty,
     };
 
-    private static void KickAndFillBot(int quota)
+    private void KickAndFillBot(int quota, string botDifficulty, string botNameGroup, string botGrade)
     {
-        var botTeam = GetBotTeam(Server.MapName);
-        if(botTeam == string.Empty) return;
-
         Server.ExecuteCommand("bot_kick");
 
-        for (int i = 0; i < quota; i++)
+        var botTeam = GetBotTeam(Server.MapName).ToLower();
+        if (botTeam == string.Empty) return;
+
+        for (int i = 1; i <= quota; i++)
         {
-            Server.ExecuteCommand($"bot_add {botTeam}");
+            string botName = $"\"[{botGrade}] {botNameGroup}#{i:D2}\"";
+            Server.ExecuteCommand($"bot_add_{botTeam} {botDifficulty} {botName}");
         }
+    }
+
+    enum BotNameGroup
+    {
+        fumo
+    }
+
+    enum BotProfile
+    {
+        Grade_A,
+        Grade_B,
+        Grade_C,
+        Grade_D,
+        Grade_E,
+        Grade_F,
+    }
+
+    enum BotDifficulty
+    {
+        easy,
+        hard
+    }
+
+    enum BotGrade
+    {
+        A,
+        B,
+        C,
+        D,
+        E
     }
 }
