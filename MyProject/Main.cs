@@ -29,7 +29,6 @@ public class Main(
     private int _playerCount = 0;
     private static bool _restart = false;
     private int _roundCount = 0;
-    private static bool _isBotFilled = false;
 
     // plugins
     private readonly ICommand _command = commmand;
@@ -41,7 +40,7 @@ public class Main(
     public override void Load(bool hotreload)
     {
         var hostname = ConVar.Find("hostname");
-        
+
         _logger.LogInformation("Server host time: {DT}", DateTime.Now);
 
         if (string.IsNullOrEmpty(hostname?.StringValue))
@@ -53,16 +52,16 @@ public class Main(
         RegisterEventHandler<EventPlayerConnectFull>(ConnectHandler);
         RegisterEventHandler<EventPlayerDisconnect>(DisconnectHandler);
         RegisterEventHandler<EventRoundAnnounceWarmup>(WarmupHandler);
-        RegisterEventHandler<EventWarmupEnd>(WarmupEndHandler);
+        RegisterEventHandler<EventWarmupEnd>(WarmupEndHandler, HookMode.Pre);
         RegisterEventHandler<EventRoundStart>(RoundStartHandler);
-        RegisterEventHandler<EventRoundEnd>(RoundEndHandler);
+        RegisterEventHandler<EventRoundEnd>(RoundEndHandler, HookMode.Pre);
     }
 
     #region hook result
     private HookResult RoundStartHandler(EventRoundStart eventRoundStart, GameEventInfo gameEventInfo)
     {
         Server.PrintToChatAll($"Round: {_roundCount}");
-        _bot.RoundStartBehavior(_roundCount, ref _isBotFilled, BotQuota);
+        //_bot.RoundStartBehavior(_roundCount, ref _isBotFilled, BotQuota);
         return HookResult.Continue;
     }
 
@@ -121,8 +120,7 @@ public class Main(
 
     private void MapStartListener(string mapName)
     {
-        InitializeFileds(mapName);
-
+        InitializeFileds();
         _logger.LogInformation("server has restarted: {restart}", _restart);
 
         if (!_restart)
@@ -144,13 +142,13 @@ public class Main(
                 _logger.LogInformation("Cannot identify the category of map: {mapName}", mapName);
                 break;
         }
+    }
 
-        void RestartServer()
-        {
-            _logger.LogInformation("restarting server");
-            Server.ExecuteCommand($"changelevel {mapName}");
-            _restart = true;
-        }
+    void RestartServer()
+    {
+        _restart = true;
+        _logger.LogInformation("restarting server");
+        Server.ExecuteCommand($"changelevel {Server.MapName}");
     }
 
     #region commands
@@ -184,12 +182,11 @@ public class Main(
     }
     #endregion commands
 
-    private void InitializeFileds(string mapName)
+    private void InitializeFileds()
     {
         _roundCount = 0;
         _playerCount = 0;
         _players.Clear();
-        _isBotFilled = false;
     }
 
     private string GetTargetName(string name)
