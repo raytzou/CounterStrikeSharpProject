@@ -17,7 +17,7 @@ public class Main(
 {
     #region plugin info
     public override string ModuleAuthor => "cynicat";
-    public override string ModuleName => "MyMain";
+    public override string ModuleName => "MyProject";
     public override string ModuleVersion => "0.87";
     public override string ModuleDescription => "My main plugin";
     #endregion plugin info
