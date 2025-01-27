@@ -4,7 +4,6 @@ using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
 using Microsoft.Extensions.Logging;
 using MyProject.PluginInterfaces;
-using System.Reflection;
 
 namespace MyProject.PluginClasses;
 
