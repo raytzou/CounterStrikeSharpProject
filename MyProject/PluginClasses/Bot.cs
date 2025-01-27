@@ -1,5 +1,6 @@
 ﻿using CounterStrikeSharp.API;
 using Microsoft.Extensions.Logging;
+using MyProject.Enum;
 using MyProject.PluginInterfaces;
 
 namespace MyProject.PluginClasses;
@@ -27,7 +28,7 @@ public class Bot(ILogger<Bot> logger) : IBot
     {
         Server.ExecuteCommand("sv_cheats 0");
         Server.ExecuteCommand("bot_stop 0");
-        //KickAndFillBot(botQuota, BotDifficulty.hard.ToString(), BotNameGroup.fumo.ToString(), BotGrade.A.ToString());
+        KickAndFillBot(botQuota, BotDifficulty.hard, BotNameGroup.fumo);
     }
 
     public void RoundStartBehavior(int roundCount, ref bool isBotFilled, int botQuota)
@@ -56,31 +57,44 @@ public class Bot(ILogger<Bot> logger) : IBot
         _ => string.Empty,
     };
 
-    private void KickAndFillBot(int quota, string botDifficulty, string botNameGroup, string botGrade)
+    private void KickAndFillBot(int quota, BotDifficulty difficulty, BotNameGroup nameGroup)
     {
-        Server.ExecuteCommand("bot_kick");
+        KickOnlyTrashes();
 
         var botTeam = GetBotTeam(Server.MapName).ToLower();
         if (botTeam == string.Empty) return;
 
         for (int i = 1; i <= quota; i++)
         {
-            string botName = $"\"[{botGrade}] {botNameGroup}#{i:D2}\"";
-            Server.ExecuteCommand($"bot_add_{botTeam} {botDifficulty} {botName}");
+            string botName = $"\"[{GetBotGrade(difficulty).ToString()}] {nameGroup.ToString()}#{i:D2}\"";
+            Server.ExecuteCommand($"bot_add_{botTeam} {difficulty} {botName}");
         }
-    }
 
-    enum BotNameGroup
-    {
-        fumo
-    }
+        BotGrade GetBotGrade(BotDifficulty botDifficulty)
+        {
+            return botDifficulty switch
+            {
+                BotDifficulty.easy => BotGrade.E,
+                BotDifficulty.hard => BotGrade.D,
+                BotDifficulty.expert => BotGrade.C,
+                _ => BotGrade.A,
+            };
+        }
 
-    enum BotDifficulty
-    {
-        easy,
-        normal,
-        hard,
-        expert,
-        None_10
+        void KickOnlyTrashes()
+        {
+            for (int i = 0; i < Server.MaxPlayers; i++)
+            {
+                var client = Utilities.GetPlayerFromIndex(i);
+
+                if (client is not null &&
+                    client.IsValid &&
+                    client.IsBot &&
+                    client.PlayerName.Contains(BotNameGroup.fumo.ToString()))
+                {
+                    Server.ExecuteCommand($"kick {client.PlayerName}");
+                }
+            }
+        }
     }
 }
