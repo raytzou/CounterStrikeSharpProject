@@ -17,10 +17,10 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void AddSpecialBot()
         {
-            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName).ToLower()} {BotDifficulty.None_10.ToString()} \"[S++] Kanonushi\"");
-            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName).ToLower()} {BotDifficulty.None_10.ToString()} \"[S+] Artorius\"");
-            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName).ToLower()} {BotDifficulty.None_10.ToString()} \"[S] Pine\"");
-            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName).ToLower()} {BotDifficulty.None_10.ToString()} \"[S] Zakiyama\"");
+            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName).ToLower()} {Difficulty.None_10.ToString()} \"[S++] Kanonushi\"");
+            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName).ToLower()} {Difficulty.None_10.ToString()} \"[S+] Artorius\"");
+            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName).ToLower()} {Difficulty.None_10.ToString()} \"[S] Pine\"");
+            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName).ToLower()} {Difficulty.None_10.ToString()} \"[S] Zakiyama\"");
         }
     }
 
@@ -28,7 +28,7 @@ public class Bot(ILogger<Bot> logger) : IBot
     {
         Server.ExecuteCommand("sv_cheats 0");
         Server.ExecuteCommand("bot_stop 0");
-        KickAndFillBot(botQuota, BotDifficulty.hard, BotNameGroup.fumo);
+        KickAndFillBot(botQuota, Difficulty.hard, NameGroup.fumo);
     }
 
     public void RoundStartBehavior(int roundCount, ref bool isBotFilled, int botQuota)
@@ -57,7 +57,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         _ => string.Empty,
     };
 
-    private void KickAndFillBot(int quota, BotDifficulty difficulty, BotNameGroup nameGroup)
+    private void KickAndFillBot(int quota, Difficulty difficulty, NameGroup nameGroup)
     {
         KickOnlyTrashes();
 
@@ -70,14 +70,14 @@ public class Bot(ILogger<Bot> logger) : IBot
             Server.ExecuteCommand($"bot_add_{botTeam} {difficulty} {botName}");
         }
 
-        BotGrade GetBotGrade(BotDifficulty botDifficulty)
+        Grade GetBotGrade(Difficulty botDifficulty)
         {
             return botDifficulty switch
             {
-                BotDifficulty.easy => BotGrade.E,
-                BotDifficulty.hard => BotGrade.D,
-                BotDifficulty.expert => BotGrade.C,
-                _ => BotGrade.A,
+                Difficulty.easy => Grade.E,
+                Difficulty.hard => Grade.D,
+                Difficulty.expert => Grade.C,
+                _ => Grade.A,
             };
         }
 
@@ -90,7 +90,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 if (client is not null &&
                     client.IsValid &&
                     client.IsBot &&
-                    client.PlayerName.Contains(BotNameGroup.fumo.ToString()))
+                    client.PlayerName.Contains(NameGroup.fumo.ToString()))
                 {
                     Server.ExecuteCommand($"kick {client.PlayerName}");
                 }

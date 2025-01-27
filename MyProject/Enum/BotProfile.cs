@@ -1,11 +1,11 @@
 ﻿namespace MyProject.Enum
 {
-    public enum BotNameGroup
+    public enum NameGroup
     {
         fumo
     }
 
-    public enum BotDifficulty
+    public enum Difficulty
     {
         easy,
         normal,
@@ -14,7 +14,7 @@
         None_10
     }
 
-    public enum BotGrade
+    public enum Grade
     {
         A,
         B,
