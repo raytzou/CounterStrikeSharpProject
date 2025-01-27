@@ -8,20 +8,26 @@ public class Bot(ILogger<Bot> logger) : IBot
 {
     private readonly ILogger<Bot> _logger = logger;
 
-    private const int NumberOfSpawnBotAtBeginning = 5;
-
     public void WarmupBehavior()
     {
         Server.ExecuteCommand("sv_cheats 1");
         Server.ExecuteCommand("bot_stop 1");
-        KickAndFillBot(NumberOfSpawnBotAtBeginning, BotDifficulty.hard.ToString(), BotNameGroup.fumo.ToString(), BotGrade.A.ToString());
+        AddSpecialBot();
+
+        void AddSpecialBot()
+        {
+            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName).ToLower()} {BotDifficulty.None_10.ToString()} \"[S++] Kanonushi\"");
+            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName).ToLower()} {BotDifficulty.None_10.ToString()} \"[S+] Artorius\"");
+            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName).ToLower()} {BotDifficulty.None_10.ToString()} \"[S] Pine\"");
+            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName).ToLower()} {BotDifficulty.None_10.ToString()} \"[S] Zakiyama\"");
+        }
     }
 
     public void WarmupEndBehavior(int botQuota)
     {
         Server.ExecuteCommand("sv_cheats 0");
         Server.ExecuteCommand("bot_stop 0");
-        //KickAndFillBot(botQuota, nameof(BotProfile.Grade_A), nameof(BotNameGroup.fumo));
+        //KickAndFillBot(botQuota, BotDifficulty.hard.ToString(), BotNameGroup.fumo.ToString(), BotGrade.A.ToString());
     }
 
     public void RoundStartBehavior(int roundCount, ref bool isBotFilled, int botQuota)
@@ -69,28 +75,12 @@ public class Bot(ILogger<Bot> logger) : IBot
         fumo
     }
 
-    enum BotProfile
-    {
-        Grade_A,
-        Grade_B,
-        Grade_C,
-        Grade_D,
-        Grade_E,
-        Grade_F,
-    }
-
     enum BotDifficulty
     {
         easy,
-        hard
-    }
-
-    enum BotGrade
-    {
-        A,
-        B,
-        C,
-        D,
-        E
+        normal,
+        hard,
+        expert,
+        None_10
     }
 }
