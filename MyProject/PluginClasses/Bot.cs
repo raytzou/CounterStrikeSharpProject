@@ -32,23 +32,56 @@ public class Bot(ILogger<Bot> logger) : IBot
         KickAndFillBot(botQuota, Difficulty.hard, NameGroup.fumo);
     }
 
-    public void RoundStartBehavior(int roundCount, ref bool isBotFilled, int botQuota)
+    public void RoundStartBehavior()
     {
-        //var botTeam = GetBotTeam(currentMap);
+        for (int i = 0; i < Server.MaxPlayers; i++)
+        {
+            var client = Utilities.GetPlayerFromIndex(i);
 
-        //if (string.IsNullOrEmpty(botTeam))
-        //    return;
+            if (client is not null &&
+                client.IsValid &&
+                client.IsBot)
+            {
+                client.InGameMoneyServices.StartAccount = 0;
+                client.InGameMoneyServices.Account = 0;
+                client.PlayerPawn.Value.WeaponServices.PreventWeaponPickup = true;
+            }
+        }
+    }
 
-        //if (!isBotFilled)
-        //{
-        //    AddBot(botQuota, botTeam);
-        //    isBotFilled = true;
-        //}
+    public void RoundEndBehavior(int botQuota, int roundCount)
+    {
+        if (roundCount > 0)
+            SetDefaultWeapon();
+        KickAndFillBot(botQuota, Difficulty.hard, NameGroup.fumo);
+
+        void SetDefaultWeapon()
+        {
+            var botTeam = GetBotTeam(Server.MapName).ToLower();
+
+            Server.ExecuteCommand($"mp_{botTeam}_default_primary {GetDefaultPrimaryWeapon()}");
+            Server.ExecuteCommand($"mp_{botTeam}_default_secondary {GetDefaultSecondaryWeapon()}");
+
+            string GetDefaultPrimaryWeapon()
+            {
+                if (botTeam == "ct")
+                    return "weapon_m4a1_silencer";
+                else if (botTeam == "t")
+                    return "weapon_ak47";
+
+                return string.Empty;
             }
 
-    public void RoundEndBehavior(int botQuota)
+            string GetDefaultSecondaryWeapon()
             {
-        KickAndFillBot(botQuota, Difficulty.hard, NameGroup.fumo);
+                if (botTeam == "ct")
+                    return "weapon_usp_silencer";
+                else if (botTeam == "t")
+                    return "weapon_glock";
+
+                return string.Empty;
+            }
+        }
     }
 
     private string GetBotTeam(string mapName) => mapName[..2] switch

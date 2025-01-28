@@ -75,14 +75,14 @@ public class Main(
     private HookResult RoundStartHandler(EventRoundStart eventRoundStart, GameEventInfo gameEventInfo)
     {
         Server.PrintToChatAll($"Round: {_roundCount}");
-        //_bot.RoundStartBehavior(_roundCount, ref _isBotFilled, BotQuota);
+        _bot.RoundStartBehavior();
         return HookResult.Continue;
     }
 
     private HookResult RoundEndHandler(EventRoundEnd eventRoundEnd, GameEventInfo gameEventInfo)
     {
+        _bot.RoundEndBehavior(BotQuota, _roundCount);
         _roundCount++;
-        _bot.RoundEndBehavior(BotQuota);
         return HookResult.Continue;
     }
 
