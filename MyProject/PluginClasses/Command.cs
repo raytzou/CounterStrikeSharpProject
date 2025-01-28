@@ -233,4 +233,36 @@ public class Command(ILogger<Command> logger) : ICommand
             command.ReplyToCommand(player.Value);
         }
     }
+
+    public void OnSlayCommand(CCSPlayerController client, CommandInfo command, string targetName)
+    {
+        if (command.ArgCount < 2)
+        {
+            command.ReplyToCommand("[css] Usage: css_slay <target>");
+            return;
+        }
+
+        if (string.IsNullOrEmpty(targetName))
+        {
+            command.ReplyToCommand("[css] Target not found.");
+            return;
+        }
+
+        var player = GetPlayerControllerByName();
+
+        player.CommitSuicide(true, true);
+        command.ReplyToCommand($"[css] You slay {targetName}");
+        _logger.LogInformation("[css] {admin} slew {targetName} at {DT}", client.PlayerName, targetName, DateTime.Now);
+        Server.PrintToChatAll($"Admin slew {targetName}");
+
+        CCSPlayerController? GetPlayerControllerByName()
+        {
+            foreach (var client in Utilities.GetPlayers())
+            {
+                if (client.PlayerName == targetName) return client;
+            }
+
+            return null;
+        }
+    }
 }

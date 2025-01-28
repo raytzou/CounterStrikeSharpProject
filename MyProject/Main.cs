@@ -200,6 +200,15 @@ public class Main(
     {
         _command.OnPlayersCommand(client, command, _players);
     }
+
+    [RequiresPermissions("@css/kick")]
+    [ConsoleCommand("css_slay", "Slay Player")]
+    public void OnSlayCommand(CCSPlayerController client, CommandInfo command)
+    {
+        var targetName = GetTargetNameByKeyword(command.GetArg(1));
+
+        _command.OnSlayCommand(client, command, targetName);
+    }
     #endregion commands
 
     private void InitializeFileds()
