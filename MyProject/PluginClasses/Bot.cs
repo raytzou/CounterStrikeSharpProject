@@ -31,7 +31,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         Server.ExecuteCommand("bot_stop 0");
         KickAndFillBot(botQuota, Difficulty.hard, NameGroup.fumo);
     }
-
+    
     public void RoundStartBehavior(int roundCount, ref bool isBotFilled, int botQuota)
     {
         //var botTeam = GetBotTeam(currentMap);
@@ -75,9 +75,9 @@ public class Bot(ILogger<Bot> logger) : IBot
         {
             return botDifficulty switch
             {
+                Difficulty.hard => Grade.A,
+                Difficulty.normal => Grade.C,
                 Difficulty.easy => Grade.E,
-                Difficulty.hard => Grade.D,
-                Difficulty.expert => Grade.C,
                 _ => Grade.A,
             };
         }
