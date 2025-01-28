@@ -31,7 +31,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         Server.ExecuteCommand("bot_stop 0");
         KickAndFillBot(botQuota, Difficulty.hard, NameGroup.fumo);
     }
-    
+
     public void RoundStartBehavior(int roundCount, ref bool isBotFilled, int botQuota)
     {
         //var botTeam = GetBotTeam(currentMap);
@@ -44,14 +44,14 @@ public class Bot(ILogger<Bot> logger) : IBot
         //    AddBot(botQuota, botTeam);
         //    isBotFilled = true;
         //}
-    }
+            }
 
     public void RoundEndBehavior(int botQuota)
-    {
+            {
         KickAndFillBot(botQuota, Difficulty.hard, NameGroup.fumo);
     }
 
-    private static string GetBotTeam(string mapName) => mapName[..2] switch
+    private string GetBotTeam(string mapName) => mapName[..2] switch
     {
         "cs" => "T",
         "de" => "CT",

@@ -62,7 +62,7 @@ public class Command(ILogger<Command> logger) : ICommand
         Server.PrintToChatAll($"Admin changed map to {mapName}");
         Server.ExecuteCommand($"changelevel {mapName}");
 
-        static string GetMapNameInPhysicalDirectory(string name)
+        string GetMapNameInPhysicalDirectory(string name)
         {
             string gameRootPath = Server.GameDirectory;
 
