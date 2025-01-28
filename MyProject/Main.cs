@@ -213,7 +213,6 @@ public class Main(
     {
         foreach (var pair in _players)
         {
-            Console.WriteLine(pair.Key + " " + pair.Value);
             if (pair.Value == name)
                 return pair.Value;
         }
