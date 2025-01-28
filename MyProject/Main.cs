@@ -51,6 +51,7 @@ public class Main(
         RegisterListener<Listeners.OnMapStart>(MapStartListener);
         RegisterEventHandler<EventPlayerConnectFull>(ConnectHandler);
         RegisterEventHandler<EventPlayerDisconnect>(DisconnectHandler);
+        RegisterEventHandler<EventPlayerSpawn>(PlayerSpawnHandler);
         RegisterEventHandler<EventRoundAnnounceWarmup>(WarmupHandler);
         RegisterEventHandler<EventWarmupEnd>(WarmupEndHandler, HookMode.Pre);
         RegisterEventHandler<EventRoundStart>(RoundStartHandler);
@@ -58,6 +59,19 @@ public class Main(
     }
 
     #region hook result
+    private HookResult PlayerSpawnHandler(EventPlayerSpawn @event, GameEventInfo info)
+    {
+        var player = @event.Userid;
+
+        if (player is null || !player.IsValid || player.PlayerPawn.Value is null)
+            return HookResult.Continue;
+
+        if (_roundCount == 0 && player.PlayerPawn.Value.TakesDamage)
+            SetPlayerProtection(player); // somehow spawn event triggered when player is connecting, not in the real timing
+
+        return HookResult.Continue;
+    }
+
     private HookResult RoundStartHandler(EventRoundStart eventRoundStart, GameEventInfo gameEventInfo)
     {
         Server.PrintToChatAll($"Round: {_roundCount}");
@@ -142,13 +156,13 @@ public class Main(
                 _logger.LogInformation("Cannot identify the category of map: {mapName}", mapName);
                 break;
         }
-    }
 
-    void RestartServer()
-    {
-        _restart = true;
-        _logger.LogInformation("restarting server");
-        Server.ExecuteCommand($"changelevel {Server.MapName}");
+        void RestartServer()
+        {
+            _restart = true;
+            _logger.LogInformation("restarting server");
+            Server.ExecuteCommand($"changelevel {Server.MapName}");
+        }
     }
 
     #region commands
@@ -161,7 +175,7 @@ public class Main(
         _command.OnKickCommand(client, command, targetName);
     }
 
-    [ConsoleCommand("css_info", "Current counts of player")]
+    [ConsoleCommand("css_info", "Server Info")]
     public void OnInfoCommand(CCSPlayerController client, CommandInfo command)
     {
         _command.OnInfoCommand(client, command, _playerCount, _roundCount);
@@ -199,5 +213,11 @@ public class Main(
         }
 
         return string.Empty;
+    }
+
+    private void SetPlayerProtection(CCSPlayerController? player)
+    {
+        if (player is not null && player.PlayerPawn.Value is not null)
+            player.PlayerPawn.Value.TakesDamage = false;
     }
 }
