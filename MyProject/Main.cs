@@ -170,7 +170,7 @@ public class Main(
     [ConsoleCommand("css_kick", "Kick player")]
     public void OnKickCommand(CCSPlayerController client, CommandInfo command)
     {
-        string targetName = GetTargetName(command.GetArg(1));
+        string targetName = GetTargetNameByKeyword(command.GetArg(1));
 
         _command.OnKickCommand(client, command, targetName);
     }
@@ -209,11 +209,11 @@ public class Main(
         _players.Clear();
     }
 
-    private string GetTargetName(string name)
+    private string GetTargetNameByKeyword(string keyword)
     {
         foreach (var pair in _players)
         {
-            if (pair.Value == name)
+            if (pair.Value == keyword)
                 return pair.Value;
         }
 
