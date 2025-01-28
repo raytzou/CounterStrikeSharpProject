@@ -220,13 +220,22 @@ public class Main(
 
     private string GetTargetNameByKeyword(string keyword)
     {
+        int ctr = 0;
+
         foreach (var pair in _players)
         {
-            if (pair.Value == keyword)
-                return pair.Value;
+            if (pair.Value.Contains(keyword))
+            {
+                ctr++;
+                if (ctr > 1)
+                    break;
+            }
         }
 
-        return string.Empty;
+        if(ctr != 1)
+            return string.Empty;
+        else
+            return _players.FirstOrDefault(player => player.Value.Contains(keyword)).Value;
     }
 
     private void SetPlayerProtection(CCSPlayerController? player)
