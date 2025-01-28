@@ -12,5 +12,7 @@ namespace MyProject.PluginInterfaces
         void OnChangeMapCommand(CCSPlayerController client, CommandInfo command);
 
         void OnCvarCommand(CCSPlayerController client, CommandInfo command);
+
+        void OnPlayersCommand(CCSPlayerController client, CommandInfo command, Dictionary<ulong, string> players);
     }
 }

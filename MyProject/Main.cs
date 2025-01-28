@@ -189,10 +189,16 @@ public class Main(
     }
 
     [RequiresPermissions("@css/cvar")]
-    [ConsoleCommand("css_cvar", "Modify cvar")]
+    [ConsoleCommand("css_cvar", "Modify Cvar")]
     public void OnCvarCommand(CCSPlayerController client, CommandInfo command)
     {
         _command.OnCvarCommand(client, command);
+    }
+
+    [ConsoleCommand("css_players", "Player List")]
+    public void OnPlayersCommand(CCSPlayerController client, CommandInfo command)
+    {
+        _command.OnPlayersCommand(client, command, _players);
     }
     #endregion commands
 

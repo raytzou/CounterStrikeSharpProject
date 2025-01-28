@@ -225,4 +225,12 @@ public class Command(ILogger<Command> logger) : ICommand
             _logger.LogInformation("{admin} changed {cvar} to {value} at {DT}", client.PlayerName, cvar.Name, value, DateTime.Now);
         }
     }
+
+    public void OnPlayersCommand(CCSPlayerController client, CommandInfo command, Dictionary<ulong, string> players)
+    {
+        foreach (var player in players)
+        {
+            command.ReplyToCommand(player.Value);
+        }
+    }
 }
