@@ -143,6 +143,8 @@ public class Main(
             return;
         }
 
+        ResetDefaultWeapon();
+
         switch (mapName[..2])
         {
             case "cs":
@@ -162,6 +164,14 @@ public class Main(
             _restart = true;
             _logger.LogInformation("restarting server");
             Server.ExecuteCommand($"changelevel {Server.MapName}");
+        }
+
+        void ResetDefaultWeapon()
+        {
+            Server.ExecuteCommand($"mp_ct_default_primary \"\"");
+            Server.ExecuteCommand($"mp_ct_default_secondary \"weapon_usp_silencer\"");
+            Server.ExecuteCommand($"mp_t_default_primary \"\"");
+            Server.ExecuteCommand($"mp_t_default_secondary \"weapon_glock\"");
         }
     }
 
