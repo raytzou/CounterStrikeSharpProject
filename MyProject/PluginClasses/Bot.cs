@@ -13,6 +13,7 @@ public class Bot(ILogger<Bot> logger) : IBot
     {
         Server.ExecuteCommand("sv_cheats 1");
         Server.ExecuteCommand("bot_stop 1");
+        Server.ExecuteCommand("bot_kick");
         AddSpecialBot();
 
         void AddSpecialBot()
@@ -47,7 +48,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
     public void RoundEndBehavior(int botQuota)
     {
-        //KickAndFillBot(botQuota);
+        KickAndFillBot(botQuota, Difficulty.hard, NameGroup.fumo);
     }
 
     private static string GetBotTeam(string mapName) => mapName[..2] switch
