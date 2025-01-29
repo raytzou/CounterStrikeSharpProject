@@ -228,14 +228,9 @@ public class Command(ILogger<Command> logger) : ICommand
 
     public void OnPlayersCommand(CCSPlayerController client, CommandInfo command)
     {
-        for (int i = 0; i < Server.MaxPlayers; i++)
+        foreach(var player in Utilities.GetPlayers())
         {
-            var player = Utilities.GetPlayerFromIndex(i);
-
-            if (player is not null)
-            {
-                command.ReplyToCommand(player.PlayerName);
-            }
+            command.ReplyToCommand(player.PlayerName);
         }
     }
 
