@@ -144,20 +144,7 @@ public class Main(
         }
 
         ResetDefaultWeapon();
-
-        switch (mapName[..2])
-        {
-            case "cs":
-                Server.ExecuteCommand("mp_humanteam CT");
-                break;
-            case "de":
-                Server.ExecuteCommand("mp_humanteam T");
-                break;
-            default:
-                Server.ExecuteCommand("mp_humanteam T");
-                _logger.LogInformation("Cannot identify the category of map: {mapName}", mapName);
-                break;
-        }
+        SetHumanTeam();
 
         void RestartServer()
         {
@@ -172,6 +159,23 @@ public class Main(
             Server.ExecuteCommand($"mp_ct_default_secondary \"weapon_usp_silencer\"");
             Server.ExecuteCommand($"mp_t_default_primary \"\"");
             Server.ExecuteCommand($"mp_t_default_secondary \"weapon_glock\"");
+        }
+
+        void SetHumanTeam()
+        {
+            switch (mapName[..2])
+            {
+                case "cs":
+                    Server.ExecuteCommand("mp_humanteam CT");
+                    break;
+                case "de":
+                    Server.ExecuteCommand("mp_humanteam T");
+                    break;
+                default:
+                    Server.ExecuteCommand("mp_humanteam T");
+                    _logger.LogInformation("Cannot identify the category of map: {mapName}", mapName);
+                    break;
+            }
         }
     }
 
