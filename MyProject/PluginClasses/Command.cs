@@ -226,11 +226,16 @@ public class Command(ILogger<Command> logger) : ICommand
         }
     }
 
-    public void OnPlayersCommand(CCSPlayerController client, CommandInfo command, Dictionary<ulong, string> players)
+    public void OnPlayersCommand(CCSPlayerController client, CommandInfo command)
     {
-        foreach (var player in players)
+        for (int i = 0; i < Server.MaxPlayers; i++)
         {
-            command.ReplyToCommand(player.Value);
+            var player = Utilities.GetPlayerFromIndex(i);
+
+            if (player is not null)
+            {
+                command.ReplyToCommand(player.PlayerName);
+            }
         }
     }
 

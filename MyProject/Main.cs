@@ -208,7 +208,7 @@ public class Main(
     [ConsoleCommand("css_players", "Player List")]
     public void OnPlayersCommand(CCSPlayerController client, CommandInfo command)
     {
-        _command.OnPlayersCommand(client, command, _players);
+        _command.OnPlayersCommand(client, command);
     }
 
     [RequiresPermissions("@css/kick")]

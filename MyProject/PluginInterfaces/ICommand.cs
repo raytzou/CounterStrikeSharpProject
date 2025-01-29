@@ -13,7 +13,7 @@ namespace MyProject.PluginInterfaces
 
         void OnCvarCommand(CCSPlayerController client, CommandInfo command);
 
-        void OnPlayersCommand(CCSPlayerController client, CommandInfo command, Dictionary<ulong, string> players);
+        void OnPlayersCommand(CCSPlayerController client, CommandInfo command);
 
         void OnSlayCommand(CCSPlayerController client, CommandInfo command, string targetName);
     }
