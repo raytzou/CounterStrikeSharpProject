@@ -60,7 +60,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             var botTeam = GetBotTeam(Server.MapName).ToLower();
 
             Server.ExecuteCommand($"mp_{botTeam}_default_primary {GetDefaultPrimaryWeapon()}");
-            Server.ExecuteCommand($"mp_{botTeam}_default_secondary {GetDefaultSecondaryWeapon()}");
+            Server.ExecuteCommand($"mp_{botTeam}_default_secondary \"\"");
 
             string GetDefaultPrimaryWeapon()
             {
@@ -68,16 +68,6 @@ public class Bot(ILogger<Bot> logger) : IBot
                     return "weapon_m4a1_silencer";
                 else if (botTeam == "t")
                     return "weapon_ak47";
-
-                return string.Empty;
-            }
-
-            string GetDefaultSecondaryWeapon()
-            {
-                if (botTeam == "ct")
-                    return "weapon_usp_silencer";
-                else if (botTeam == "t")
-                    return "weapon_glock";
 
                 return string.Empty;
             }
