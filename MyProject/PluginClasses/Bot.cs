@@ -68,8 +68,10 @@ public class Bot(ILogger<Bot> logger) : IBot
     public void RoundEndBehavior(int botQuota, int roundCount)
     {
         if (roundCount > 0)
+        {
             SetDefaultWeapon();
-        KickAndFillBot(botQuota, Difficulty.hard, NameGroup.fumo);
+            KickAndFillBot(botQuota, Difficulty.hard, NameGroup.fumo);
+        }
 
         void SetDefaultWeapon()
         {
