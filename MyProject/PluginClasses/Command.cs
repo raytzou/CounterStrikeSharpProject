@@ -43,24 +43,25 @@ public class Command(ILogger<Command> logger) : ICommand
         command.ReplyToCommand("----------");
     }
 
-    public void OnChangeMapCommand(CCSPlayerController client, CommandInfo command)
+    public string OnChangeMapCommand(CCSPlayerController client, CommandInfo command)
     {
         if (command.ArgCount < 2)
         {
             command.ReplyToCommand("[css] Usage: css_map <map name>");
-            return;
+            return string.Empty;
         }
 
         string mapName = GetMapNameInPhysicalDirectory(command.GetArg(1));
 
-        if (string.IsNullOrEmpty(mapName))
+        if (mapName == string.Empty)
         {
             command.ReplyToCommand($"[css] Map not found: {command.GetArg(1)}");
-            return;
+            return string.Empty;
         }
 
+        _logger.LogInformation("{admin} changed map to {mapName} at {DT}", client.PlayerName, mapName, DateTime.Now);
         Server.PrintToChatAll($"Admin changed map to {mapName}");
-        Server.ExecuteCommand($"changelevel {mapName}");
+        return mapName;
 
         string GetMapNameInPhysicalDirectory(string name)
         {
@@ -228,7 +229,14 @@ public class Command(ILogger<Command> logger) : ICommand
 
     public void OnPlayersCommand(CCSPlayerController client, CommandInfo command)
     {
-        foreach(var player in Utilities.GetPlayers())
+        var players = Utilities.GetPlayers();
+        if (players.Count == 0)
+        {
+            command.ReplyToCommand("no any players");
+            return;
+        }
+
+        foreach (var player in players)
         {
             command.ReplyToCommand(player.PlayerName);
         }
