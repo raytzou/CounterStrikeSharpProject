@@ -25,20 +25,6 @@ public class Bot(ILogger<Bot> logger) : IBot
             Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName).ToLower()} {Difficulty.None_10.ToString()} \"[S] Zakiyama\"");
             Utility.MyAddTimer(1f, SetBotScore);
         }
-
-        void SetBotScore()
-        {
-            foreach (var player in Utilities.GetPlayers())
-            {
-                if (player.IsBot)
-                {
-                    if (player.PlayerName.Contains("Pine"))
-                        player.Score = 999;
-                    else if (player.PlayerName.Contains("Zakiyama"))
-                        player.Score = 888;
-                }
-            }
-        }
     }
 
     public void WarmupEndBehavior(int botQuota)
@@ -63,6 +49,8 @@ public class Bot(ILogger<Bot> logger) : IBot
                 client.PlayerPawn.Value.WeaponServices.PreventWeaponPickup = true;
             }
         }
+
+        SetBotScore();
     }
 
     public void RoundEndBehavior(int botQuota, int roundCount)
@@ -83,7 +71,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             string GetDefaultPrimaryWeapon()
             {
                 if (botTeam == "ct")
-                    return "weapon_m4a1_silencer";
+                    return "weapon_m4a1_silencer"; // special bots don't have weapon
                 else if (botTeam == "t")
                     return "weapon_ak47";
 
@@ -136,6 +124,20 @@ public class Bot(ILogger<Bot> logger) : IBot
                 {
                     Server.ExecuteCommand($"kick {client.PlayerName}");
                 }
+            }
+        }
+    }
+
+    private void SetBotScore()
+    {
+        foreach (var player in Utilities.GetPlayers())
+        {
+            if (player.IsBot)
+            {
+                if (player.PlayerName.Contains("Pine"))
+                    player.Score = 999;
+                else if (player.PlayerName.Contains("Zakiyama"))
+                    player.Score = 888;
             }
         }
     }
