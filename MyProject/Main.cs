@@ -72,6 +72,8 @@ public class Main(
 
         if (_warmup && player.PlayerPawn.Value.TakesDamage)
             SetPlayerProtection(player);
+        else
+            RemovePlayerProtection(player);
 
         return HookResult.Continue;
     }
@@ -80,6 +82,15 @@ public class Main(
     {
         Server.PrintToChatAll($"Round: {_roundCount}");
         _bot.RoundStartBehavior();
+
+        if (!_warmup)
+        {
+            foreach (var player in Utilities.GetPlayers())
+            {
+                RemovePlayerProtection(player);
+            }
+        }
+
         return HookResult.Continue;
     }
 
@@ -101,6 +112,7 @@ public class Main(
     private HookResult WarmupEndHandler(EventWarmupEnd @event, GameEventInfo info)
     {
         _roundCount = 1;
+        _warmup = false;
         _bot.WarmupEndBehavior(BotQuota);
         return HookResult.Continue;
     }
@@ -267,5 +279,11 @@ public class Main(
     {
         if (player is not null && player.PlayerPawn.Value is not null)
             player.PlayerPawn.Value.TakesDamage = false;
+    }
+
+    private void RemovePlayerProtection(CCSPlayerController? player)
+    {
+        if (player is not null && player.PlayerPawn.Value is not null)
+            player.PlayerPawn.Value.TakesDamage = true;
     }
 }
