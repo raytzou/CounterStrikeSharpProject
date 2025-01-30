@@ -1,5 +1,6 @@
 ﻿using CounterStrikeSharp.API;
 using Microsoft.Extensions.Logging;
+using MyProject.Classes;
 using MyProject.Enum;
 using MyProject.PluginInterfaces;
 
@@ -18,10 +19,25 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void AddSpecialBot()
         {
-            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName).ToLower()} {Difficulty.None_10.ToString()} \"[S++] Kanonushi\"");
-            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName).ToLower()} {Difficulty.None_10.ToString()} \"[S+] Artorius\"");
+            //Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName).ToLower()} {Difficulty.None_10.ToString()} \"[S++] Kanonushi\"");
+            //Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName).ToLower()} {Difficulty.None_10.ToString()} \"[S+] Artorius\"");
             Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName).ToLower()} {Difficulty.None_10.ToString()} \"[S] Pine\"");
             Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName).ToLower()} {Difficulty.None_10.ToString()} \"[S] Zakiyama\"");
+            Utility.MyAddTimer(1f, SetBotScore);
+        }
+
+        void SetBotScore()
+        {
+            foreach (var player in Utilities.GetPlayers())
+            {
+                if (player.IsBot)
+                {
+                    if (player.PlayerName.Contains("Pine"))
+                        player.Score = 999;
+                    else if (player.PlayerName.Contains("Zakiyama"))
+                        player.Score = 888;
+                }
+            }
         }
     }
 
