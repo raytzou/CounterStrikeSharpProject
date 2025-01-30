@@ -29,13 +29,15 @@ public class Main(
     private int _playerCount = 0;
     private static bool _restart = false;
     private int _roundCount = 0;
+    private bool _warmup = true;
 
     // plugins
     private readonly ICommand _command = commmand;
     private readonly IBot _bot = bot;
 
     // constants
-    private readonly int BotQuota = 8; // should I write a cfg file? .Net way or plugin way? or probably a .txt with IO API lol?
+    private const int BotQuota = 8; // should I write a cfg file? .Net way or plugin way? or probably a .txt with IO API lol?
+    private const float ChangeMapTimeBuffer = 2f;
 
     public override void Load(bool hotreload)
     {
@@ -49,6 +51,7 @@ public class Main(
             _logger.LogInformation("Server name: {serverName}", hostname.StringValue);
 
         RegisterListener<Listeners.OnMapStart>(MapStartListener);
+        //RegisterEventHandler<EventPlayerActivate>(TestHandler);
         RegisterEventHandler<EventPlayerConnectFull>(ConnectHandler);
         RegisterEventHandler<EventPlayerDisconnect>(DisconnectHandler);
         RegisterEventHandler<EventPlayerSpawn>(PlayerSpawnHandler);
@@ -56,6 +59,7 @@ public class Main(
         RegisterEventHandler<EventWarmupEnd>(WarmupEndHandler, HookMode.Pre);
         RegisterEventHandler<EventRoundStart>(RoundStartHandler);
         RegisterEventHandler<EventRoundEnd>(RoundEndHandler, HookMode.Pre);
+        //RegisterEventHandler<EventItemPurchase>()
     }
 
     #region hook result
@@ -66,8 +70,8 @@ public class Main(
         if (player is null || !player.IsValid || player.PlayerPawn.Value is null)
             return HookResult.Continue;
 
-        if (_roundCount == 0 && player.PlayerPawn.Value.TakesDamage)
-            SetPlayerProtection(player); // somehow spawn event triggered when player is connecting, not in the real timing
+        if (_warmup && player.PlayerPawn.Value.TakesDamage)
+            SetPlayerProtection(player);
 
         return HookResult.Continue;
     }
@@ -82,14 +86,15 @@ public class Main(
     private HookResult RoundEndHandler(EventRoundEnd eventRoundEnd, GameEventInfo gameEventInfo)
     {
         _bot.RoundEndBehavior(BotQuota, _roundCount);
-        _roundCount++;
+        if (!_warmup)
+            _roundCount++;
         return HookResult.Continue;
     }
 
     private HookResult WarmupHandler(EventRoundAnnounceWarmup @event, GameEventInfo info)
     {
         _roundCount = 0;
-        _bot.WarmupBehavior();
+        _warmup = true;
         return HookResult.Continue;
     }
 
@@ -139,12 +144,13 @@ public class Main(
 
         if (!_restart)
         {
-            RestartServer();
+            AddTimer(ChangeMapTimeBuffer, RestartServer);
             return;
         }
 
         ResetDefaultWeapon();
         SetHumanTeam();
+        AddTimer(2f, _bot.MapStartBehavior);
 
         void RestartServer()
         {
@@ -199,7 +205,11 @@ public class Main(
     [ConsoleCommand("css_map", "Change map")]
     public void OnChangeMapCommand(CCSPlayerController client, CommandInfo command)
     {
-        _command.OnChangeMapCommand(client, command);
+        var mapName = _command.OnChangeMapCommand(client, command);
+        if (mapName != string.Empty)
+        {
+            AddTimer(ChangeMapTimeBuffer, () => Server.ExecuteCommand($"changelevel {mapName}"));
+        }
     }
 
     [RequiresPermissions("@css/cvar")]
@@ -229,6 +239,7 @@ public class Main(
     {
         _roundCount = 0;
         _playerCount = 0;
+        _warmup = true;
         _players.Clear();
     }
 
@@ -246,7 +257,7 @@ public class Main(
             }
         }
 
-        if(ctr != 1)
+        if (ctr != 1)
             return string.Empty;
         else
             return _players.FirstOrDefault(player => player.Value.Contains(keyword)).Value;

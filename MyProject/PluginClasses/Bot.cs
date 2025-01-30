@@ -10,7 +10,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 {
     private readonly ILogger<Bot> _logger = logger;
 
-    public void WarmupBehavior()
+    public void MapStartBehavior()
     {
         Server.ExecuteCommand("sv_cheats 1");
         Server.ExecuteCommand("bot_stop 1");

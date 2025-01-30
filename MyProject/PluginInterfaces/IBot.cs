@@ -2,7 +2,7 @@
 {
     public interface IBot
     {
-        void WarmupBehavior();
+        void MapStartBehavior();
 
         void WarmupEndBehavior(int botQuota);
 
