@@ -31,7 +31,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName)} {BotProfile.Difficulty.expert.ToString()} \"[ELITE]EagleEye\"");
             Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName)} {BotProfile.Difficulty.expert.ToString()} \"[ELITE]mimic\"");
             Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName)} {BotProfile.Difficulty.expert.ToString()} \"[EXPERT]Rush\"");
-            Utility.MyAddTimer(1f, SetBotScore);
+            Server.NextWorldUpdateAsync(SetBotScore);
         }
     }
 
