@@ -36,7 +36,7 @@ public class Main(
     private readonly IBot _bot = bot;
 
     // constants
-    private const int BotQuota = 8; // should I write a cfg file? .Net way or plugin way? or probably a .txt with IO API lol?
+    private const int BotQuota = 16; // should I write a cfg file? .Net way or plugin way? or probably a .txt with IO API lol?
     private const float ChangeMapTimeBuffer = 2f;
 
     public override void Load(bool hotreload)
@@ -80,7 +80,8 @@ public class Main(
 
     private HookResult RoundStartHandler(EventRoundStart eventRoundStart, GameEventInfo gameEventInfo)
     {
-        Server.PrintToChatAll($"Round: {_roundCount}");
+        if(!_warmup && _roundCount != ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>())
+            Server.PrintToChatAll($"Round: {_roundCount}");
         _bot.RoundStartBehavior();
 
         if (!_warmup)
