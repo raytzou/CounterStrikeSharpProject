@@ -185,4 +185,24 @@ public class Bot(ILogger<Bot> logger) : IBot
             }
         }
     }
+
+    private int GetDifficultyLevel(int winStreak)
+    {// copilot gens this programming war crime code and I must push it to the repo (the comment was wrote by copilot too 💀)
+        if (winStreak < 3)
+            return 0;
+        else if (winStreak < 6)
+            return 1;
+        else if (winStreak < 9)
+            return 2;
+        else if (winStreak < 12)
+            return 3;
+        else if (winStreak < 15)
+            return 4;
+        else if (winStreak < 18)
+            return 5;
+        else if (winStreak < 21)
+            return 6;
+        else
+            return 7;
+    }
 }
