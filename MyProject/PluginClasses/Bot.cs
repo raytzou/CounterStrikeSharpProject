@@ -88,12 +88,24 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    private string GetBotTeam(string mapName) => mapName[..2] switch
+    private string GetBotTeam(string mapName)
     {
-        "cs" => "t",
-        "de" => "ct",
-        _ => string.Empty,
-    };
+        switch (mapName[..3])
+        {
+            case "cs_":
+                return "t";
+            case "de_":
+                return "ct";
+            default:
+                if (mapName == "cs2_whiterun" ||
+                    mapName == "sandstone_new" ||
+                    mapName == "legend4" ||
+                    mapName == "pango")
+                    return "ct";
+
+                return string.Empty;
+        }
+    }
 
     private void KickAndFillBot(int quota, Difficulty difficulty, NameGroup nameGroup)
     {

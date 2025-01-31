@@ -91,7 +91,7 @@ public class Main(
             }
         }
 
-        if(_roundCount == ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>())
+        if (_roundCount == ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>())
         {
             // End Game
             Server.ExecuteCommand("mp_maxrounds 1");
@@ -187,17 +187,23 @@ public class Main(
 
         void SetHumanTeam()
         {
-            switch (mapName[..2])
+            switch (mapName[..3])
             {
-                case "cs":
+                case "cs_":
                     Server.ExecuteCommand("mp_humanteam CT");
                     break;
-                case "de":
+                case "de_":
                     Server.ExecuteCommand("mp_humanteam T");
                     break;
                 default:
+                    if (mapName == "cs2_whiterun" ||
+                        mapName == "sandstone_new" ||
+                        mapName == "legend4" ||
+                        mapName == "pango")
+                        Server.ExecuteCommand("mp_humanteam T");
+
                     Server.ExecuteCommand("mp_humanteam T");
-                    _logger.LogInformation("Cannot identify the category of map: {mapName}", mapName);
+                    _logger.LogWarning("Cannot identify the category of map: {mapName}", mapName);
                     break;
             }
         }
