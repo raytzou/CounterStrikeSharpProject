@@ -21,6 +21,14 @@ public class Bot(ILogger<Bot> logger) : IBot
         {
             //Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName).ToLower()} {Difficulty.None_10.ToString()} \"[S++] Kanonushi\"");
             //Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName).ToLower()} {Difficulty.None_10.ToString()} \"[S+] Artorius\"");
+            var botTeam = GetBotTeam(Server.MapName);
+
+            if (botTeam == string.Empty)
+            {
+                _logger.LogWarning("Bot team not found. {mapName}", Server.MapName);
+                return;
+            }
+
             Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName)} {Difficulty.None_10.ToString()} \"[S] Pine\"");
             Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName)} {Difficulty.None_10.ToString()} \"[S] Zakiyama\"");
             Utility.MyAddTimer(1f, SetBotScore);
