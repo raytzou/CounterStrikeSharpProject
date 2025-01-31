@@ -91,6 +91,12 @@ public class Main(
             }
         }
 
+        if(_roundCount == ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>())
+        {
+            // End Game
+            Server.ExecuteCommand("mp_maxrounds 1");
+        }
+
         return HookResult.Continue;
     }
 
@@ -154,11 +160,11 @@ public class Main(
         InitializeFileds();
         _logger.LogInformation("server has restarted: {restart}", _restart);
 
-        if (!_restart)
-        {
-            AddTimer(ChangeMapTimeBuffer, RestartServer);
-            return;
-        }
+        //if (!_restart)
+        //{
+        //    AddTimer(ChangeMapTimeBuffer, RestartServer);
+        //    return;
+        //}
 
         ResetDefaultWeapon();
         SetHumanTeam();
