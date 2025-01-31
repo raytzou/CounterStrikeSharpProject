@@ -33,13 +33,11 @@ public class Command(ILogger<Command> logger) : ICommand
 
     public void OnInfoCommand(CCSPlayerController client, CommandInfo command, int playerCount, int roundCount)
     {
-        var maxRounds = (ConVar.Find("mp_maxrounds") is null) ? 0 : ConVar.Find("mp_maxrounds").GetPrimitiveValue<int>();
-
         command.ReplyToCommand("----------");
         command.ReplyToCommand($"Server local time: {DateTime.Now}");
         command.ReplyToCommand($"Current map: {Server.MapName}");
         command.ReplyToCommand($"Player: {playerCount}/{Server.MaxPlayers}");
-        command.ReplyToCommand($"Round: {roundCount}/{maxRounds}");
+        command.ReplyToCommand($"Round: {roundCount}/{ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>()}");
         command.ReplyToCommand("----------");
     }
 
@@ -232,7 +230,7 @@ public class Command(ILogger<Command> logger) : ICommand
         var players = Utilities.GetPlayers();
         if (players.Count == 0)
         {
-            command.ReplyToCommand("no any players");
+            command.ReplyToCommand("no any player");
             return;
         }
 

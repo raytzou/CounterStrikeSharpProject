@@ -1,5 +1,4 @@
 ﻿using CounterStrikeSharp.API;
-using CounterStrikeSharp.API.Modules.Cvars;
 using Microsoft.Extensions.Logging;
 using MyProject.Classes;
 using MyProject.Enum;
@@ -10,7 +9,7 @@ namespace MyProject.PluginClasses;
 public class Bot(ILogger<Bot> logger) : IBot
 {
     private readonly ILogger<Bot> _logger = logger;
-    private readonly HashSet<string> Special = new(){ "[ELITE]EagleEye", "[ELITE]mimic", "[EXPERT]Rush" };
+    private readonly HashSet<string> Special = new() { "[ELITE]EagleEye", "[ELITE]mimic", "[EXPERT]Rush" };
 
     public void MapStartBehavior()
     {
