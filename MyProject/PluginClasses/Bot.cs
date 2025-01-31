@@ -27,9 +27,9 @@ public class Bot(ILogger<Bot> logger) : IBot
                 return;
             }
 
-            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName)} {BotProfile.Difficulty.expert.ToString()} \"[ELITE]EagleEye\"");
-            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName)} {BotProfile.Difficulty.expert.ToString()} \"[ELITE]mimic\"");
-            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName)} {BotProfile.Difficulty.expert.ToString()} \"[EXPERT]Rush\"");
+            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName)} {nameof(BotProfile.Difficulty.expert)} \"[ELITE]EagleEye\"");
+            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName)} {nameof(BotProfile.Difficulty.expert)} \"[ELITE]mimic\"");
+            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName)} {nameof(BotProfile.Difficulty.expert)} \"[EXPERT]Rush\"");
             Server.NextWorldUpdateAsync(SetBotScore);
         }
     }
