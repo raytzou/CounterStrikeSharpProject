@@ -1,26 +1,17 @@
 ﻿namespace MyProject.Enum
 {
-    public enum NameGroup
+    public class BotProfile
     {
-        fumo
-    }
+        public enum Difficulty
+        {
+            easy,
+            normal,
+            hard,
+            expert,
+        }
 
-    public enum Difficulty
-    {
-        easy,
-        normal,
-        hard,
-        expert,
-        None_10
-    }
+        public static string[] Grade => [ "*", "**", "***", "X", "XX", "XXX", "OTAKU", "TIKU", "ZAKO" ];
 
-    public enum Grade
-    {
-        A,
-        B,
-        C,
-        D,
-        E,
-        F
+        public static string[] NameGroup => ["Rookie", "Casual", "Regular", "Veteran", "Skilled", "Pro", "GemaHaijin", "Dorei", "Helper"];
     }
 }
