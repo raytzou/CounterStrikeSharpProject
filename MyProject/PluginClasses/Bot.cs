@@ -21,8 +21,8 @@ public class Bot(ILogger<Bot> logger) : IBot
         {
             //Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName).ToLower()} {Difficulty.None_10.ToString()} \"[S++] Kanonushi\"");
             //Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName).ToLower()} {Difficulty.None_10.ToString()} \"[S+] Artorius\"");
-            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName).ToLower()} {Difficulty.None_10.ToString()} \"[S] Pine\"");
-            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName).ToLower()} {Difficulty.None_10.ToString()} \"[S] Zakiyama\"");
+            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName)} {Difficulty.None_10.ToString()} \"[S] Pine\"");
+            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName)} {Difficulty.None_10.ToString()} \"[S] Zakiyama\"");
             Utility.MyAddTimer(1f, SetBotScore);
         }
     }
@@ -63,7 +63,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void SetDefaultWeapon()
         {
-            var botTeam = GetBotTeam(Server.MapName).ToLower();
+            var botTeam = GetBotTeam(Server.MapName);
 
             Server.ExecuteCommand($"mp_{botTeam}_default_primary {GetDefaultPrimaryWeapon()}");
             Server.ExecuteCommand($"mp_{botTeam}_default_secondary \"\"");
@@ -82,8 +82,8 @@ public class Bot(ILogger<Bot> logger) : IBot
 
     private string GetBotTeam(string mapName) => mapName[..2] switch
     {
-        "cs" => "T",
-        "de" => "CT",
+        "cs" => "t",
+        "de" => "ct",
         _ => string.Empty,
     };
 
@@ -91,7 +91,7 @@ public class Bot(ILogger<Bot> logger) : IBot
     {
         KickOnlyTrashes();
 
-        var botTeam = GetBotTeam(Server.MapName).ToLower();
+        var botTeam = GetBotTeam(Server.MapName);
         if (botTeam == string.Empty) return;
 
         for (int i = 1; i <= quota; i++)
