@@ -82,7 +82,7 @@ public class Main(
     {
         if(!_warmup && _roundCount != ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>())
             Server.PrintToChatAll($"Round: {_roundCount}");
-        _bot.RoundStartBehavior();
+        _bot.RoundStartBehavior(_roundCount);
 
         if (!_warmup)
         {

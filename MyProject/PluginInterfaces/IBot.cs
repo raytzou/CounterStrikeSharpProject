@@ -6,7 +6,7 @@
 
         void WarmupEndBehavior(int botQuota);
 
-        void RoundStartBehavior();
+        void RoundStartBehavior(int roundCount);
 
         void RoundEndBehavior(int botQuota, int roundCount);
     }

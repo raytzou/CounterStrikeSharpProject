@@ -1,6 +1,5 @@
 ﻿using CounterStrikeSharp.API;
 using Microsoft.Extensions.Logging;
-using MyProject.Classes;
 using MyProject.Enum;
 using MyProject.PluginInterfaces;
 
@@ -42,7 +41,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         KickAndFillBot(botQuota, 0);
     }
 
-    public void RoundStartBehavior()
+    public void RoundStartBehavior(int roundCount)
     {
         for (int i = 0; i < Server.MaxPlayers; i++)
         {
@@ -54,11 +53,32 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 client.InGameMoneyServices.StartAccount = 0;
                 client.InGameMoneyServices.Account = 0;
-                client.PlayerPawn.Value.WeaponServices.PreventWeaponPickup = true;
             }
         }
 
         SetBotScore();
+
+        if (roundCount > 1)
+        {
+            SetSpecialBotWeapon("[ELITE]EagleEye", "weapon_awp");
+            SetSpecialBotWeapon("[ELITE]mimic", "weapon_m4a1_silencer");
+            SetSpecialBotWeapon("[EXPERT]Rush", "weapon_p90");
+        }
+
+        void SetSpecialBotWeapon(string botName, string weaponName)
+        {
+            var bot = Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(botName));
+
+            bot!.DropActiveWeapon();
+            bot.GiveNamedItem(weaponName);
+            Server.NextWorldUpdateAsync(() =>
+            {
+                foreach (var bot in Utilities.GetPlayers().Where(player => player.IsBot))
+                {
+                    bot.PlayerPawn.Value.WeaponServices.PreventWeaponPickup = true;
+                }
+            });
+        }
     }
 
     public void RoundEndBehavior(int botQuota, int roundCount)
@@ -79,7 +99,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             string GetDefaultPrimaryWeapon()
             {
                 if (botTeam == "ct")
-                    return "weapon_m4a1_silencer"; // special bots don't have weapon
+                    return "weapon_m4a1";
                 else if (botTeam == "t")
                     return "weapon_ak47";
 
