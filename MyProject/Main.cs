@@ -180,24 +180,9 @@ public class Main(
     private void MapStartListener(string mapName)
     {
         InitializeFileds();
-        _logger.LogInformation("server has restarted: {restart}", _restart);
-
-        //if (!_restart)
-        //{
-        //    AddTimer(ChangeMapTimeBuffer, RestartServer);
-        //    return;
-        //}
-
         ResetDefaultWeapon();
         SetHumanTeam();
         AddTimer(2f, _bot.MapStartBehavior);
-
-        void RestartServer()
-        {
-            _restart = true;
-            _logger.LogInformation("restarting server");
-            Server.ExecuteCommand($"changelevel {Server.MapName}");
-        }
 
         void ResetDefaultWeapon()
         {
