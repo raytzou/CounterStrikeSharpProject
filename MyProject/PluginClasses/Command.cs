@@ -57,7 +57,7 @@ public class Command(ILogger<Command> logger) : ICommand
             return string.Empty;
         }
 
-        _logger.LogInformation("{admin} changed map to {mapName} at {DT}", client.PlayerName, mapName, DateTime.Now);
+        _logger.LogInformation("{admin} changed map to {mapName} at {DT}", client?.PlayerName is null ? "console" : client.PlayerName, mapName, DateTime.Now);
         Server.PrintToChatAll($"Admin changed map to {mapName}");
         return mapName;
 
@@ -222,7 +222,7 @@ public class Command(ILogger<Command> logger) : ICommand
         if (!string.IsNullOrEmpty(value))
         {
             Server.PrintToChatAll($"{cvar.Name} changed to {value}");
-            _logger.LogInformation("{admin} changed {cvar} to {value} at {DT}", client.PlayerName, cvar.Name, value, DateTime.Now);
+            _logger.LogInformation("{admin} changed {cvar} to {value} at {DT}", client?.PlayerName is null ? "console" : client.PlayerName, cvar.Name, value, DateTime.Now);
         }
     }
 
@@ -259,7 +259,7 @@ public class Command(ILogger<Command> logger) : ICommand
 
         player!.CommitSuicide(true, true);
         command.ReplyToCommand($"[css] You slay {targetName}");
-        _logger.LogInformation("[css] {admin} slew {targetName} at {DT}", client.PlayerName, targetName, DateTime.Now);
+        _logger.LogInformation("[css] {admin} slew {targetName} at {DT}", client?.PlayerName is null ? "console" : client.PlayerName, targetName, DateTime.Now);
         Server.PrintToChatAll($"Admin slew {targetName}");
 
         CCSPlayerController? GetPlayerControllerByName()
