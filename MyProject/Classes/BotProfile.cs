@@ -15,5 +15,12 @@
         public static string[] Grade => ["*", "**", "***", "X", "XX", "XXX", "OTAKU", "TIKU", "ZAKO"];
 
         public static string[] NameGroup => ["Rookie", "Casual", "Regular", "Veteran", "Skilled", "Pro", "GemaHaijin", "Dorei", "Helper"];
+
+        public static Dictionary<int, string> Special => new Dictionary<int, string>
+        {
+            { 0, "[ELITE]EagleEye" },
+            { 1, "[ELITE]mimic" },
+            { 2, "[EXPERT]Rush" },
+        };
     }
 }

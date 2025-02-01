@@ -1,14 +1,16 @@
 ﻿using CounterStrikeSharp.API;
+using CounterStrikeSharp.API.Modules.Entities.Constants;
 using Microsoft.Extensions.Logging;
 using MyProject.Classes;
 using MyProject.PluginInterfaces;
+using System.Reflection;
+using System.Runtime.Serialization;
 
 namespace MyProject.PluginClasses;
 
 public class Bot(ILogger<Bot> logger) : IBot
 {
     private readonly ILogger<Bot> _logger = logger;
-    private readonly HashSet<string> Special = new() { "[ELITE]EagleEye", "[ELITE]mimic", "[EXPERT]Rush" };
 
     private int _level = 2;
 
@@ -32,9 +34,9 @@ public class Bot(ILogger<Bot> logger) : IBot
                 return;
             }
 
-            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName)} {nameof(BotProfile.Difficulty.expert)} \"[ELITE]EagleEye\"");
-            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName)} {nameof(BotProfile.Difficulty.expert)} \"[ELITE]mimic\"");
-            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName)} {nameof(BotProfile.Difficulty.expert)} \"[EXPERT]Rush\"");
+            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName)} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[0]}");
+            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName)} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[1]}");
+            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName)} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[2]}");
             Server.NextWorldUpdateAsync(SetBotScore);
         }
     }
@@ -65,24 +67,30 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         if (roundCount > 1)
         {
-            SetSpecialBotWeapon("[ELITE]EagleEye", "weapon_awp");
-            SetSpecialBotWeapon("[ELITE]mimic", "weapon_m4a1_silencer");
-            SetSpecialBotWeapon("[EXPERT]Rush", "weapon_p90");
-        }
+            SetSpecialBotWeapon(BotProfile.Special[0], CsItem.AWP); // "[ELITE]EagleEye"
+            SetSpecialBotWeapon(BotProfile.Special[1], CsItem.M4A1S); // "[ELITE]mimic"
+            SetSpecialBotWeapon(BotProfile.Special[2], CsItem.P90); // "[EXPERT]Rush"
 
-        void SetSpecialBotWeapon(string botName, string weaponName)
-        {
-            var bot = Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(botName));
-
-            bot!.DropActiveWeapon();
-            bot.GiveNamedItem(weaponName);
-            Server.NextWorldUpdateAsync(() =>
+            Server.NextWorldUpdate(() =>
             {
                 foreach (var bot in Utilities.GetPlayers().Where(player => player.IsBot))
                 {
                     bot.PlayerPawn.Value.WeaponServices.PreventWeaponPickup = true;
                 }
             });
+        }
+
+        void SetSpecialBotWeapon(string botName, CsItem item)
+        {
+            var bot = Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(botName));
+            var botActiveWeapon = bot!.PlayerPawn.Value!.WeaponServices?.ActiveWeapon.Value?.DesignerName;
+            var itemValue = item.GetType().GetMember(item.ToString())[0].GetCustomAttribute<EnumMemberAttribute>()!.Value;
+
+            if (string.IsNullOrEmpty(botActiveWeapon) || botActiveWeapon != itemValue)
+            {
+                bot.PlayerPawn.Value.WeaponServices.PreventWeaponPickup = false;
+                bot.GiveNamedItem(itemValue!);
+            }
         }
     }
 
@@ -148,7 +156,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             _ => BotProfile.Difficulty.easy,
         };
 
-        for (int i = 1; i <= quota - Special.Count; i++)
+        for (int i = 1; i <= quota - BotProfile.Special.Count; i++)
         {
             string botName = $"\"[{BotProfile.Grade[level]}]{BotProfile.NameGroup[level]}#{i:D2}\"";
             Server.ExecuteCommand($"bot_add_{botTeam} {difficulty} {botName}");
@@ -158,20 +166,12 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void KickOnlyTrashes()
         {
-            for (int i = 0; i < Server.MaxPlayers; i++)
-            {
-                var client = Utilities.GetPlayerFromIndex(i);
+            var specialBotSet = BotProfile.Special.Values.Select(bot => bot).ToHashSet();
 
-                if (client is not null &&
-                    client.IsValid &&
-                    client.IsBot &&
-                    !Special.Contains(client.PlayerName))
-                {
-                    Server.ExecuteCommand($"kick {client.PlayerName}");
-                }
-            }
+            foreach (var client in Utilities.GetPlayers().Where(player => player.IsBot && !specialBotSet.Contains(player.PlayerName)))
+                Server.ExecuteCommand($"kick {client.PlayerName}");
 
-            Server.ExecuteCommand($"bot_quota {Special.Count}");
+            Server.ExecuteCommand($"bot_quota {BotProfile.Special.Count}");
         }
     }
 
