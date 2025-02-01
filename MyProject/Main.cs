@@ -4,6 +4,7 @@ using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
+using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
 using MyProject.PluginInterfaces;
 
@@ -188,25 +189,12 @@ public class Main(
 
         void SetHumanTeam()
         {
-            switch (mapName[..3])
-            {
-                case "cs_":
-                    Server.ExecuteCommand("mp_humanteam CT");
-                    break;
-                case "de_":
-                    Server.ExecuteCommand("mp_humanteam T");
-                    break;
-                default:
-                    if (mapName == "cs2_whiterun" ||
-                        mapName == "sandstone_new" ||
-                        mapName == "legend4" ||
-                        mapName == "pango")
-                        Server.ExecuteCommand("mp_humanteam T");
+            var humanTeam = GetHumanTeam();
 
-                    Server.ExecuteCommand("mp_humanteam T");
-                    _logger.LogWarning("Cannot identify the category of map: {mapName}", mapName);
-                    break;
-            }
+            if (humanTeam == CsTeam.CounterTerrorist)
+                Server.ExecuteCommand("mp_humanteam ct");
+            else
+                Server.ExecuteCommand("mp_humanteam t");
         }
     }
 
@@ -298,5 +286,25 @@ public class Main(
     {
         if (player is not null && player.PlayerPawn.Value is not null)
             player.PlayerPawn.Value.TakesDamage = true;
+    }
+
+    private CsTeam GetHumanTeam()
+    {
+        var mapName = Server.MapName;
+        switch (mapName[..3])
+        {
+            case "cs_":
+                return CsTeam.CounterTerrorist;
+            case "de_":
+                return CsTeam.Terrorist;
+            default:
+                if (mapName == "cs2_whiterun" ||
+                    mapName == "sandstone_new" ||
+                    mapName == "legend4" ||
+                    mapName == "pango")
+                    return CsTeam.Terrorist;
+                _logger.LogWarning("Cannot identify the category of map: {mapName}", mapName);
+                return CsTeam.Terrorist;
+        }
     }
 }
