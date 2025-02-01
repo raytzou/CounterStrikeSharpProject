@@ -3,8 +3,6 @@ using CounterStrikeSharp.API.Modules.Entities.Constants;
 using Microsoft.Extensions.Logging;
 using MyProject.Classes;
 using MyProject.PluginInterfaces;
-using System.Reflection;
-using System.Runtime.Serialization;
 
 namespace MyProject.PluginClasses;
 
@@ -72,18 +70,18 @@ public class Bot(ILogger<Bot> logger) : IBot
         {
             var bot = Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(botName));
             var botActiveWeapon = bot!.PlayerPawn.Value!.WeaponServices?.ActiveWeapon.Value?.DesignerName;
-            var itemValue = item.GetType().GetMember(item.ToString())[0].GetCustomAttribute<EnumMemberAttribute>()!.Value;
+            var itemValue = Utility.GetCsItemEnumValue(item);
 
             if (string.IsNullOrEmpty(botActiveWeapon) || botActiveWeapon != itemValue)
             {
                 bot.PlayerPawn.Value.WeaponServices!.PreventWeaponPickup = false;
-                bot.GiveNamedItem(itemValue!);
+                bot.GiveNamedItem(itemValue);
             }
         }
 
         void SetBotMoneyToZero()
         {
-            foreach(var client in Utilities.GetPlayers().Where(player => player.IsBot))
+            foreach (var client in Utilities.GetPlayers().Where(player => player.IsBot))
             {
                 client.InGameMoneyServices!.StartAccount = 0;
                 client.InGameMoneyServices.Account = 0;
@@ -109,9 +107,9 @@ public class Bot(ILogger<Bot> logger) : IBot
             string GetDefaultPrimaryWeapon()
             {
                 if (botTeam == "ct")
-                    return "weapon_m4a1";
+                    return Utility.GetCsItemEnumValue(CsItem.M4A4);
                 else if (botTeam == "t")
-                    return "weapon_ak47";
+                    return Utility.GetCsItemEnumValue(CsItem.AK47);
 
                 return string.Empty;
             }

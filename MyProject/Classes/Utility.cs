@@ -1,5 +1,8 @@
-﻿using CounterStrikeSharp.API.Modules.Timers;
+﻿using CounterStrikeSharp.API.Modules.Entities.Constants;
+using CounterStrikeSharp.API.Modules.Timers;
 using Microsoft.Extensions.Logging;
+using System.Reflection;
+using System.Runtime.Serialization;
 
 namespace MyProject.Classes
 {
@@ -23,6 +26,16 @@ namespace MyProject.Classes
             var timer = new CounterStrikeSharp.API.Modules.Timers.Timer(interval, callback, flags ?? 0);
             Timers.Add(timer);
             return timer;
+        }
+
+        /// <summary>
+        /// Uses reflection to get the <see cref="EnumMemberAttribute"/> value of a CsItem enum.
+        /// </summary>
+        /// <param name="item">The enum option of <see cref="CsItem"/>.</param>
+        /// <returns><c>string</c> - The item entity name.</returns>
+        public static string GetCsItemEnumValue(CsItem item)
+        {
+            return item.GetType().GetMember(item.ToString())[0].GetCustomAttribute<EnumMemberAttribute>()!.Value!;
         }
     }
 }
