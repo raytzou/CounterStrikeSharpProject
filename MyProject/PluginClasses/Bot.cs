@@ -50,19 +50,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
     public void RoundStartBehavior(int roundCount)
     {
-        for (int i = 0; i < Server.MaxPlayers; i++)
-        {
-            var client = Utilities.GetPlayerFromIndex(i);
-
-            if (client is not null &&
-                client.IsValid &&
-                client.IsBot)
-            {
-                client.InGameMoneyServices.StartAccount = 0;
-                client.InGameMoneyServices.Account = 0;
-            }
-        }
-
+        SetBotMoneyToZero();
         SetBotScore();
 
         if (roundCount > 1)
@@ -90,6 +78,15 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 bot.PlayerPawn.Value.WeaponServices.PreventWeaponPickup = false;
                 bot.GiveNamedItem(itemValue!);
+            }
+        }
+
+        void SetBotMoneyToZero()
+        {
+            foreach(var client in Utilities.GetPlayers().Where(player => player.IsBot))
+            {
+                client.InGameMoneyServices!.StartAccount = 0;
+                client.InGameMoneyServices.Account = 0;
             }
         }
     }
