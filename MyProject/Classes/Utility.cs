@@ -1,4 +1,5 @@
-﻿using CounterStrikeSharp.API.Modules.Entities.Constants;
+﻿using CounterStrikeSharp.API;
+using CounterStrikeSharp.API.Modules.Entities.Constants;
 using CounterStrikeSharp.API.Modules.Timers;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
@@ -9,6 +10,8 @@ namespace MyProject.Classes
     public class Utility
     {
         public readonly static List<CounterStrikeSharp.API.Modules.Timers.Timer> Timers = [];
+
+        public static IEnumerable<string> AllMaps => GetMapsInPhysicalDirectory().Concat(GetMapsFromWorkshop());
 
         /// <summary>
         /// This is for debugging purposes only. There should be no references to this method.
@@ -36,6 +39,38 @@ namespace MyProject.Classes
         public static string GetCsItemEnumValue(CsItem item)
         {
             return item.GetType().GetMember(item.ToString())[0].GetCustomAttribute<EnumMemberAttribute>()!.Value!;
+        }
+
+        /// <summary>
+        /// Get maps in the maplist.txt file
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="Exception">Can't find maplist.txt</exception>
+        public static IEnumerable<string> GetMapsFromWorkshop()
+        {
+            // if there is an API like ServerCommandEx() from SourceMod then I don't need to use maplist.txt
+            var mapListPath = Path.Join(Server.GameDirectory, "maplist.txt");
+            if (!File.Exists(mapListPath)) throw new Exception("maplist.txt could not be found in root folder");
+
+            return File.ReadAllLines(mapListPath);
+        }
+
+        /// <summary>
+        /// Get maps in the physical directory
+        /// </summary>
+        /// <returns></returns>
+        public static IEnumerable<string> GetMapsInPhysicalDirectory()
+        {
+            string mapFolderPath = Path.Join(Server.GameDirectory, "csgo", "maps");
+
+            return Directory.GetFiles(mapFolderPath)
+                .Select(Path.GetFileNameWithoutExtension)
+                .Where(mapName =>
+                    !string.IsNullOrEmpty(mapName) &&
+                    !mapName.Contains("vanity") &&
+                    !mapName.Contains("workshop_preview") &&
+                    !mapName.Contains("graphics_settings") &&
+                    !mapName.Contains("lobby_mapveto"))!;
         }
     }
 }

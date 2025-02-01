@@ -222,11 +222,14 @@ public class Main(
     [ConsoleCommand("css_map", "Change map")]
     public void OnChangeMapCommand(CCSPlayerController client, CommandInfo command)
     {
-        var mapName = _command.OnChangeMapCommand(client, command);
-        if (mapName != string.Empty)
-        {
-            AddTimer(ChangeMapTimeBuffer, () => Server.ExecuteCommand($"changelevel {mapName}"));
-        }
+        _command.OnChangeMapCommand(client, command, ChangeMapTimeBuffer);
+    }
+
+    [RequiresPermissions("@css/changemap")]
+    [ConsoleCommand("css_maps", "Change map")]
+    public void OnMapsCommand(CCSPlayerController client, CommandInfo command)
+    {
+        _command.OnMapsCommand(client, command);
     }
 
     [RequiresPermissions("@css/cvar")]

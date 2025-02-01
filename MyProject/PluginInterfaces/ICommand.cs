@@ -9,7 +9,9 @@ namespace MyProject.PluginInterfaces
 
         void OnInfoCommand(CCSPlayerController client, CommandInfo command, int playerCount, int roundCount);
 
-        string OnChangeMapCommand(CCSPlayerController client, CommandInfo command);
+        void OnChangeMapCommand(CCSPlayerController client, CommandInfo command, float changeMapTimeBuffer);
+
+        void OnMapsCommand(CCSPlayerController client, CommandInfo command);
 
         void OnCvarCommand(CCSPlayerController client, CommandInfo command);
 

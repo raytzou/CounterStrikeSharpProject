@@ -3,6 +3,7 @@ using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
 using Microsoft.Extensions.Logging;
+using MyProject.Classes;
 using MyProject.PluginInterfaces;
 
 namespace MyProject.PluginClasses;
@@ -41,57 +42,39 @@ public class Command(ILogger<Command> logger) : ICommand
         command.ReplyToCommand("----------");
     }
 
-    public string OnChangeMapCommand(CCSPlayerController client, CommandInfo command)
+    public void OnChangeMapCommand(CCSPlayerController client, CommandInfo command, float changeMapTimeBuffer)
     {
         if (command.ArgCount < 2)
         {
             command.ReplyToCommand("[css] Usage: css_map <map name>");
-            return string.Empty;
+            return;
         }
 
-        string mapName = GetMapNameInPhysicalDirectory(command.GetArg(1));
+        var mapName = command.GetArg(1);
 
-        if (mapName == string.Empty)
+        if (!Utility.AllMaps.Contains(mapName))
         {
-            command.ReplyToCommand($"[css] Map not found: {command.GetArg(1)}");
-            return string.Empty;
+            command.ReplyToCommand($"[css] Map not found: {mapName}");
+            return;
         }
 
         _logger.LogInformation("{admin} changed map to {mapName} at {DT}", client?.PlayerName is null ? "console" : client.PlayerName, mapName, DateTime.Now);
         Server.PrintToChatAll($"Admin changed map to {mapName}");
-        return mapName;
 
-        // This method can only search for maps in 'maps' folder, but not in workshop folder
-        static string GetMapNameInPhysicalDirectory(string name)
+        Utility.MyAddTimer(changeMapTimeBuffer, () =>
         {
-            string gameRootPath = Server.GameDirectory;
+            if (Utility.GetMapsFromWorkshop().Contains(mapName))
+                Server.ExecuteCommand($"ds_workshop_changelevel {mapName}");
+            else if (Utility.GetMapsInPhysicalDirectory().Contains(mapName))
+                Server.ExecuteCommand($"changelevel {mapName}");
+        });
+    }
 
-            gameRootPath += "\\csgo\\maps";
-
-            List<string> maps = [];
-
-            foreach (var mapPath in Directory.GetFiles(gameRootPath))
-            {
-                string[] arr = mapPath.Split("\\");
-                string mapName = arr[^1][..(arr[^1].Length - 4)];
-
-                if (mapName.Contains("vanity") ||
-                   mapName.Contains("workshop_preview") ||
-                   mapName == "graphics_settings" ||
-                   mapName == "lobby_mapveto") continue;
-
-                maps.Add(mapName);
-            }
-
-            maps.Sort();
-
-            foreach (var map in maps) // should and can be optimized
-            {
-                if (map.Contains(name))
-                    return map;
-            }
-
-            return string.Empty;
+    public void OnMapsCommand(CCSPlayerController client, CommandInfo command)
+    {
+        foreach (var map in Utility.AllMaps)
+        {
+            command.ReplyToCommand(map);
         }
     }
 
