@@ -1,6 +1,6 @@
 ﻿using CounterStrikeSharp.API;
 using Microsoft.Extensions.Logging;
-using MyProject.Enum;
+using MyProject.Classes;
 using MyProject.PluginInterfaces;
 
 namespace MyProject.PluginClasses;
@@ -10,12 +10,17 @@ public class Bot(ILogger<Bot> logger) : IBot
     private readonly ILogger<Bot> _logger = logger;
     private readonly HashSet<string> Special = new() { "[ELITE]EagleEye", "[ELITE]mimic", "[EXPERT]Rush" };
 
+    private int _level = 2;
+
+    public int CurrentLevel => _level + 1;
+
     public void MapStartBehavior()
     {
         Server.ExecuteCommand("sv_cheats 1");
         Server.ExecuteCommand("bot_stop 1");
         Server.ExecuteCommand("bot_kick");
         AddSpecialBot();
+        _level = 2;
 
         void AddSpecialBot()
         {
@@ -38,7 +43,7 @@ public class Bot(ILogger<Bot> logger) : IBot
     {
         Server.ExecuteCommand("sv_cheats 0");
         Server.ExecuteCommand("bot_stop 0");
-        KickAndFillBot(botQuota, 0);
+        KickAndFillBot(botQuota, GetDifficultyLevel(0, 0));
     }
 
     public void RoundStartBehavior(int roundCount)
@@ -81,12 +86,12 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    public void RoundEndBehavior(int botQuota, int roundCount)
+    public void RoundEndBehavior(int botQuota, int roundCount, int winStreak, int looseStreak)
     {
         if (roundCount > 0)
         {
             SetDefaultWeapon();
-            KickAndFillBot(botQuota, 0);
+            KickAndFillBot(botQuota, GetDifficultyLevel(winStreak, looseStreak));
         }
 
         void SetDefaultWeapon()
@@ -139,7 +144,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             0 => BotProfile.Difficulty.easy,
             1 or 2 => BotProfile.Difficulty.normal,
             3 or 4 => BotProfile.Difficulty.hard,
-            5 or 6 => BotProfile.Difficulty.expert,
+            5 or 6 or 7 => BotProfile.Difficulty.expert,
             _ => BotProfile.Difficulty.easy,
         };
 
@@ -186,23 +191,13 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    private int GetDifficultyLevel(int winStreak)
-    {// copilot gens this programming war crime code and I must push it to the repo (the comment was wrote by copilot too 💀)
-        if (winStreak < 3)
-            return 0;
-        else if (winStreak < 6)
-            return 1;
-        else if (winStreak < 9)
-            return 2;
-        else if (winStreak < 12)
-            return 3;
-        else if (winStreak < 15)
-            return 4;
-        else if (winStreak < 18)
-            return 5;
-        else if (winStreak < 21)
-            return 6;
-        else
-            return 7;
+    private int GetDifficultyLevel(int winStreak, int looseStreak)
+    {
+        if (winStreak > 1 && _level < 7)
+            _level++;
+        else if (looseStreak > 2 && _level > 1)
+            _level--;
+
+        return _level;
     }
 }

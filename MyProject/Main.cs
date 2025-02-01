@@ -6,6 +6,7 @@ using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
+using MyProject.Classes;
 using MyProject.PluginInterfaces;
 
 namespace MyProject;
@@ -39,6 +40,8 @@ public class Main(
     // constants
     private const int BotQuota = 16; // should I write a cfg file? .Net way or plugin way? or probably a .txt with IO API lol?
     private const float ChangeMapTimeBuffer = 2f;
+    private int _winStreak = 0;
+    private int _looseStreak = 0;
 
     public override void Load(bool hotreload)
     {
@@ -81,8 +84,12 @@ public class Main(
 
     private HookResult RoundStartHandler(EventRoundStart eventRoundStart, GameEventInfo gameEventInfo)
     {
-        if(!_warmup && _roundCount != ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>())
+        if (!_warmup && _roundCount != ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>())
+        {
             Server.PrintToChatAll($"Round: {_roundCount}");
+            Server.PrintToChatAll($"Difficulty level: {_bot.CurrentLevel}/{BotProfile.MaxLevel}");
+        }
+
         _bot.RoundStartBehavior(_roundCount);
 
         if (!_warmup)
@@ -104,9 +111,22 @@ public class Main(
 
     private HookResult RoundEndHandler(EventRoundEnd eventRoundEnd, GameEventInfo gameEventInfo)
     {
-        _bot.RoundEndBehavior(BotQuota, _roundCount);
+        if (eventRoundEnd.Winner == (int)GetHumanTeam())
+        {
+            _winStreak++;
+            _looseStreak = 0;
+        }
+        else
+        {
+            _looseStreak++;
+            _winStreak = 0;
+        }
+
+        _bot.RoundEndBehavior(BotQuota, _roundCount, _winStreak, _looseStreak);
+
         if (!_warmup)
             _roundCount++;
+
         return HookResult.Continue;
     }
 
@@ -259,6 +279,7 @@ public class Main(
     {
         _roundCount = 0;
         _playerCount = 0;
+        _winStreak = 0;
         _warmup = true;
         _players.Clear();
     }
