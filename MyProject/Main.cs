@@ -246,6 +246,13 @@ public class Main(
 
         _command.OnSlayCommand(client, command, targetName);
     }
+
+    [RequiresPermissions("@css/kick")]
+    [ConsoleCommand("css_god", "enable godmode")]
+    public void OnGodCommand(CCSPlayerController client, CommandInfo command)
+    {
+        _command.OnGodCommand(client, command);
+    }
     #endregion commands
 
     private void InitializeFileds()

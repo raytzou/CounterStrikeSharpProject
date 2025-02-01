@@ -16,5 +16,7 @@ namespace MyProject.PluginInterfaces
         void OnPlayersCommand(CCSPlayerController client, CommandInfo command);
 
         void OnSlayCommand(CCSPlayerController client, CommandInfo command, string targetName);
+
+        void OnGodCommand(CCSPlayerController client, CommandInfo command);
     }
 }

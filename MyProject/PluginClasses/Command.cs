@@ -272,4 +272,20 @@ public class Command(ILogger<Command> logger) : ICommand
             return null;
         }
     }
+
+    public void OnGodCommand(CCSPlayerController client, CommandInfo command)
+    {
+        if (client is null) return;
+        if (ConVar.Find("sv_cheats")!.GetPrimitiveValue<bool>())
+        {
+            var takeDamage = client.PlayerPawn.Value!.TakesDamage;
+
+            if (takeDamage)
+                command.ReplyToCommand("[css] God mode off");
+            else
+                command.ReplyToCommand("[css] God mode on");
+
+            client.PlayerPawn.Value.TakesDamage = !takeDamage;
+        }
+    }
 }
