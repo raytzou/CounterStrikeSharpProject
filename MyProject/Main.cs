@@ -50,7 +50,7 @@ public class Main(
         _logger.LogInformation("Server host time: {DT}", DateTime.Now);
 
         if (string.IsNullOrEmpty(hostname?.StringValue))
-            _logger.LogError("hostname is not be set");
+            _logger.LogWarning("hostname is not be set");
         else
             _logger.LogInformation("Server name: {serverName}", hostname.StringValue);
 
