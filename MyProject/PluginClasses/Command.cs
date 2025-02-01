@@ -61,6 +61,7 @@ public class Command(ILogger<Command> logger) : ICommand
         Server.PrintToChatAll($"Admin changed map to {mapName}");
         return mapName;
 
+        // This method can only search for maps in 'maps' folder, but not in workshop folder
         string GetMapNameInPhysicalDirectory(string name)
         {
             string gameRootPath = Server.GameDirectory;
