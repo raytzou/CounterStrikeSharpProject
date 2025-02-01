@@ -62,7 +62,7 @@ public class Command(ILogger<Command> logger) : ICommand
         return mapName;
 
         // This method can only search for maps in 'maps' folder, but not in workshop folder
-        string GetMapNameInPhysicalDirectory(string name)
+        static string GetMapNameInPhysicalDirectory(string name)
         {
             string gameRootPath = Server.GameDirectory;
 
@@ -257,7 +257,7 @@ public class Command(ILogger<Command> logger) : ICommand
 
         var player = GetPlayerControllerByName();
 
-        player.CommitSuicide(true, true);
+        player!.CommitSuicide(true, true);
         command.ReplyToCommand($"[css] You slay {targetName}");
         _logger.LogInformation("[css] {admin} slew {targetName} at {DT}", client.PlayerName, targetName, DateTime.Now);
         Server.PrintToChatAll($"Admin slew {targetName}");

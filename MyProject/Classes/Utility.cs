@@ -5,14 +5,14 @@ namespace MyProject.Classes
 {
     public class Utility
     {
-        public readonly static List<CounterStrikeSharp.API.Modules.Timers.Timer> Timers = new List<CounterStrikeSharp.API.Modules.Timers.Timer>();
+        public readonly static List<CounterStrikeSharp.API.Modules.Timers.Timer> Timers = [];
 
         /// <summary>
         /// This is for debugging purposes only. There should be no references to this method.
         /// </summary>
         public static void DebugLogger<T>(ILogger<T> logger, string content) where T : class
         {
-            logger.LogInformation(content);
+            logger.LogInformation("{content}", content);
         }
 
         /// <summary>

@@ -16,7 +16,7 @@
 
         public static string[] NameGroup => ["Rookie", "Casual", "Regular", "Veteran", "Skilled", "Pro", "GemaHaijin", "Dorei", "Helper"];
 
-        public static Dictionary<int, string> Special => new Dictionary<int, string>
+        public static Dictionary<int, string> Special => new()
         {
             { 0, "[ELITE]EagleEye" },
             { 1, "[ELITE]mimic" },

@@ -63,7 +63,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 foreach (var bot in Utilities.GetPlayers().Where(player => player.IsBot))
                 {
-                    bot.PlayerPawn.Value.WeaponServices.PreventWeaponPickup = true;
+                    bot.PlayerPawn.Value!.WeaponServices!.PreventWeaponPickup = true;
                 }
             });
         }
@@ -76,7 +76,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             if (string.IsNullOrEmpty(botActiveWeapon) || botActiveWeapon != itemValue)
             {
-                bot.PlayerPawn.Value.WeaponServices.PreventWeaponPickup = false;
+                bot.PlayerPawn.Value.WeaponServices!.PreventWeaponPickup = false;
                 bot.GiveNamedItem(itemValue!);
             }
         }
@@ -118,7 +118,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    private string GetBotTeam(string mapName)
+    private static string GetBotTeam(string mapName)
     {
         switch (mapName[..3])
         {
@@ -137,7 +137,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    private void KickAndFillBot(int quota, int level)
+    private static void KickAndFillBot(int quota, int level)
     {
         KickOnlyTrashes();
 

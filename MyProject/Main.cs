@@ -29,7 +29,6 @@ public class Main(
     // fields
     private readonly Dictionary<ulong, string> _players = [];
     private int _playerCount = 0;
-    private static bool _restart = false;
     private int _roundCount = 0;
     private bool _warmup = true;
 
@@ -289,13 +288,13 @@ public class Main(
             return _players.FirstOrDefault(player => player.Value.Contains(keyword)).Value;
     }
 
-    private void SetPlayerProtection(CCSPlayerController? player)
+    private static void SetPlayerProtection(CCSPlayerController? player)
     {
         if (player is not null && player.PlayerPawn.Value is not null)
             player.PlayerPawn.Value.TakesDamage = false;
     }
 
-    private void RemovePlayerProtection(CCSPlayerController? player)
+    private static void RemovePlayerProtection(CCSPlayerController? player)
     {
         if (player is not null && player.PlayerPawn.Value is not null)
             player.PlayerPawn.Value.TakesDamage = true;
