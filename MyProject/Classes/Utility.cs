@@ -10,8 +10,24 @@ namespace MyProject.Classes
     public class Utility
     {
         public readonly static List<CounterStrikeSharp.API.Modules.Timers.Timer> Timers = [];
+        private static readonly Dictionary<CsItem, string> EnumValueCache;
 
         public static IEnumerable<string> AllMaps => GetMapsInPhysicalDirectory().Concat(GetMapsFromWorkshop());
+
+        static Utility()
+        {
+            EnumValueCache = new Dictionary<CsItem, string>();
+
+            foreach (var field in typeof(CsItem).GetFields(BindingFlags.Public | BindingFlags.Static))
+            {
+                var attribute = field.GetCustomAttribute<EnumMemberAttribute>();
+                if (attribute != null)
+                {
+                    var value = (CsItem)field.GetValue(null);
+                    EnumValueCache[value] = attribute.Value;
+                }
+            }
+        }
 
         /// <summary>
         /// This is for debugging purposes only. There should be no references to this method.
@@ -38,7 +54,7 @@ namespace MyProject.Classes
         /// <returns><c>string</c> - The item entity name.</returns>
         public static string GetCsItemEnumValue(CsItem item)
         {
-            return item.GetType().GetMember(item.ToString())[0].GetCustomAttribute<EnumMemberAttribute>()?.Value ?? string.Empty;
+            return EnumValueCache.TryGetValue(item, out var value) ? value : string.Empty;
         }
 
         /// <summary>
