@@ -42,17 +42,11 @@ public class Main(
     private const float ChangeMapTimeBuffer = 2f;
     private int _winStreak = 0;
     private int _looseStreak = 0;
+    private static bool _restart = false;
 
     public override void Load(bool hotreload)
     {
-        var hostname = ConVar.Find("hostname");
-
         _logger.LogInformation("Server host time: {DT}", DateTime.Now);
-
-        if (string.IsNullOrEmpty(hostname?.StringValue))
-            _logger.LogWarning("hostname is not be set");
-        else
-            _logger.LogInformation("Server name: {serverName}", hostname.StringValue);
 
         RegisterListener<Listeners.OnMapStart>(MapStartListener);
         //RegisterEventHandler<EventPlayerActivate>(TestHandler);
@@ -179,6 +173,21 @@ public class Main(
 
     private void MapStartListener(string mapName)
     {
+        _logger.LogInformation("server has restarted: {restart}", _restart);
+        
+        if(!_restart)
+        {
+            _restart = true;
+            return;
+        }
+
+        var hostname = ConVar.Find("hostname");
+
+        if (string.IsNullOrEmpty(hostname?.StringValue))
+            _logger.LogWarning("hostname is not be set");
+        else
+            _logger.LogInformation("Server name: {serverName}", hostname.StringValue);
+
         InitializeFileds();
         ResetDefaultWeapon();
         SetHumanTeam();
