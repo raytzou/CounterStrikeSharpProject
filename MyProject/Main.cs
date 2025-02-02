@@ -41,8 +41,9 @@ public class Main(
     private readonly IBot _bot = bot;
 
     // constants
-    private const int BotQuota = 16; // should I write a cfg file? .Net way or plugin way? or probably a .txt with IO API lol?
+    private const int BotQuota = 20; // should I write a cfg file? .Net way or plugin way? or probably a .txt with IO API lol?
     private const float ChangeMapTimeBuffer = 2f;
+    private const int SpawnPointCount = 10;
 
     public override void Load(bool hotreload)
     {
@@ -191,7 +192,12 @@ public class Main(
         InitializeFileds();
         ResetDefaultWeapon();
         SetHumanTeam();
-        AddTimer(2f, _bot.MapStartBehavior);
+        
+        AddTimer(2f, () =>
+        {
+            Server.NextWorldUpdateAsync(AddMoreSpawnPoint);
+            _bot.MapStartBehavior();
+        });
         
         void ResetDefaultWeapon()
         {
@@ -209,6 +215,36 @@ public class Main(
                 Server.ExecuteCommand("mp_humanteam ct");
             else
                 Server.ExecuteCommand("mp_humanteam t");
+        }
+
+        void AddMoreSpawnPoint()
+        {
+            var TSpawnPoint = Utilities.FindAllEntitiesByDesignerName<SpawnPoint>("info_player_terrorist").FirstOrDefault();
+            var CTSpawnPoint = Utilities.FindAllEntitiesByDesignerName<SpawnPoint>("info_player_counterterrorist").FirstOrDefault();
+
+            if (TSpawnPoint is null)
+                _logger.LogWarning("T Spawn point not found. map: {mapName}", mapName);
+
+            if (CTSpawnPoint is null)
+                _logger.LogWarning("CT Spawn point not found. map: {mapName}", mapName);
+
+
+            for (int i = 0; i < SpawnPointCount; i++)
+            {
+                if (TSpawnPoint is not null)
+                {
+                    var newTSpawnPoint = Utilities.CreateEntityByName<CInfoPlayerTerrorist>("info_player_terrorist");
+                    newTSpawnPoint!.Teleport(TSpawnPoint.AbsOrigin);
+                    newTSpawnPoint.DispatchSpawn();
+                }
+
+                if (CTSpawnPoint is not null)
+                {
+                    var newCTSpawnPoint = Utilities.CreateEntityByName<CInfoPlayerCounterterrorist>("info_player_counterterrorist");
+                    newCTSpawnPoint!.Teleport(CTSpawnPoint.AbsOrigin);
+                    newCTSpawnPoint.DispatchSpawn();
+                }
+            }
         }
     }
 
