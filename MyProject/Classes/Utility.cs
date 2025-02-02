@@ -16,14 +16,14 @@ namespace MyProject.Classes
 
         static Utility()
         {
-            EnumValueCache = new Dictionary<CsItem, string>();
+            EnumValueCache = [];
 
             foreach (var field in typeof(CsItem).GetFields(BindingFlags.Public | BindingFlags.Static))
             {
                 var attribute = field.GetCustomAttribute<EnumMemberAttribute>();
-                if (attribute != null)
+                if (attribute != null && attribute.Value != null)
                 {
-                    var value = (CsItem)field.GetValue(null);
+                    var value = (CsItem)field.GetValue(null)!;
                     EnumValueCache[value] = attribute.Value;
                 }
             }
