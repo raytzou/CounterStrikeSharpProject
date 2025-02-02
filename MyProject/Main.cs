@@ -32,6 +32,9 @@ public class Main(
     private int _playerCount = 0;
     private int _roundCount = 0;
     private bool _warmup = true;
+    private int _winStreak = 0;
+    private int _looseStreak = 0;
+    private static bool _restart = false;
 
     // plugins
     private readonly ICommand _command = commmand;
@@ -40,9 +43,6 @@ public class Main(
     // constants
     private const int BotQuota = 16; // should I write a cfg file? .Net way or plugin way? or probably a .txt with IO API lol?
     private const float ChangeMapTimeBuffer = 2f;
-    private int _winStreak = 0;
-    private int _looseStreak = 0;
-    private static bool _restart = false;
 
     public override void Load(bool hotreload)
     {
@@ -192,7 +192,7 @@ public class Main(
         ResetDefaultWeapon();
         SetHumanTeam();
         AddTimer(2f, _bot.MapStartBehavior);
-
+        
         void ResetDefaultWeapon()
         {
             Server.ExecuteCommand($"mp_ct_default_primary \"\"");
