@@ -38,7 +38,7 @@ namespace MyProject.Classes
         /// <returns><c>string</c> - The item entity name.</returns>
         public static string GetCsItemEnumValue(CsItem item)
         {
-            return item.GetType().GetMember(item.ToString())[0].GetCustomAttribute<EnumMemberAttribute>()!.Value!;
+            return item.GetType().GetMember(item.ToString())[0].GetCustomAttribute<EnumMemberAttribute>()?.Value ?? string.Empty;
         }
 
         /// <summary>
