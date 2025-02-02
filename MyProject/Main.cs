@@ -4,6 +4,7 @@ using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
+using CounterStrikeSharp.API.Modules.Entities.Constants;
 using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
 using MyProject.Classes;
@@ -186,9 +187,9 @@ public class Main(
         void ResetDefaultWeapon()
         {
             Server.ExecuteCommand($"mp_ct_default_primary \"\"");
-            Server.ExecuteCommand($"mp_ct_default_secondary \"weapon_usp_silencer\"");
+            Server.ExecuteCommand($"mp_ct_default_secondary \"{Utility.GetCsItemEnumValue(CsItem.USPS)}\"");
             Server.ExecuteCommand($"mp_t_default_primary \"\"");
-            Server.ExecuteCommand($"mp_t_default_secondary \"weapon_glock\"");
+            Server.ExecuteCommand($"mp_t_default_secondary \"{Utility.GetCsItemEnumValue(CsItem.Glock)}\"");
         }
 
         void SetHumanTeam()
