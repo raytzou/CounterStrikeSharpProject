@@ -16,7 +16,7 @@ public class Main(
     ILogger<Main> logger,
     ICommand commmand,
     IBot bot
-    ) : BasePlugin
+    ) : BasePlugin, IPluginConfig<Configuration>
 {
     #region plugin info
     public override string ModuleAuthor => "cynicat";
@@ -45,12 +45,21 @@ public class Main(
     private const float ChangeMapTimeBuffer = 2f;
     private const int SpawnPointCount = 10;
 
+    // properties
+    public static Main Instance { get; private set; } = null!;
+    public Configuration Config { get; set; } = null!;
+
+    public void OnConfigParsed(Configuration config)
+    {
+        config.SetDebugMode(true);
+        Config = config;
+    }
+
     public override void Load(bool hotreload)
     {
         _logger.LogInformation("Server host time: {DT}", DateTime.Now);
-
+        Instance = this;
         RegisterListener<Listeners.OnMapStart>(MapStartListener);
-        //RegisterEventHandler<EventPlayerActivate>(TestHandler);
         RegisterEventHandler<EventPlayerConnectFull>(ConnectHandler);
         RegisterEventHandler<EventPlayerDisconnect>(DisconnectHandler);
         RegisterEventHandler<EventPlayerSpawn>(PlayerSpawnHandler);
@@ -58,7 +67,6 @@ public class Main(
         RegisterEventHandler<EventWarmupEnd>(WarmupEndHandler, HookMode.Pre);
         RegisterEventHandler<EventRoundStart>(RoundStartHandler);
         RegisterEventHandler<EventRoundEnd>(RoundEndHandler, HookMode.Pre);
-        //RegisterEventHandler<EventItemPurchase>()
     }
 
     #region hook result
@@ -175,8 +183,8 @@ public class Main(
     private void MapStartListener(string mapName)
     {
         _logger.LogInformation("server has restarted: {restart}", _restart);
-        
-        if(!_restart)
+
+        if (!_restart)
         {
             _restart = true;
             return;
@@ -192,13 +200,13 @@ public class Main(
         InitializeFileds();
         ResetDefaultWeapon();
         SetHumanTeam();
-        
+
         AddTimer(2f, () =>
         {
             Server.NextWorldUpdateAsync(AddMoreSpawnPoint);
             _bot.MapStartBehavior();
         });
-        
+
         void ResetDefaultWeapon()
         {
             Server.ExecuteCommand($"mp_ct_default_primary \"\"");
