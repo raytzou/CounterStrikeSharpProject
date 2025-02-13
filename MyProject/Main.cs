@@ -125,7 +125,8 @@ public class Main(
             _winStreak = 0;
         }
 
-        _bot.RoundEndBehavior(BotQuota, _roundCount, _winStreak, _looseStreak);
+        if (!Config.IsDebugMode)
+            _bot.RoundEndBehavior(BotQuota, _roundCount, _winStreak, _looseStreak);
 
         if (!_warmup)
             _roundCount++;
@@ -144,7 +145,8 @@ public class Main(
     {
         _roundCount = 1;
         _warmup = false;
-        _bot.WarmupEndBehavior(BotQuota);
+        if (!Config.IsDebugMode)
+            _bot.WarmupEndBehavior(BotQuota);
         return HookResult.Continue;
     }
 
