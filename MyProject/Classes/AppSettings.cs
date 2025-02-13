@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace MyProject.Classes
 {
-    public class Configuration : BasePluginConfig
+    public class AppSettings : BasePluginConfig
     {
         private const string DefaultCaller = "NOT_CALL_FROM_MAIN";
 

@@ -16,7 +16,7 @@ public class Main(
     ILogger<Main> logger,
     ICommand commmand,
     IBot bot
-    ) : BasePlugin, IPluginConfig<Configuration>
+    ) : BasePlugin, IPluginConfig<AppSettings>
 {
     #region plugin info
     public override string ModuleAuthor => "cynicat";
@@ -47,9 +47,9 @@ public class Main(
 
     // properties
     public static Main Instance { get; private set; } = null!;
-    public Configuration Config { get; set; } = null!;
+    public AppSettings Config { get; set; } = null!;
 
-    public void OnConfigParsed(Configuration config)
+    public void OnConfigParsed(AppSettings config)
     {
         config.SetDebugMode(true);
         Config = config;
