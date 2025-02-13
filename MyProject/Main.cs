@@ -47,7 +47,8 @@ public class Main(
 
     public override void Load(bool hotreload)
     {
-        _logger.LogInformation("Debug mode: {debug}", AppSettings.IsDebug);
+        if (AppSettings.IsDebug)
+            _logger.LogWarning("Debug mode is on");
         _logger.LogInformation("Server host time: {DT}", DateTime.Now);
         RegisterListener<Listeners.OnMapStart>(MapStartListener);
         RegisterEventHandler<EventPlayerConnectFull>(ConnectHandler);
