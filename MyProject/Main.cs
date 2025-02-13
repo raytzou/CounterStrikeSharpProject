@@ -16,7 +16,7 @@ public class Main(
     ILogger<Main> logger,
     ICommand commmand,
     IBot bot
-    ) : BasePlugin, IPluginConfig<AppSettings>
+    ) : BasePlugin
 {
     #region plugin info
     public override string ModuleAuthor => "cynicat";
@@ -45,20 +45,10 @@ public class Main(
     private const float ChangeMapTimeBuffer = 2f;
     private const int SpawnPointCount = 10;
 
-    // properties
-    public static Main Instance { get; private set; } = null!;
-    public AppSettings Config { get; set; } = null!;
-
-    public void OnConfigParsed(AppSettings config)
-    {
-        config.SetDebugMode(true);
-        Config = config;
-    }
-
     public override void Load(bool hotreload)
     {
+        _logger.LogInformation("Debug mode: {debug}", AppSettings.IsDebug);
         _logger.LogInformation("Server host time: {DT}", DateTime.Now);
-        Instance = this;
         RegisterListener<Listeners.OnMapStart>(MapStartListener);
         RegisterEventHandler<EventPlayerConnectFull>(ConnectHandler);
         RegisterEventHandler<EventPlayerDisconnect>(DisconnectHandler);
@@ -125,7 +115,7 @@ public class Main(
             _winStreak = 0;
         }
 
-        if (!Config.IsDebugMode)
+        if (!AppSettings.IsDebug)
             _bot.RoundEndBehavior(BotQuota, _roundCount, _winStreak, _looseStreak);
 
         if (!_warmup)
@@ -145,7 +135,7 @@ public class Main(
     {
         _roundCount = 1;
         _warmup = false;
-        if (!Config.IsDebugMode)
+        if (!AppSettings.IsDebug)
             _bot.WarmupEndBehavior(BotQuota);
         return HookResult.Continue;
     }
