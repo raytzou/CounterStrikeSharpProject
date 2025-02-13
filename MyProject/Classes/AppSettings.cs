@@ -1,24 +1,31 @@
-﻿using CounterStrikeSharp.API.Core;
-using System.Runtime.CompilerServices;
-using System.Text.Json.Serialization;
+﻿using CounterStrikeSharp.API;
+using Microsoft.Extensions.Configuration;
+using System.Reflection;
 
 namespace MyProject.Classes
 {
-    public class AppSettings : BasePluginConfig
+    public static class AppSettings
     {
-        private const string DefaultCaller = "NOT_CALL_FROM_MAIN";
+        public static IConfigurationRoot? Configuration { get; private set; }
+        public static bool IsDebug => Configuration?.GetValue<bool>("DebugMode") == true;
 
-        [JsonPropertyName("DebugMode")]
-        public bool IsDebugMode { get; private set; }
-
-        internal void SetDebugMode(bool value, [CallerMemberName] string caller = DefaultCaller)
+        static AppSettings()
         {
-            // Personally, I just want to make this method only accessible in Main.OnConfigParsed.
-            // Bad design anyway
-            if (caller != nameof(Main.OnConfigParsed))
-                throw new InvalidOperationException($"You can only set DebugMode in {nameof(Main.OnConfigParsed)}！");
+            try
+            {
+                var projectName = Assembly.GetExecutingAssembly().GetName().Name;
+                var pluginPath = Path.Join(Server.GameDirectory, "csgo", "addons", "counterstrikesharp", "plugins", projectName);
 
-            IsDebugMode = value;
+                var builder = new ConfigurationBuilder()
+                .SetBasePath(pluginPath)
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true); // counterstrikesharp/plugins/{projectName}\appsettings.json
+
+                Configuration = builder.Build();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error loading appsettings.json: {0}", ex.Message);
+            }
         }
     }
 }
