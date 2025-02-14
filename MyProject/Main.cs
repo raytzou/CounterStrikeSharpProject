@@ -306,6 +306,12 @@ public class Main(
     [ConsoleCommand("css_god", "enable godmode")]
     public void OnGodCommand(CCSPlayerController client, CommandInfo command)
     {
+        if (AppSettings.IsDebug)
+        {
+            command.ReplyToCommand("God mode is available only in debug mode");
+            return;
+        }
+
         _command.OnGodCommand(client, command);
     }
     #endregion commands
