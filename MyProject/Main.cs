@@ -84,7 +84,8 @@ public class Main(
             Server.PrintToChatAll($"Difficulty level: {_bot.CurrentLevel}/{BotProfile.MaxLevel}");
         }
 
-        _bot.RoundStartBehavior(_roundCount);
+        if (!AppSettings.IsDebug)
+            _bot.RoundStartBehavior(_roundCount);
 
         if (!_warmup)
         {
