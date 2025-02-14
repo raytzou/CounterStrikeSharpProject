@@ -271,4 +271,24 @@ public class Command(ILogger<Command> logger) : ICommand
             client.PlayerPawn.Value.TakesDamage = !takeDamage;
         }
     }
+
+    public void OnReviveCommand(CCSPlayerController client, CommandInfo command)
+    {
+        if(client is null) return;
+
+        if(client.Health > 0)
+        {
+            command.ReplyToCommand("[css] You are alive.");
+            return;
+        }
+
+        if (client.Score - 50 < 0)
+        {
+            command.ReplyToCommand("[css] You don't have enough score to revive.");
+            return;
+        }
+
+        client.Score -= 50;
+        client.Respawn();
+    }
 }
