@@ -274,9 +274,9 @@ public class Command(ILogger<Command> logger) : ICommand
 
     public void OnReviveCommand(CCSPlayerController client, CommandInfo command)
     {
-        if(client is null) return;
+        if (client is null) return;
 
-        if(client.Health > 0)
+        if (client.Health > 0)
         {
             command.ReplyToCommand("[css] You are alive.");
             return;
