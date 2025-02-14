@@ -283,7 +283,7 @@ public class Command(ILogger<Command> logger) : ICommand
             return;
         }
 
-        if (client.Score - 50 < 0)
+        if (client.Score - 50 < 0 && !AppSettings.IsDebug)
         {
             command.ReplyToCommand("[css] You don't have enough score to revive.");
             return;
