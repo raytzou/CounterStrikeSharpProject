@@ -29,6 +29,7 @@ public class Main(
 
     // fields
     private readonly Dictionary<ulong, string> _players = [];
+    private readonly Dictionary<string, Vector> _origins = [];
     private int _playerCount = 0;
     private int _roundCount = 0;
     private bool _warmup = true;
@@ -54,6 +55,7 @@ public class Main(
         RegisterEventHandler<EventPlayerConnectFull>(ConnectHandler);
         RegisterEventHandler<EventPlayerDisconnect>(DisconnectHandler);
         RegisterEventHandler<EventPlayerSpawn>(PlayerSpawnHandler);
+        RegisterEventHandler<EventPlayerDeath>(PlayerDeathHandler);
         RegisterEventHandler<EventRoundAnnounceWarmup>(WarmupHandler);
         RegisterEventHandler<EventWarmupEnd>(WarmupEndHandler, HookMode.Pre);
         RegisterEventHandler<EventRoundStart>(RoundStartHandler);
@@ -72,6 +74,16 @@ public class Main(
             SetPlayerProtection(player);
         else
             RemovePlayerProtection(player);
+
+        return HookResult.Continue;
+    }
+
+    private HookResult PlayerDeathHandler(EventPlayerDeath @event, GameEventInfo info)
+    {
+        var player = @event.Userid;
+        var origin = player.PlayerPawn.Value.AbsOrigin;
+
+        _origins[player.PlayerName] = origin;
 
         return HookResult.Continue;
     }
@@ -152,9 +164,15 @@ public class Main(
         _logger.LogInformation("{client} has connected at {DT}, IP: {ipAddress}, SteamID: {steamID}", player.PlayerName, DateTime.Now, player.IpAddress, player.SteamID);
 
         if (!_players.ContainsKey(player.SteamID))
+        {
             _players.Add(player.SteamID, player.PlayerName);
+            _origins.Add(player.PlayerName, Vector.Zero);
+        }
         else
+        {
             _players[player.SteamID] = player.PlayerName;
+            _origins[player.PlayerName] = Vector.Zero;
+        }
 
         return HookResult.Continue;
     }
@@ -167,8 +185,8 @@ public class Main(
 
         _playerCount--;
         _logger.LogInformation("{client} has disconnected at {DT}", player.PlayerName, DateTime.Now);
-
         _players.Remove(player.SteamID);
+        _origins.Remove(player.PlayerName);
 
         return HookResult.Continue;
     }
@@ -327,6 +345,12 @@ public class Main(
 
         _command.OnWeaponCommand(client, command);
     }
+
+    [ConsoleCommand("css_revive", "revive command")]
+    public void OnReviveCommand(CCSPlayerController client, CommandInfo command)
+    {
+        _command.OnReviveCommand(client, command, _origins[client.PlayerName]);
+    }
     #endregion commands
 
     private void InitializeFileds()
@@ -336,6 +360,7 @@ public class Main(
         _winStreak = 0;
         _warmup = true;
         _players.Clear();
+        _origins.Clear();
     }
 
     private string GetTargetNameByKeyword(string keyword)

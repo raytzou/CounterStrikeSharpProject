@@ -1,5 +1,6 @@
 ﻿using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Commands;
+using CounterStrikeSharp.API.Modules.Utils;
 
 namespace MyProject.PluginInterfaces
 {
@@ -21,7 +22,7 @@ namespace MyProject.PluginInterfaces
 
         void OnGodCommand(CCSPlayerController client, CommandInfo command);
 
-        void OnReviveCommand(CCSPlayerController client, CommandInfo command);
+        void OnReviveCommand(CCSPlayerController client, CommandInfo command, Vector? origin);
 
         void OnWeaponCommand(CCSPlayerController client, CommandInfo command);
     }

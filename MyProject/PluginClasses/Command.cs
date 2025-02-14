@@ -273,7 +273,7 @@ public class Command(ILogger<Command> logger) : ICommand
         }
     }
 
-    public void OnReviveCommand(CCSPlayerController client, CommandInfo command)
+    public void OnReviveCommand(CCSPlayerController client, CommandInfo command, Vector? origin)
     {
         if (client is null) return;
 
@@ -292,6 +292,9 @@ public class Command(ILogger<Command> logger) : ICommand
         if (!AppSettings.IsDebug)
             client.Score -= 50;
         client.Respawn();
+
+        if (origin is not null)
+            client.Pawn.Value!.Teleport(origin);
     }
 
     public void OnWeaponCommand(CCSPlayerController client, CommandInfo command)
