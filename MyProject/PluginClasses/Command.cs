@@ -291,4 +291,22 @@ public class Command(ILogger<Command> logger) : ICommand
         client.Score -= 50;
         client.Respawn();
     }
+
+    public void OnWeaponCommand(CCSPlayerController client, CommandInfo command)
+    {
+        if (client is null || client.PlayerPawn.Value is null)
+            return;
+
+        var weaponServices = client.PlayerPawn.Value.WeaponServices;
+        if (weaponServices is null)
+        {
+            command.ReplyToCommand($"weapon services is null");
+            return;
+        }
+        var weaponServiceValue = weaponServices.ActiveWeapon.Value;
+        if (weaponServiceValue is null)
+            command.ReplyToCommand($"weapon service value is null");
+        else
+            command.ReplyToCommand($"Weapon: {weaponServiceValue.DesignerName}");
+    }
 }

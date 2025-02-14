@@ -314,6 +314,19 @@ public class Main(
 
         _command.OnGodCommand(client, command);
     }
+
+    [RequiresPermissions("@css/kick")]
+    [ConsoleCommand("css_weapon", "weapon info")]
+    public void OnWeaponCommand(CCSPlayerController client, CommandInfo command)
+    {
+        if (AppSettings.IsDebug)
+        {
+            command.ReplyToCommand("Weapon info is available only in debug mode");
+            return;
+        }
+
+        _command.OnWeaponCommand(client, command);
+    }
     #endregion commands
 
     private void InitializeFileds()
