@@ -273,13 +273,13 @@ public class Command(ILogger<Command> logger) : ICommand
         }
     }
 
-    public void OnReviveCommand(CCSPlayerController client, CommandInfo command, Vector? origin)
+    public void OnReviveCommand(CCSPlayerController client, CommandInfo command, List<Vector> position)
     {
         if (client is null) return;
 
-        if (client.Health > 0)
+        if (client.PlayerPawn.Value.Health > 0)
         {
-            command.ReplyToCommand("[css] You are alive.");
+            command.ReplyToCommand("[css] You are alive."); // after connecting server, the Health is alawys 100, no matter player is dead or alive
             return;
         }
 
@@ -292,9 +292,13 @@ public class Command(ILogger<Command> logger) : ICommand
         if (!AppSettings.IsDebug)
             client.Score -= 50;
         client.Respawn();
-
-        if (origin is not null)
-            client.Pawn.Value!.Teleport(origin);
+        Server.NextFrameAsync(() =>
+        {
+            client.Pawn.Value.Teleport(
+                position[0],
+                new QAngle(position[1].X, position[1].Y, position[1].Z),
+                position[2]);
+        });
     }
 
     public void OnWeaponCommand(CCSPlayerController client, CommandInfo command)

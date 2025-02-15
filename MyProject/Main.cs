@@ -29,7 +29,7 @@ public class Main(
 
     // fields
     private readonly Dictionary<ulong, string> _players = [];
-    private readonly Dictionary<string, Vector> _origins = [];
+    private readonly Dictionary<string, List<Vector>> _position = []; // origin, rotation, velocity
     private int _playerCount = 0;
     private int _roundCount = 0;
     private bool _warmup = true;
@@ -81,9 +81,15 @@ public class Main(
     private HookResult PlayerDeathHandler(EventPlayerDeath @event, GameEventInfo info)
     {
         var player = @event.Userid;
-        var origin = player.PlayerPawn.Value.AbsOrigin;
+        if (player is null || !player.IsValid || player.IsBot || !_position.ContainsKey(player.PlayerName)) return HookResult.Continue;
 
-        _origins[player.PlayerName] = origin;
+        var origin = new Vector(player.PlayerPawn.Value.AbsOrigin.X, player.PlayerPawn.Value.AbsOrigin.Y, player.PlayerPawn.Value.AbsOrigin.Z);
+        var rotation = new QAngle(player.PlayerPawn.Value.AbsRotation.X, player.PlayerPawn.Value.AbsRotation.Y, player.PlayerPawn.Value.AbsRotation.Z);
+        var velocity = new Vector(player.PlayerPawn.Value.AbsVelocity.X, player.PlayerPawn.Value.AbsVelocity.Y, player.PlayerPawn.Value.AbsVelocity.Z);
+
+        _position[player.PlayerName][0] = origin;
+        _position[player.PlayerName][1] = new Vector(rotation.X, rotation.Y, rotation.Z);
+        _position[player.PlayerName][2] = velocity;
 
         return HookResult.Continue;
     }
@@ -166,13 +172,13 @@ public class Main(
         if (!_players.ContainsKey(player.SteamID))
         {
             _players.Add(player.SteamID, player.PlayerName);
-            _origins.Add(player.PlayerName, Vector.Zero);
+            _position.Add(player.PlayerName, new List<Vector>());
         }
         else
-        {
             _players[player.SteamID] = player.PlayerName;
-            _origins[player.PlayerName] = Vector.Zero;
-        }
+
+        for (int i = 0; i < 3; i++)
+            _position[player.PlayerName].Add(Vector.Zero);
 
         return HookResult.Continue;
     }
@@ -186,7 +192,7 @@ public class Main(
         _playerCount--;
         _logger.LogInformation("{client} has disconnected at {DT}", player.PlayerName, DateTime.Now);
         _players.Remove(player.SteamID);
-        _origins.Remove(player.PlayerName);
+        _position.Remove(player.PlayerName);
 
         return HookResult.Continue;
     }
@@ -349,7 +355,12 @@ public class Main(
     [ConsoleCommand("css_revive", "revive command")]
     public void OnReviveCommand(CCSPlayerController client, CommandInfo command)
     {
-        _command.OnReviveCommand(client, command, _origins[client.PlayerName]);
+        if ((AppSettings.IsDebug))
+        {
+            command.ReplyToCommand($"X: {_position[client.PlayerName][0].X} Y: {_position[client.PlayerName][0].Y} Z: {_position[client.PlayerName][0].Z}");
+        }
+
+        _command.OnReviveCommand(client, command, _position[client.PlayerName]);
     }
     #endregion commands
 
@@ -360,7 +371,7 @@ public class Main(
         _winStreak = 0;
         _warmup = true;
         _players.Clear();
-        _origins.Clear();
+        _position.Clear();
     }
 
     private string GetTargetNameByKeyword(string keyword)
