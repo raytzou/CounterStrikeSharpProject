@@ -8,6 +8,7 @@ using CounterStrikeSharp.API.Modules.Entities.Constants;
 using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
 using MyProject.Classes;
+using MyProject.Models;
 using MyProject.PluginInterfaces;
 
 namespace MyProject;
@@ -29,7 +30,7 @@ public class Main(
 
     // fields
     private readonly Dictionary<ulong, string> _players = [];
-    private readonly Dictionary<string, List<Vector>> _position = []; // origin, rotation, velocity
+    private readonly Dictionary<string, Position> _position = [];
     private int _playerCount = 0;
     private int _roundCount = 0;
     private bool _warmup = true;
@@ -87,9 +88,9 @@ public class Main(
         var rotation = new QAngle(player.PlayerPawn.Value.AbsRotation.X, player.PlayerPawn.Value.AbsRotation.Y, player.PlayerPawn.Value.AbsRotation.Z);
         var velocity = new Vector(player.PlayerPawn.Value.AbsVelocity.X, player.PlayerPawn.Value.AbsVelocity.Y, player.PlayerPawn.Value.AbsVelocity.Z);
 
-        _position[player.PlayerName][0] = origin;
-        _position[player.PlayerName][1] = new Vector(rotation.X, rotation.Y, rotation.Z);
-        _position[player.PlayerName][2] = velocity;
+        _position[player.PlayerName].Origin = origin;
+        _position[player.PlayerName].Rotation = rotation;
+        _position[player.PlayerName].Velocity = velocity;
 
         return HookResult.Continue;
     }
@@ -172,13 +173,10 @@ public class Main(
         if (!_players.ContainsKey(player.SteamID))
         {
             _players.Add(player.SteamID, player.PlayerName);
-            _position.Add(player.PlayerName, new List<Vector>());
+            _position.Add(player.PlayerName, new Position());
         }
         else
             _players[player.SteamID] = player.PlayerName;
-
-        for (int i = 0; i < 3; i++)
-            _position[player.PlayerName].Add(Vector.Zero);
 
         return HookResult.Continue;
     }
@@ -357,7 +355,7 @@ public class Main(
     {
         if ((AppSettings.IsDebug))
         {
-            command.ReplyToCommand($"X: {_position[client.PlayerName][0].X} Y: {_position[client.PlayerName][0].Y} Z: {_position[client.PlayerName][0].Z}");
+            command.ReplyToCommand($"X: {_position[client.PlayerName].Origin.X} Y: {_position[client.PlayerName].Origin.Y} Z: {_position[client.PlayerName].Origin.Z}");
         }
 
         _command.OnReviveCommand(client, command, _position[client.PlayerName]);

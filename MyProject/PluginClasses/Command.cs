@@ -2,9 +2,9 @@
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
-using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
 using MyProject.Classes;
+using MyProject.Models;
 using MyProject.PluginInterfaces;
 
 namespace MyProject.PluginClasses;
@@ -273,7 +273,7 @@ public class Command(ILogger<Command> logger) : ICommand
         }
     }
 
-    public void OnReviveCommand(CCSPlayerController client, CommandInfo command, List<Vector> position)
+    public void OnReviveCommand(CCSPlayerController client, CommandInfo command, Position position)
     {
         if (client is null) return;
 
@@ -294,10 +294,7 @@ public class Command(ILogger<Command> logger) : ICommand
         client.Respawn();
         Server.NextFrameAsync(() =>
         {
-            client.Pawn.Value.Teleport(
-                position[0],
-                new QAngle(position[1].X, position[1].Y, position[1].Z),
-                position[2]);
+            client.Pawn.Value.Teleport(position.Origin, position.Rotation, position.Velocity);
         });
     }
 
