@@ -32,7 +32,7 @@ public class Main(
     private readonly HashSet<string> _players = [];
     private readonly Dictionary<string, Position> _position = [];
     private readonly Dictionary<string, WeaponStatus> _weaponStatus = [];
-    private CounterStrikeSharp.API.Modules.Timers.Timer? temp = null;
+    private CounterStrikeSharp.API.Modules.Timers.Timer? _weaponCheckTimer = null;
     private int _roundCount = 0;
     private bool _warmup = true;
     private int _winStreak = 0;
@@ -119,7 +119,7 @@ public class Main(
                 RemovePlayerProtection(player);
             }
 
-            temp = AddTimer(2f, () =>
+            _weaponCheckTimer = AddTimer(2f, () =>
             {
                 foreach(var pair in _weaponStatus)
                 {
@@ -161,6 +161,7 @@ public class Main(
             if (!AppSettings.IsDebug)
                 _bot.RoundEndBehavior(BotQuota, _roundCount, _winStreak, _looseStreak);
 
+            _weaponCheckTimer?.Kill();
             _roundCount++;
         }
 
