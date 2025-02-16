@@ -306,6 +306,12 @@ public class Command(ILogger<Command> logger) : ICommand
 
     public void OnDebugCommand(CCSPlayerController client, CommandInfo command)
     {
+        if (!AppSettings.IsDebug)
+        {
+            command.ReplyToCommand("debug command is available only in debug mode");
+            return;
+        }
+
         if (client is null || client.PlayerPawn.Value is null)
             return;
 
@@ -315,11 +321,17 @@ public class Command(ILogger<Command> logger) : ICommand
             command.ReplyToCommand($"weapon services is null");
             return;
         }
+
         var weaponServiceValue = weaponServices.ActiveWeapon.Value;
         if (weaponServiceValue is null)
             command.ReplyToCommand($"weapon service value is null");
         else
             command.ReplyToCommand($"Weapon: {weaponServiceValue.DesignerName}");
+
+        foreach(var weapon in weaponServices.MyWeapons)
+        {
+            command.ReplyToCommand(weapon.Value.DesignerName);
+        }
     }
 
     private static void ReviveCallBack(ref float time, CCSPlayerController client, Position position, CounterStrikeSharp.API.Modules.Timers.Timer? timer)

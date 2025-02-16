@@ -342,12 +342,6 @@ public class Main(
     [ConsoleCommand("css_debug", "debug info")]
     public void OnDebugCommand(CCSPlayerController client, CommandInfo command)
     {
-        if (AppSettings.IsDebug)
-        {
-            command.ReplyToCommand("debug command is available only in debug mode");
-            return;
-        }
-
         _command.OnDebugCommand(client, command);
     }
 
