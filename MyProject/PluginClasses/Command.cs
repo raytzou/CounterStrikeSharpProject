@@ -2,6 +2,7 @@
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
+using CounterStrikeSharp.API.Modules.Timers;
 using Microsoft.Extensions.Logging;
 using MyProject.Classes;
 using MyProject.Models;
@@ -293,12 +294,14 @@ public class Command(ILogger<Command> logger) : ICommand
             command.ReplyToCommand($"X: {position.Origin.X} Y: {position.Origin.Y} Z: {position.Origin.Z}");
         else
             client.Score -= 50;
-        
-        client.Respawn();
-        Server.NextFrameAsync(() =>
+
+        float time = 1f;
+        CounterStrikeSharp.API.Modules.Timers.Timer? timer = null;
+
+        timer = Utility.MyAddTimer(time, () =>
         {
-            client.Pawn.Value.Teleport(position.Origin, position.Rotation, position.Velocity);
-        });
+            ReviveCallBack(ref time, client, position, timer);
+        }, TimerFlags.REPEAT);
     }
 
     public void OnWeaponCommand(CCSPlayerController client, CommandInfo command)
@@ -317,5 +320,25 @@ public class Command(ILogger<Command> logger) : ICommand
             command.ReplyToCommand($"weapon service value is null");
         else
             command.ReplyToCommand($"Weapon: {weaponServiceValue.DesignerName}");
+    }
+
+    private static void ReviveCallBack(ref float time, CCSPlayerController client, Position position, CounterStrikeSharp.API.Modules.Timers.Timer? timer)
+    {
+        time++;
+
+        if ((5 - time) >= 1)
+        {
+            client.PrintToCenter($"Revive in {5 - time}");
+        }
+        else
+        {
+            client.PrintToCenter($"You have benn revived.");
+            client.Respawn();
+            Server.NextFrameAsync(() =>
+            {
+                client.Pawn.Value!.Teleport(position.Origin, position.Rotation, position.Velocity);
+            });
+            timer?.Kill();
+        }
     }
 }
