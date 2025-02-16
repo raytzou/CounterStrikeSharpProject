@@ -328,9 +328,9 @@ public class Main(
     [ConsoleCommand("css_god", "enable godmode")]
     public void OnGodCommand(CCSPlayerController client, CommandInfo command)
     {
-        if (AppSettings.IsDebug)
+        if (!ConVar.Find("sv_cheats")!.GetPrimitiveValue<bool>())
         {
-            command.ReplyToCommand("God mode is available only in debug mode");
+            command.ReplyToCommand("God mode is available only when sv_cheats is true");
             return;
         }
 
