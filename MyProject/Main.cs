@@ -31,6 +31,7 @@ public class Main(
     // fields
     private readonly HashSet<string> _players = [];
     private readonly Dictionary<string, Position> _position = [];
+    private readonly Dictionary<string, WeaponStatus> _weaponStatus = [];
     private int _roundCount = 0;
     private bool _warmup = true;
     private int _winStreak = 0;
@@ -82,7 +83,11 @@ public class Main(
     private HookResult PlayerDeathHandler(EventPlayerDeath @event, GameEventInfo info)
     {
         var player = @event.Userid;
-        if (player is null || !player.IsValid || player.IsBot || !_position.TryGetValue(player.PlayerName, out Position? playerPosition)) return HookResult.Continue;
+        if (player is null ||
+            !player.IsValid ||
+            player.IsBot ||
+            !_position.TryGetValue(player.PlayerName, out Position? playerPosition))
+            return HookResult.Continue;
 
         var origin = new Vector(player.PlayerPawn.Value!.AbsOrigin?.X ?? 0f, player.PlayerPawn.Value!.AbsOrigin?.Y ?? 0f, player.PlayerPawn.Value!.AbsOrigin?.Z ?? 0f);
         var rotation = new QAngle(player.PlayerPawn.Value!.AbsRotation?.X ?? 0f, player.PlayerPawn.Value!.AbsRotation?.Y ?? 0f, player.PlayerPawn.Value!.AbsRotation?.Z ?? 0f);
@@ -165,14 +170,17 @@ public class Main(
     {
         var player = @event.Userid;
 
-        if (player is null || !player.IsValid || player.IsBot) return HookResult.Continue;
-
-        _logger.LogInformation("{client} has connected at {DT}, IP: {ipAddress}, SteamID: {steamID}", player.PlayerName, DateTime.Now, player.IpAddress, player.SteamID);
-
-        if (!_position.ContainsKey(player.PlayerName))
-            _position.Add(player.PlayerName, new Position());
+        if (player is null || !player.IsValid || player.IsBot)
+            return HookResult.Continue;
 
         _players.Add(player.PlayerName);
+        _logger.LogInformation("{client} has connected at {DT}, IP: {ipAddress}, SteamID: {steamID}", player.PlayerName, DateTime.Now, player.IpAddress, player.SteamID);
+
+        if (!_players.Contains(player.PlayerName))
+        {
+            _position.Add(player.PlayerName, new Position());
+            _weaponStatus.Add(player.PlayerName, new WeaponStatus());
+        }
 
         return HookResult.Continue;
     }
@@ -181,11 +189,13 @@ public class Main(
     {
         var player = @event.Userid;
 
-        if (player is null || !player.IsValid || player.IsBot) return HookResult.Continue;
+        if (player is null || !player.IsValid || player.IsBot)
+            return HookResult.Continue;
 
         _logger.LogInformation("{client} has disconnected at {DT}", player.PlayerName, DateTime.Now);
         _players.Remove(player.PlayerName);
         _position.Remove(player.PlayerName);
+        _weaponStatus.Remove(player.PlayerName);
 
         return HookResult.Continue;
     }
@@ -353,6 +363,7 @@ public class Main(
         _warmup = true;
         _players.Clear();
         _position.Clear();
+        _weaponStatus.Clear();
     }
 
     private string GetTargetNameByKeyword(string keyword)
