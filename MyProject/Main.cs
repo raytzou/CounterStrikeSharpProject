@@ -324,7 +324,7 @@ public class Main(
         _command.OnSlayCommand(client, command, targetName);
     }
 
-    [RequiresPermissions("@css/kick")]
+    [RequiresPermissions("@css/cheats")]
     [ConsoleCommand("css_god", "enable godmode")]
     public void OnGodCommand(CCSPlayerController client, CommandInfo command)
     {
@@ -337,7 +337,7 @@ public class Main(
         _command.OnGodCommand(client, command);
     }
 
-    [RequiresPermissions("@css/kick")]
+    [RequiresPermissions("@css/root")]
     [ConsoleCommand("css_weapon", "weapon info")]
     public void OnWeaponCommand(CCSPlayerController client, CommandInfo command)
     {
