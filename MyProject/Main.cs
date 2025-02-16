@@ -46,6 +46,7 @@ public class Main(
     private const int BotQuota = 20; // should I write a cfg file? .Net way or plugin way? or probably a .txt with IO API lol?
     private const float ChangeMapTimeBuffer = 2f;
     private const int SpawnPointCount = 10;
+    private const int CostScoreToRevive = 50;
 
     public override void Load(bool hotreload)
     {
@@ -353,7 +354,7 @@ public class Main(
     [ConsoleCommand("css_revive", "revive command")]
     public void OnReviveCommand(CCSPlayerController client, CommandInfo command)
     {
-        _command.OnReviveCommand(client, command, _position[client.PlayerName]);
+        _command.OnReviveCommand(client, command, CostScoreToRevive, _position[client.PlayerName]);
     }
     #endregion commands
 

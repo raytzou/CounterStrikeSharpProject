@@ -22,7 +22,7 @@ namespace MyProject.PluginInterfaces
 
         void OnGodCommand(CCSPlayerController client, CommandInfo command);
 
-        void OnReviveCommand(CCSPlayerController client, CommandInfo command, Position position);
+        void OnReviveCommand(CCSPlayerController client, CommandInfo command, int costScore, Position position);
 
         void OnWeaponCommand(CCSPlayerController client, CommandInfo command);
     }
