@@ -29,7 +29,7 @@ public class Main(
     private readonly ILogger<Main> _logger = logger;
 
     // fields
-    private readonly Dictionary<ulong, string> _players = [];
+    private readonly HashSet<string> _players = [];
     private readonly Dictionary<string, Position> _position = [];
     private int _playerCount = 0;
     private int _roundCount = 0;
@@ -171,13 +171,10 @@ public class Main(
         _playerCount++;
         _logger.LogInformation("{client} has connected at {DT}, IP: {ipAddress}, SteamID: {steamID}", player.PlayerName, DateTime.Now, player.IpAddress, player.SteamID);
 
-        if (!_players.ContainsKey(player.SteamID))
-        {
-            _players.Add(player.SteamID, player.PlayerName);
+        if (!_position.ContainsKey(player.PlayerName))
             _position.Add(player.PlayerName, new Position());
-        }
-        else
-            _players[player.SteamID] = player.PlayerName;
+
+        _players.Add(player.PlayerName);
 
         return HookResult.Continue;
     }
@@ -190,7 +187,7 @@ public class Main(
 
         _playerCount--;
         _logger.LogInformation("{client} has disconnected at {DT}", player.PlayerName, DateTime.Now);
-        _players.Remove(player.SteamID);
+        _players.Remove(player.PlayerName);
         _position.Remove(player.PlayerName);
 
         return HookResult.Continue;
@@ -366,9 +363,9 @@ public class Main(
     {
         int ctr = 0;
 
-        foreach (var pair in _players)
+        foreach (var name in _players)
         {
-            if (pair.Value.Contains(keyword))
+            if (name.Contains(keyword))
             {
                 ctr++;
                 if (ctr > 1)
@@ -378,8 +375,11 @@ public class Main(
 
         if (ctr != 1)
             return string.Empty;
-        else
-            return _players.FirstOrDefault(player => player.Value.Contains(keyword)).Value;
+
+        if (_players.TryGetValue(keyword, out string target))
+            return target;
+
+        return string.Empty;
     }
 
     private static void SetPlayerProtection(CCSPlayerController? player)
