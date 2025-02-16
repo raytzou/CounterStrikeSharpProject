@@ -32,6 +32,7 @@ public class Main(
     private readonly HashSet<string> _players = [];
     private readonly Dictionary<string, Position> _position = [];
     private readonly Dictionary<string, WeaponStatus> _weaponStatus = [];
+    private CounterStrikeSharp.API.Modules.Timers.Timer? temp = null;
     private int _roundCount = 0;
     private bool _warmup = true;
     private int _winStreak = 0;
@@ -77,6 +78,8 @@ public class Main(
         else
             RemovePlayerProtection(player);
 
+        _weaponStatus[player.PlayerName].IsActive = false;
+
         return HookResult.Continue;
     }
 
@@ -96,6 +99,7 @@ public class Main(
         playerPosition.Origin = origin;
         playerPosition.Rotation = rotation;
         playerPosition.Velocity = velocity;
+        _weaponStatus[player.PlayerName].IsActive = false;
 
         return HookResult.Continue;
     }
@@ -114,6 +118,17 @@ public class Main(
             {
                 RemovePlayerProtection(player);
             }
+
+            temp = AddTimer(2f, () =>
+            {
+                foreach(var pair in _weaponStatus)
+                {
+                    if (!pair.Value.IsActive)
+                        continue;
+
+                    pair.Value.Weapons = Utilities.GetPlayers().First(player => player.PlayerName == pair.Key).PlayerPawn.Value.WeaponServices.MyWeapons;
+                }
+            }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
         }
 
         if (!AppSettings.IsDebug)
