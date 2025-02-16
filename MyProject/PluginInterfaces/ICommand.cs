@@ -24,6 +24,6 @@ namespace MyProject.PluginInterfaces
 
         void OnReviveCommand(CCSPlayerController client, CommandInfo command, int costScore, Position position);
 
-        void OnWeaponCommand(CCSPlayerController client, CommandInfo command);
+        void OnDebugCommand(CCSPlayerController client, CommandInfo command);
     }
 }

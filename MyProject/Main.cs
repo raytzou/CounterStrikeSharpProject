@@ -339,16 +339,16 @@ public class Main(
     }
 
     [RequiresPermissions("@css/root")]
-    [ConsoleCommand("css_weapon", "weapon info")]
-    public void OnWeaponCommand(CCSPlayerController client, CommandInfo command)
+    [ConsoleCommand("css_debug", "debug info")]
+    public void OnDebugCommand(CCSPlayerController client, CommandInfo command)
     {
         if (AppSettings.IsDebug)
         {
-            command.ReplyToCommand("Weapon info is available only in debug mode");
+            command.ReplyToCommand("debug command is available only in debug mode");
             return;
         }
 
-        _command.OnWeaponCommand(client, command);
+        _command.OnDebugCommand(client, command);
     }
 
     [ConsoleCommand("css_revive", "revive command")]

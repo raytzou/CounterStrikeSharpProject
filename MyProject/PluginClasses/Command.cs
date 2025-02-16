@@ -304,7 +304,7 @@ public class Command(ILogger<Command> logger) : ICommand
         }, TimerFlags.REPEAT);
     }
 
-    public void OnWeaponCommand(CCSPlayerController client, CommandInfo command)
+    public void OnDebugCommand(CCSPlayerController client, CommandInfo command)
     {
         if (client is null || client.PlayerPawn.Value is null)
             return;
