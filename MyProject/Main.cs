@@ -353,11 +353,6 @@ public class Main(
     [ConsoleCommand("css_revive", "revive command")]
     public void OnReviveCommand(CCSPlayerController client, CommandInfo command)
     {
-        if ((AppSettings.IsDebug))
-        {
-            command.ReplyToCommand($"X: {_position[client.PlayerName].Origin.X} Y: {_position[client.PlayerName].Origin.Y} Z: {_position[client.PlayerName].Origin.Z}");
-        }
-
         _command.OnReviveCommand(client, command, _position[client.PlayerName]);
     }
     #endregion commands

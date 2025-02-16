@@ -289,8 +289,11 @@ public class Command(ILogger<Command> logger) : ICommand
             return;
         }
 
-        if (!AppSettings.IsDebug)
+        if (AppSettings.IsDebug)
+            command.ReplyToCommand($"X: {position.Origin.X} Y: {position.Origin.Y} Z: {position.Origin.Z}");
+        else
             client.Score -= 50;
+        
         client.Respawn();
         Server.NextFrameAsync(() =>
         {
