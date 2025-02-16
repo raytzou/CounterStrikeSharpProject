@@ -31,7 +31,6 @@ public class Main(
     // fields
     private readonly HashSet<string> _players = [];
     private readonly Dictionary<string, Position> _position = [];
-    private int _playerCount = 0;
     private int _roundCount = 0;
     private bool _warmup = true;
     private int _winStreak = 0;
@@ -168,7 +167,6 @@ public class Main(
 
         if (player is null || !player.IsValid || player.IsBot) return HookResult.Continue;
 
-        _playerCount++;
         _logger.LogInformation("{client} has connected at {DT}, IP: {ipAddress}, SteamID: {steamID}", player.PlayerName, DateTime.Now, player.IpAddress, player.SteamID);
 
         if (!_position.ContainsKey(player.PlayerName))
@@ -185,7 +183,6 @@ public class Main(
 
         if (player is null || !player.IsValid || player.IsBot) return HookResult.Continue;
 
-        _playerCount--;
         _logger.LogInformation("{client} has disconnected at {DT}", player.PlayerName, DateTime.Now);
         _players.Remove(player.PlayerName);
         _position.Remove(player.PlayerName);
@@ -283,7 +280,7 @@ public class Main(
     [ConsoleCommand("css_info", "Server Info")]
     public void OnInfoCommand(CCSPlayerController client, CommandInfo command)
     {
-        _command.OnInfoCommand(client, command, _playerCount, _roundCount);
+        _command.OnInfoCommand(client, command, _players.Count, _roundCount);
     }
 
     [RequiresPermissions("@css/changemap")]
@@ -352,7 +349,6 @@ public class Main(
     private void InitializeFileds()
     {
         _roundCount = 0;
-        _playerCount = 0;
         _winStreak = 0;
         _warmup = true;
         _players.Clear();
