@@ -278,7 +278,7 @@ public class Command(ILogger<Command> logger) : ICommand
     {
         if (client is null) return;
 
-        if (client.PlayerPawn.Value.Health > 0)
+        if (client.PlayerPawn.Value!.Health > 0)
         {
             command.ReplyToCommand("[css] You are alive."); // after connecting server, the Health is alawys 100, no matter player is dead or alive
             return;
