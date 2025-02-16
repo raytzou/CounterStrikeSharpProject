@@ -102,22 +102,22 @@ public class Main(
 
     private HookResult RoundStartHandler(EventRoundStart eventRoundStart, GameEventInfo gameEventInfo)
     {
-        if (!_warmup && _roundCount != ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>())
-        {
-            Server.PrintToChatAll($"Round: {_roundCount}");
-            Server.PrintToChatAll($"Difficulty level: {_bot.CurrentLevel}/{BotProfile.MaxLevel}");
-        }
-
-        if (!AppSettings.IsDebug)
-            _bot.RoundStartBehavior(_roundCount);
-
         if (!_warmup)
         {
+            if (_roundCount != ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>())
+            {
+                Server.PrintToChatAll($"Round: {_roundCount}");
+                Server.PrintToChatAll($"Difficulty level: {_bot.CurrentLevel}/{BotProfile.MaxLevel}");
+            }
+
             foreach (var player in Utilities.GetPlayers())
             {
                 RemovePlayerProtection(player);
             }
         }
+
+        if (!AppSettings.IsDebug)
+            _bot.RoundStartBehavior(_roundCount);
 
         if (_roundCount == ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>())
         {
