@@ -141,11 +141,13 @@ public class Main(
             _winStreak = 0;
         }
 
-        if (!AppSettings.IsDebug)
-            _bot.RoundEndBehavior(BotQuota, _roundCount, _winStreak, _looseStreak);
-
         if (!_warmup)
+        {
+            if (!AppSettings.IsDebug)
+                _bot.RoundEndBehavior(BotQuota, _roundCount, _winStreak, _looseStreak);
+
             _roundCount++;
+        }
 
         return HookResult.Continue;
     }
