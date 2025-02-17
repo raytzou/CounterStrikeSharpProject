@@ -136,8 +136,11 @@ public class Main(
                         Server.PrintToChatAll($"tracking: {pair.Key}");
 
                     pair.Value.Weapons.Clear();
-                    foreach (var weapon in Utilities.GetPlayers().First(player => player.PlayerName == pair.Key).PlayerPawn.Value.WeaponServices.MyWeapons)
+                    var playerWeaponService = Utilities.GetPlayers().First(player => player.PlayerName == pair.Key).PlayerPawn.Value!.WeaponServices;
+                    if (playerWeaponService is null) continue;
+                    foreach (var weapon in playerWeaponService.MyWeapons)
                     {
+                        if (weapon.Value is null) continue;
                         pair.Value.Weapons.Add(weapon.Value.DesignerName);
                     }
                     if (AppSettings.IsDebug)
@@ -215,7 +218,6 @@ public class Main(
         {
             _position.Add(player.PlayerName, new Position());
             _weaponStatus.Add(player.PlayerName, new WeaponStatus());
-            _weaponStatus[player.PlayerName].Weapons = new List<string>();
         }
 
         _players.Add(player.PlayerName);
@@ -420,9 +422,9 @@ public class Main(
         if (ctr != 1)
             return string.Empty;
 
-        foreach(var name in _players)
+        foreach (var name in _players)
         {
-            if (name.Contains(keyword)) 
+            if (name.Contains(keyword))
                 return name;
         }
 

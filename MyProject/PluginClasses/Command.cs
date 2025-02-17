@@ -331,7 +331,8 @@ public class Command(ILogger<Command> logger) : ICommand
 
         foreach (var weapon in weaponServices.MyWeapons)
         {
-            command.ReplyToCommand($"my weapons: {weapon.Value.DesignerName}");
+            if (weapon.Value is not null)
+                command.ReplyToCommand($"my weapons: {weapon.Value.DesignerName}");
         }
 
         if (weaponStatus is null)
