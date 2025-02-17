@@ -48,6 +48,7 @@ public class Main(
     private const float ChangeMapTimeBuffer = 2f;
     private const int SpawnPointCount = 10;
     private const int CostScoreToRevive = 50;
+    private const float WeaponCheckTime = 3f;
 
     public override void Load(bool hotreload)
     {
@@ -78,7 +79,8 @@ public class Main(
         else
             RemovePlayerProtection(player);
 
-        _weaponStatus[player.PlayerName].IsActive = false;
+        if (!player.IsBot)
+            _weaponStatus[player.PlayerName].IsActive = true;
 
         return HookResult.Continue;
     }
@@ -119,14 +121,30 @@ public class Main(
                 RemovePlayerProtection(player);
             }
 
-            _weaponCheckTimer = AddTimer(2f, () =>
+            foreach (var pair in _weaponStatus)
+                pair.Value.IsActive = true;
+
+            _weaponCheckTimer = AddTimer(WeaponCheckTime, () =>
             {
-                foreach(var pair in _weaponStatus)
+                if (AppSettings.IsDebug)
+                    Server.PrintToChatAll("weapon check");
+                foreach (var pair in _weaponStatus)
                 {
                     if (!pair.Value.IsActive)
                         continue;
+                    if (AppSettings.IsDebug)
+                        Server.PrintToChatAll($"tracking: {pair.Key}");
 
-                    pair.Value.Weapons = Utilities.GetPlayers().First(player => player.PlayerName == pair.Key).PlayerPawn.Value.WeaponServices.MyWeapons;
+                    pair.Value.Weapons.Clear();
+                    foreach (var weapon in Utilities.GetPlayers().First(player => player.PlayerName == pair.Key).PlayerPawn.Value.WeaponServices.MyWeapons)
+                    {
+                        pair.Value.Weapons.Add(weapon.Value.DesignerName);
+                    }
+                    if (AppSettings.IsDebug)
+                    {
+                        foreach (var cacheWeapon in pair.Value.Weapons)
+                            Server.PrintToChatAll(cacheWeapon);
+                    }
                 }
             }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
         }
@@ -164,7 +182,7 @@ public class Main(
             _weaponCheckTimer?.Kill();
             _roundCount++;
         }
-
+        _weaponCheckTimer?.Kill();
         return HookResult.Continue;
     }
 
@@ -191,15 +209,16 @@ public class Main(
         if (player is null || !player.IsValid || player.IsBot)
             return HookResult.Continue;
 
-        _players.Add(player.PlayerName);
         _logger.LogInformation("{client} has connected at {DT}, IP: {ipAddress}, SteamID: {steamID}", player.PlayerName, DateTime.Now, player.IpAddress, player.SteamID);
 
         if (!_players.Contains(player.PlayerName))
         {
             _position.Add(player.PlayerName, new Position());
             _weaponStatus.Add(player.PlayerName, new WeaponStatus());
+            _weaponStatus[player.PlayerName].Weapons = new List<string>();
         }
 
+        _players.Add(player.PlayerName);
         return HookResult.Continue;
     }
 
@@ -364,13 +383,13 @@ public class Main(
     [ConsoleCommand("css_debug", "debug info")]
     public void OnDebugCommand(CCSPlayerController client, CommandInfo command)
     {
-        _command.OnDebugCommand(client, command);
+        _command.OnDebugCommand(client, command, _weaponStatus);
     }
 
     [ConsoleCommand("css_revive", "revive command")]
     public void OnReviveCommand(CCSPlayerController client, CommandInfo command)
     {
-        _command.OnReviveCommand(client, command, CostScoreToRevive, _position[client.PlayerName]);
+        _command.OnReviveCommand(client, command, CostScoreToRevive, _position[client.PlayerName], _weaponStatus);
     }
     #endregion commands
 

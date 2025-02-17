@@ -1,5 +1,6 @@
 ﻿using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Commands;
+using CounterStrikeSharp.API.Modules.Utils;
 using MyProject.Models;
 
 namespace MyProject.PluginInterfaces
@@ -22,8 +23,8 @@ namespace MyProject.PluginInterfaces
 
         void OnGodCommand(CCSPlayerController client, CommandInfo command);
 
-        void OnReviveCommand(CCSPlayerController client, CommandInfo command, int costScore, Position position);
+        void OnReviveCommand(CCSPlayerController client, CommandInfo command, int costScore, Position position, Dictionary<string, WeaponStatus> weaponStatus);
 
-        void OnDebugCommand(CCSPlayerController client, CommandInfo command);
+        void OnDebugCommand(CCSPlayerController client, CommandInfo command, Dictionary<string, WeaponStatus> weaponStatus);
     }
 }

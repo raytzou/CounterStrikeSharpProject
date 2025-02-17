@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using MyProject.Classes;
 using MyProject.Models;
 using MyProject.PluginInterfaces;
+using Timer = CounterStrikeSharp.API.Modules.Timers.Timer;
 
 namespace MyProject.PluginClasses;
 
@@ -274,7 +275,7 @@ public class Command(ILogger<Command> logger) : ICommand
         }
     }
 
-    public void OnReviveCommand(CCSPlayerController client, CommandInfo command, int costScore, Position position)
+    public void OnReviveCommand(CCSPlayerController client, CommandInfo command, int costScore, Position position, Dictionary<string, WeaponStatus> weaponStatus)
     {
         if (client is null) return;
 
@@ -300,11 +301,11 @@ public class Command(ILogger<Command> logger) : ICommand
 
         timer = Utility.MyAddTimer(time, () =>
         {
-            ReviveCallBack(ref time, client, position, timer);
+            ReviveCallBack(ref time, client, position, timer, weaponStatus);
         }, TimerFlags.REPEAT);
     }
 
-    public void OnDebugCommand(CCSPlayerController client, CommandInfo command)
+    public void OnDebugCommand(CCSPlayerController client, CommandInfo command, Dictionary<string, WeaponStatus> weaponStatus)
     {
         if (!AppSettings.IsDebug)
         {
@@ -328,13 +329,24 @@ public class Command(ILogger<Command> logger) : ICommand
         else
             command.ReplyToCommand($"Weapon: {weaponServiceValue.DesignerName}");
 
-        foreach(var weapon in weaponServices.MyWeapons)
+        foreach (var weapon in weaponServices.MyWeapons)
         {
-            command.ReplyToCommand(weapon.Value.DesignerName);
+            command.ReplyToCommand($"my weapons: {weapon.Value.DesignerName}");
+        }
+
+        if (weaponStatus is null)
+        {
+            command.ReplyToCommand("weaponStatus is null");
+            return;
+        }
+
+        foreach (var weapon in weaponStatus[client.PlayerName].Weapons)
+        {
+            command.ReplyToCommand($"weapon cache: {weapon}");
         }
     }
 
-    private static void ReviveCallBack(ref float time, CCSPlayerController client, Position position, CounterStrikeSharp.API.Modules.Timers.Timer? timer)
+    private static void ReviveCallBack(ref float time, CCSPlayerController client, Position position, Timer? timer, Dictionary<string, WeaponStatus> weaponStatus)
     {
         time++;
 
@@ -344,11 +356,19 @@ public class Command(ILogger<Command> logger) : ICommand
         }
         else
         {
-            client.PrintToCenter($"You have benn revived.");
+            client.PrintToCenter($"You have been revived.");
             client.Respawn();
             Server.NextFrameAsync(() =>
             {
                 client.Pawn.Value!.Teleport(position.Origin, position.Rotation, position.Velocity);
+                client.RemoveWeapons();
+
+                foreach (var weapon in weaponStatus[client.PlayerName].Weapons)
+                {
+                    if (AppSettings.IsDebug)
+                        client.PrintToChat($"try to give: {weapon}");
+                    client.GiveNamedItem(weapon);
+                }
             });
             timer?.Kill();
         }
