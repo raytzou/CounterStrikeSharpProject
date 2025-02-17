@@ -4,6 +4,6 @@
     {
         public bool IsActive { get; set; }
 
-        public List<string> Weapons;
+        public List<string> Weapons { get; set; }
     }
 }
