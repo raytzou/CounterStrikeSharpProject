@@ -420,8 +420,11 @@ public class Main(
         if (ctr != 1)
             return string.Empty;
 
-        if (_players.TryGetValue(keyword, out string target))
-            return target;
+        foreach(var name in _players)
+        {
+            if (name.Contains(keyword)) 
+                return name;
+        }
 
         return string.Empty;
     }
