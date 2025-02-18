@@ -103,7 +103,7 @@ public class Main(
                     _bot.RespawnBot(ref _botRespawnTimes, player, _roundCount);
                 });
             }
-            else if(_position.TryGetValue(player.PlayerName, out Position? playerPosition))
+            else if (_position.TryGetValue(player.PlayerName, out Position? playerPosition))
             {
                 var origin = new Vector(player.PlayerPawn.Value!.AbsOrigin?.X ?? 0f, player.PlayerPawn.Value!.AbsOrigin?.Y ?? 0f, player.PlayerPawn.Value!.AbsOrigin?.Z ?? 0f);
                 var rotation = new QAngle(player.PlayerPawn.Value!.AbsRotation?.X ?? 0f, player.PlayerPawn.Value!.AbsRotation?.Y ?? 0f, player.PlayerPawn.Value!.AbsRotation?.Z ?? 0f);
@@ -437,13 +437,7 @@ public class Main(
         if (ctr != 1)
             return string.Empty;
 
-        foreach (var name in _players)
-        {
-            if (name.Contains(keyword))
-                return name;
-        }
-
-        return string.Empty;
+        return _players.FirstOrDefault(name => name.Contains(keyword)) ?? string.Empty;
     }
 
     private static void SetPlayerProtection(CCSPlayerController? player)
