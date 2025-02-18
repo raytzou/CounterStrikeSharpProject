@@ -38,6 +38,7 @@ public class Main(
     private int _winStreak = 0;
     private int _looseStreak = 0;
     private static bool _restart = false;
+    private int _botRespawnTimes = 20;
 
     // plugins
     private readonly ICommand _command = commmand;
@@ -49,6 +50,7 @@ public class Main(
     private const int SpawnPointCount = 10;
     private const int CostScoreToRevive = 50;
     private const float WeaponCheckTime = 3f;
+    private const int BotRespawnTimes = 20;
 
     public override void Load(bool hotreload)
     {
@@ -89,19 +91,30 @@ public class Main(
     {
         var player = @event.Userid;
         if (player is null ||
-            !player.IsValid ||
-            player.IsBot ||
-            !_position.TryGetValue(player.PlayerName, out Position? playerPosition))
+            !player.IsValid)
             return HookResult.Continue;
 
-        var origin = new Vector(player.PlayerPawn.Value!.AbsOrigin?.X ?? 0f, player.PlayerPawn.Value!.AbsOrigin?.Y ?? 0f, player.PlayerPawn.Value!.AbsOrigin?.Z ?? 0f);
-        var rotation = new QAngle(player.PlayerPawn.Value!.AbsRotation?.X ?? 0f, player.PlayerPawn.Value!.AbsRotation?.Y ?? 0f, player.PlayerPawn.Value!.AbsRotation?.Z ?? 0f);
-        var velocity = new Vector(player.PlayerPawn.Value!.AbsVelocity?.X ?? 0f, player.PlayerPawn.Value!.AbsVelocity?.Y ?? 0f, player.PlayerPawn.Value!.AbsVelocity?.Z ?? 0f);
+        if (!_warmup)
+        {
+            if (player.IsBot && _botRespawnTimes > 0)
+            {
+                Server.NextFrameAsync(() =>
+                {
+                    _bot.RespawnBot(ref _botRespawnTimes, player, _roundCount);
+                });
+            }
+            else if(_position.TryGetValue(player.PlayerName, out Position? playerPosition))
+            {
+                var origin = new Vector(player.PlayerPawn.Value!.AbsOrigin?.X ?? 0f, player.PlayerPawn.Value!.AbsOrigin?.Y ?? 0f, player.PlayerPawn.Value!.AbsOrigin?.Z ?? 0f);
+                var rotation = new QAngle(player.PlayerPawn.Value!.AbsRotation?.X ?? 0f, player.PlayerPawn.Value!.AbsRotation?.Y ?? 0f, player.PlayerPawn.Value!.AbsRotation?.Z ?? 0f);
+                var velocity = new Vector(player.PlayerPawn.Value!.AbsVelocity?.X ?? 0f, player.PlayerPawn.Value!.AbsVelocity?.Y ?? 0f, player.PlayerPawn.Value!.AbsVelocity?.Z ?? 0f);
 
-        playerPosition.Origin = origin;
-        playerPosition.Rotation = rotation;
-        playerPosition.Velocity = velocity;
-        _weaponStatus[player.PlayerName].IsActive = false;
+                playerPosition.Origin = origin;
+                playerPosition.Rotation = rotation;
+                playerPosition.Velocity = velocity;
+                _weaponStatus[player.PlayerName].IsActive = false;
+            }
+        }
 
         return HookResult.Continue;
     }
@@ -110,10 +123,12 @@ public class Main(
     {
         if (!_warmup)
         {
+            _botRespawnTimes = BotRespawnTimes;
             if (_roundCount != ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>())
             {
                 Server.PrintToChatAll($"Round: {_roundCount}");
                 Server.PrintToChatAll($"Difficulty level: {_bot.CurrentLevel}/{BotProfile.MaxLevel}");
+                Server.PrintToChatAll($"Bot respawn: {BotRespawnTimes}");
             }
 
             foreach (var player in Utilities.GetPlayers())
@@ -329,7 +344,7 @@ public class Main(
     [ConsoleCommand("css_info", "Server Info")]
     public void OnInfoCommand(CCSPlayerController client, CommandInfo command)
     {
-        _command.OnInfoCommand(client, command, _players.Count, _roundCount);
+        _command.OnInfoCommand(client, command, _players.Count, _roundCount, _botRespawnTimes);
     }
 
     [RequiresPermissions("@css/changemap")]

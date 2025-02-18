@@ -1,4 +1,5 @@
 ﻿using CounterStrikeSharp.API;
+using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Entities.Constants;
 using Microsoft.Extensions.Logging;
 using MyProject.Classes;
@@ -114,6 +115,26 @@ public class Bot(ILogger<Bot> logger) : IBot
                 return string.Empty;
             }
         }
+    }
+
+    public void RespawnBot(ref int respawnTimes, CCSPlayerController bot, int currentRound)
+    {
+        if (bot.PlayerName == BotProfile.Special[0] ||
+            bot.PlayerName == BotProfile.Special[1] ||
+            bot.PlayerName == BotProfile.Special[2])
+            return;
+
+        bot.Respawn();
+        if (currentRound > 1)
+        {
+            Server.NextFrameAsync(() =>
+            {
+                bot.RemoveWeapons();
+                bot.PlayerPawn.Value!.WeaponServices.PreventWeaponPickup = false;
+                bot.GiveNamedItem(GetBotTeam(Server.MapName) == "ct" ? CsItem.M4A1 : CsItem.AK47);
+            });
+        };
+        respawnTimes--;
     }
 
     private static string GetBotTeam(string mapName)

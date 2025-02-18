@@ -1,4 +1,6 @@
-﻿namespace MyProject.PluginInterfaces
+﻿using CounterStrikeSharp.API.Core;
+
+namespace MyProject.PluginInterfaces
 {
     public interface IBot
     {
@@ -11,5 +13,7 @@
         void RoundStartBehavior(int roundCount);
 
         void RoundEndBehavior(int botQuota, int roundCount, int winStreak, int looseStreak);
+
+        void RespawnBot(ref int respawnTimes, CCSPlayerController bot, int currentRound);
     }
 }
