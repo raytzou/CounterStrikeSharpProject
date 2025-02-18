@@ -268,9 +268,9 @@ public class Command(ILogger<Command> logger) : ICommand
             var takeDamage = client.PlayerPawn.Value!.TakesDamage;
 
             if (takeDamage)
-                command.ReplyToCommand("[css] God mode off");
-            else
                 command.ReplyToCommand("[css] God mode on");
+            else
+                command.ReplyToCommand("[css] God mode off");
 
             client.PlayerPawn.Value.TakesDamage = !takeDamage;
         }
