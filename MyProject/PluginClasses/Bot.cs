@@ -130,7 +130,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             Server.NextFrameAsync(() =>
             {
                 bot.RemoveWeapons();
-                bot.PlayerPawn.Value!.WeaponServices.PreventWeaponPickup = false;
+                bot.PlayerPawn.Value!.WeaponServices!.PreventWeaponPickup = false;
                 bot.GiveNamedItem(GetBotTeam(Server.MapName) == "ct" ? CsItem.M4A1 : CsItem.AK47);
             });
         };
