@@ -121,47 +121,10 @@ public class Main(
     {
         if (!_warmup)
         {
-            if (_roundCount != ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>())
-            {
-                Server.PrintToChatAll($"Round: {_roundCount}");
-                Server.PrintToChatAll($"Difficulty level: {_bot.CurrentLevel}/{BotProfile.MaxLevel}");
-                Server.PrintToChatAll($"Bot respawn: {_bot.MaxRespawnTimes}");
-            }
-
-            foreach (var player in Utilities.GetPlayers())
-            {
-                RemovePlayerProtection(player);
-            }
-
-            foreach (var pair in _weaponStatus)
-                pair.Value.IsActive = true;
-
-            _weaponCheckTimer = AddTimer(WeaponCheckTime, () =>
-            {
-                if (AppSettings.IsDebug)
-                    Server.PrintToChatAll("weapon check");
-                foreach (var pair in _weaponStatus)
-                {
-                    if (!pair.Value.IsActive)
-                        continue;
-                    if (AppSettings.IsDebug)
-                        Server.PrintToChatAll($"tracking: {pair.Key}");
-
-                    pair.Value.Weapons.Clear();
-                    var playerWeaponService = Utilities.GetPlayers().First(player => player.PlayerName == pair.Key).PlayerPawn.Value!.WeaponServices;
-                    if (playerWeaponService is null) continue;
-                    foreach (var weapon in playerWeaponService.MyWeapons)
-                    {
-                        if (weapon.Value is null) continue;
-                        pair.Value.Weapons.Add(weapon.Value.DesignerName);
-                    }
-                    if (AppSettings.IsDebug)
-                    {
-                        foreach (var cacheWeapon in pair.Value.Weapons)
-                            Server.PrintToChatAll(cacheWeapon);
-                    }
-                }
-            }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
+            HandleRoundStartMessages();
+            RemoveProtectionFromAllPlayers();
+            ActivateAllWeaponStatuses();
+            StartWeaponCheckTimer();
         }
 
         if (!AppSettings.IsDebug)
@@ -174,6 +137,71 @@ public class Main(
         }
 
         return HookResult.Continue;
+
+        void HandleRoundStartMessages()
+        {
+            if (_roundCount != ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>())
+            {
+                Server.PrintToChatAll($"Round: {_roundCount}");
+                Server.PrintToChatAll($"Difficulty level: {_bot.CurrentLevel}/{BotProfile.MaxLevel}");
+                Server.PrintToChatAll($"Bot respawn: {_bot.MaxRespawnTimes}");
+            }
+        }
+
+        void RemoveProtectionFromAllPlayers()
+        {
+            foreach (var player in Utilities.GetPlayers())
+            {
+                RemovePlayerProtection(player);
+            }
+        }
+
+        void ActivateAllWeaponStatuses()
+        {
+            foreach (var pair in _weaponStatus)
+            {
+                pair.Value.IsActive = true;
+            }
+        }
+
+        void StartWeaponCheckTimer()
+        {
+            _weaponCheckTimer = AddTimer(WeaponCheckTime, () =>
+            {
+                if (AppSettings.IsDebug)
+                    Server.PrintToChatAll("weapon check");
+
+                foreach (var pair in _weaponStatus)
+                {
+                    if (!pair.Value.IsActive)
+                        continue;
+
+                    if (AppSettings.IsDebug)
+                        Server.PrintToChatAll($"tracking: {pair.Key}");
+
+                    UpdateWeaponStatus(pair);
+                }
+            }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
+
+            void UpdateWeaponStatus(KeyValuePair<string, WeaponStatus> pair)
+            {
+                pair.Value.Weapons.Clear();
+                var playerWeaponService = Utilities.GetPlayers().First(player => player.PlayerName == pair.Key).PlayerPawn.Value!.WeaponServices;
+                if (playerWeaponService is null) return;
+
+                foreach (var weapon in playerWeaponService.MyWeapons)
+                {
+                    if (weapon.Value is null) continue;
+                    pair.Value.Weapons.Add(weapon.Value.DesignerName);
+                }
+
+                if (AppSettings.IsDebug)
+                {
+                    foreach (var cacheWeapon in pair.Value.Weapons)
+                        Server.PrintToChatAll(cacheWeapon);
+                }
+            }
+        }
     }
 
     private HookResult RoundEndHandler(EventRoundEnd eventRoundEnd, GameEventInfo gameEventInfo)
