@@ -45,7 +45,7 @@ public class Main(
     private readonly IBot _bot = bot;
 
     // constants
-    private const int BotQuota = 20; // should I write a cfg file? .Net way or plugin way? or probably a .txt with IO API lol?
+    private const int BotQuota = 20;
     private const float ChangeMapTimeBuffer = 2f;
     private const int SpawnPointCount = 10;
     private const int CostScoreToRevive = 50;
