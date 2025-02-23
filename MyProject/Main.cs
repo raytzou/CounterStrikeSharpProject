@@ -37,6 +37,7 @@ public class Main(
     private bool _warmup = true;
     private int _winStreak = 0;
     private int _looseStreak = 0;
+    private bool _respawnBot = false;
     private static bool _restart = false;
 
     // plugins
@@ -94,7 +95,7 @@ public class Main(
 
         if (!_warmup)
         {
-            if (player.IsBot)
+            if (_respawnBot && player.IsBot)
             {
                 Server.NextFrameAsync(() =>
                 {
@@ -121,6 +122,7 @@ public class Main(
     {
         if (!_warmup)
         {
+            _respawnBot = true;
             Server.ExecuteCommand("mp_randomspawn 1");
             HandleRoundStartMessages();
             RemoveProtectionFromAllPlayers();
@@ -207,6 +209,8 @@ public class Main(
 
     private HookResult RoundEndHandler(EventRoundEnd eventRoundEnd, GameEventInfo gameEventInfo)
     {
+        _respawnBot = false;
+
         if (eventRoundEnd.Winner == (int)GetHumanTeam())
         {
             _winStreak++;
