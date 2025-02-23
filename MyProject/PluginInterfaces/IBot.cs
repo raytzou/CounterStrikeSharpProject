@@ -6,6 +6,10 @@ namespace MyProject.PluginInterfaces
     {
         int CurrentLevel { get; }
 
+        int MaxRespawnTimes { get; }
+
+        int RespawnTimes { get; }
+
         void MapStartBehavior();
 
         void WarmupEndBehavior(int botQuota);
@@ -14,6 +18,6 @@ namespace MyProject.PluginInterfaces
 
         void RoundEndBehavior(int botQuota, int roundCount, int winStreak, int looseStreak);
 
-        void RespawnBot(ref int respawnTimes, CCSPlayerController bot, int currentRound);
+        void RespawnBot(CCSPlayerController bot, int currentRound);
     }
 }

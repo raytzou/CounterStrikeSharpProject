@@ -38,7 +38,6 @@ public class Main(
     private int _winStreak = 0;
     private int _looseStreak = 0;
     private static bool _restart = false;
-    private int _botRespawnTimes = 20;
 
     // plugins
     private readonly ICommand _command = commmand;
@@ -50,7 +49,6 @@ public class Main(
     private const int SpawnPointCount = 10;
     private const int CostScoreToRevive = 50;
     private const float WeaponCheckTime = 3f;
-    private const int BotRespawnTimes = 20;
 
     public override void Load(bool hotreload)
     {
@@ -96,11 +94,11 @@ public class Main(
 
         if (!_warmup)
         {
-            if (player.IsBot && _botRespawnTimes > 0)
+            if (player.IsBot)
             {
                 Server.NextFrameAsync(() =>
                 {
-                    _bot.RespawnBot(ref _botRespawnTimes, player, _roundCount);
+                    _bot.RespawnBot(player, _roundCount);
                 });
             }
             else if (_position.TryGetValue(player.PlayerName, out Position? playerPosition))
@@ -123,12 +121,11 @@ public class Main(
     {
         if (!_warmup)
         {
-            _botRespawnTimes = BotRespawnTimes;
             if (_roundCount != ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>())
             {
                 Server.PrintToChatAll($"Round: {_roundCount}");
                 Server.PrintToChatAll($"Difficulty level: {_bot.CurrentLevel}/{BotProfile.MaxLevel}");
-                Server.PrintToChatAll($"Bot respawn: {BotRespawnTimes}");
+                Server.PrintToChatAll($"Bot respawn: {_bot.MaxRespawnTimes}");
             }
 
             foreach (var player in Utilities.GetPlayers())
@@ -344,7 +341,7 @@ public class Main(
     [ConsoleCommand("css_info", "Server Info")]
     public void OnInfoCommand(CCSPlayerController client, CommandInfo command)
     {
-        _command.OnInfoCommand(client, command, _players.Count, _roundCount, _botRespawnTimes);
+        _command.OnInfoCommand(client, command, _players.Count, _roundCount, _bot.RespawnTimes);
     }
 
     [RequiresPermissions("@css/changemap")]

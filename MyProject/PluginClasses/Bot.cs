@@ -12,8 +12,12 @@ public class Bot(ILogger<Bot> logger) : IBot
     private readonly ILogger<Bot> _logger = logger;
 
     private int _level = 2;
+    private int _respawnTimes = 0;
+    private int _maxRespawnTimes = 20;
 
     public int CurrentLevel => _level + 1;
+    public int RespawnTimes => _respawnTimes;
+    public int MaxRespawnTimes => _maxRespawnTimes;
 
     public void MapStartBehavior()
     {
@@ -51,6 +55,7 @@ public class Bot(ILogger<Bot> logger) : IBot
     {
         SetBotMoneyToZero();
         SetBotScore();
+        _respawnTimes = _maxRespawnTimes;
 
         if (roundCount > 1)
         {
@@ -117,14 +122,17 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    public void RespawnBot(ref int respawnTimes, CCSPlayerController bot, int currentRound)
+    public void RespawnBot(CCSPlayerController bot, int currentRound)
     {
-        if (bot.PlayerName == BotProfile.Special[0] ||
+        if (_respawnTimes <= 0 ||
+            bot.PlayerName == BotProfile.Special[0] ||
             bot.PlayerName == BotProfile.Special[1] ||
             bot.PlayerName == BotProfile.Special[2])
             return;
 
         bot.Respawn();
+        _respawnTimes--;
+
         if (currentRound > 1)
         {
             Server.NextFrameAsync(() =>
@@ -134,7 +142,6 @@ public class Bot(ILogger<Bot> logger) : IBot
                 bot.GiveNamedItem(GetBotTeam(Server.MapName) == "ct" ? CsItem.M4A1 : CsItem.AK47);
             });
         };
-        respawnTimes--;
     }
 
     private static string GetBotTeam(string mapName)
@@ -214,6 +221,13 @@ public class Bot(ILogger<Bot> logger) : IBot
         else if (looseStreak > 2 && _level > 1)
             _level--;
 
+        SetMaxRespawnTimes(_level);
+
         return _level;
+
+        void SetMaxRespawnTimes(int level)
+        {
+            _maxRespawnTimes = (level < 3) ? 20 : (level == 4) ? 50 : 80;
+        }
     }
 }
