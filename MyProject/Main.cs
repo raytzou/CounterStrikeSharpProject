@@ -121,6 +121,7 @@ public class Main(
     {
         if (!_warmup)
         {
+            Server.ExecuteCommand("mp_randomspawn 1");
             HandleRoundStartMessages();
             RemoveProtectionFromAllPlayers();
             ActivateAllWeaponStatuses();
@@ -222,6 +223,7 @@ public class Main(
             if (!AppSettings.IsDebug)
                 _bot.RoundEndBehavior(BotQuota, _roundCount, _winStreak, _looseStreak);
 
+            Server.ExecuteCommand("mp_randomspawn 0");
             _weaponCheckTimer?.Kill();
             _roundCount++;
         }
@@ -297,6 +299,7 @@ public class Main(
         else
             _logger.LogInformation("Server name: {serverName}", hostname.StringValue);
 
+        Server.ExecuteCommand("mp_randomspawn 0");
         InitializeFileds();
         ResetDefaultWeapon();
         SetHumanTeam();
