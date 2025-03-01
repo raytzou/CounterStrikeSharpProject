@@ -38,7 +38,6 @@ public class Main(
     private int _winStreak = 0;
     private int _looseStreak = 0;
     private bool _respawnBot = false;
-    private static bool _restart = false;
 
     // plugins
     private readonly ICommand _command = commmand;
@@ -288,14 +287,6 @@ public class Main(
 
     private void MapStartListener(string mapName)
     {
-        _logger.LogInformation("server has restarted: {restart}", _restart);
-
-        if (!_restart)
-        {
-            _restart = true;
-            return;
-        }
-
         var hostname = ConVar.Find("hostname");
 
         if (string.IsNullOrEmpty(hostname?.StringValue))
