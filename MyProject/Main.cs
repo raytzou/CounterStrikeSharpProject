@@ -198,8 +198,7 @@ public class Main(
             StartWeaponCheckTimer();
         }
 
-        if (!AppSettings.IsDebug)
-            _bot.RoundStartBehavior(_roundCount);
+        _bot.RoundStartBehavior(_roundCount);
 
         if (_roundCount == ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>())
         {
