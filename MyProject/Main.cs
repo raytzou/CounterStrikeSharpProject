@@ -55,7 +55,7 @@ public class Main(
         if (AppSettings.IsDebug)
             _logger.LogWarning("Debug mode is on");
         _logger.LogInformation("Server host time: {DT}", DateTime.Now);
-        RegisterListener<Listeners.OnMapStart>(MapStartListener);
+        RegisterListener<Listeners.OnMapStart>(OnMapStart);
         RegisterEventHandler<EventPlayerConnectFull>(ConnectHandler);
         RegisterEventHandler<EventPlayerDisconnect>(DisconnectHandler);
         RegisterEventHandler<EventPlayerSpawn>(PlayerSpawnHandler);
@@ -66,7 +66,7 @@ public class Main(
         RegisterEventHandler<EventRoundEnd>(RoundEndHandler, HookMode.Pre);
     }
 
-    private void MapStartListener(string mapName)
+    private void OnMapStart(string mapName)
     {
         var hostname = ConVar.Find("hostname");
 
