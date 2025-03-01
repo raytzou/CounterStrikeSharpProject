@@ -56,7 +56,7 @@ public class Main(
             _logger.LogWarning("Debug mode is on");
         _logger.LogInformation("Server host time: {DT}", DateTime.Now);
         RegisterListener<Listeners.OnMapStart>(OnMapStart);
-        RegisterEventHandler<EventPlayerConnectFull>(ConnectHandler);
+        RegisterListener<Listeners.OnClientPutInServer>(OnClientPutInServer);
         RegisterEventHandler<EventPlayerDisconnect>(DisconnectHandler);
         RegisterEventHandler<EventPlayerSpawn>(PlayerSpawnHandler);
         RegisterEventHandler<EventPlayerDeath>(PlayerDeathHandler);
@@ -133,6 +133,28 @@ public class Main(
                 }
             }
         }
+    }
+
+    private void OnClientPutInServer(int playerSlot)
+    {
+        var player = Utilities.GetPlayerFromSlot(playerSlot);
+
+        if (player is null || !player.IsValid)
+            return;
+
+        if (!player.IsBot)
+        {
+            _logger.LogInformation("{client} has connected at {DT}, IP: {ipAddress}, SteamID: {steamID}", player.PlayerName, DateTime.Now, player.IpAddress, player.SteamID);
+            if (!_position.ContainsKey(player.PlayerName))
+                _position.Add(player.PlayerName, new Position());
+            if (!_weaponStatus.ContainsKey(player.PlayerName))
+                _weaponStatus.Add(player.PlayerName, new WeaponStatus());
+        }
+
+        if (!_players.ContainsKey(player.PlayerName))
+            _players.Add(player.PlayerName, player.Slot);
+        else
+            _players[player.PlayerName] = player.Slot;
     }
 
     #region hook result
@@ -315,30 +337,6 @@ public class Main(
         _warmup = false;
         if (!AppSettings.IsDebug)
             _bot.WarmupEndBehavior(BotQuota);
-        return HookResult.Continue;
-    }
-
-    private HookResult ConnectHandler(EventPlayerConnectFull @event, GameEventInfo info)
-    {
-        var player = @event.Userid;
-
-        if (player is null || !player.IsValid)
-            return HookResult.Continue;
-
-        if (!player.IsBot)
-        {
-            _logger.LogInformation("{client} has connected at {DT}, IP: {ipAddress}, SteamID: {steamID}", player.PlayerName, DateTime.Now, player.IpAddress, player.SteamID);
-            if (!_position.ContainsKey(player.PlayerName))
-                _position.Add(player.PlayerName, new Position());
-            if (!_weaponStatus.ContainsKey(player.PlayerName))
-                _weaponStatus.Add(player.PlayerName, new WeaponStatus());
-        }
-
-        if (!_players.ContainsKey(player.PlayerName))
-            _players.Add(player.PlayerName, player.Slot);
-        else
-            _players[player.PlayerName] = player.Slot;
-
         return HookResult.Continue;
     }
 
