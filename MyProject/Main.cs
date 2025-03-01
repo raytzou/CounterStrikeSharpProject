@@ -29,7 +29,7 @@ public class Main(
     private readonly ILogger<Main> _logger = logger;
 
     // fields
-    private readonly HashSet<string> _players = [];
+    private readonly Dictionary<string, int> _players = []; // playerName -> slot
     private readonly Dictionary<string, Position> _position = [];
     private readonly Dictionary<string, WeaponStatus> _weaponStatus = [];
     private CounterStrikeSharp.API.Modules.Timers.Timer? _weaponCheckTimer = null;
@@ -323,18 +323,23 @@ public class Main(
     {
         var player = @event.Userid;
 
-        if (player is null || !player.IsValid || player.IsBot)
+        if (player is null || !player.IsValid)
             return HookResult.Continue;
 
-        _logger.LogInformation("{client} has connected at {DT}, IP: {ipAddress}, SteamID: {steamID}", player.PlayerName, DateTime.Now, player.IpAddress, player.SteamID);
-
-        if (!_players.Contains(player.PlayerName))
+        if (!player.IsBot)
         {
-            _position.Add(player.PlayerName, new Position());
-            _weaponStatus.Add(player.PlayerName, new WeaponStatus());
+            _logger.LogInformation("{client} has connected at {DT}, IP: {ipAddress}, SteamID: {steamID}", player.PlayerName, DateTime.Now, player.IpAddress, player.SteamID);
+            if (!_position.ContainsKey(player.PlayerName))
+                _position.Add(player.PlayerName, new Position());
+            if (!_weaponStatus.ContainsKey(player.PlayerName))
+                _weaponStatus.Add(player.PlayerName, new WeaponStatus());
         }
 
-        _players.Add(player.PlayerName);
+        if (!_players.ContainsKey(player.PlayerName))
+            _players.Add(player.PlayerName, player.Slot);
+        else
+            _players[player.PlayerName] = player.Slot;
+
         return HookResult.Continue;
     }
 
@@ -342,13 +347,17 @@ public class Main(
     {
         var player = @event.Userid;
 
-        if (player is null || !player.IsValid || player.IsBot)
+        if (player is null || !player.IsValid)
             return HookResult.Continue;
 
-        _logger.LogInformation("{client} has disconnected at {DT}", player.PlayerName, DateTime.Now);
+        if (!player.IsBot)
+        {
+            _logger.LogInformation("{client} has disconnected at {DT}", player.PlayerName, DateTime.Now);
+            _position.Remove(player.PlayerName);
+            _weaponStatus.Remove(player.PlayerName);
+        }
+
         _players.Remove(player.PlayerName);
-        _position.Remove(player.PlayerName);
-        _weaponStatus.Remove(player.PlayerName);
 
         return HookResult.Continue;
     }
@@ -447,9 +456,9 @@ public class Main(
     {
         int ctr = 0;
 
-        foreach (var name in _players)
+        foreach (var playerName in _players.Keys)
         {
-            if (name.Contains(keyword))
+            if (playerName.Contains(keyword))
             {
                 ctr++;
                 if (ctr > 1)
@@ -460,7 +469,7 @@ public class Main(
         if (ctr != 1)
             return string.Empty;
 
-        return _players.FirstOrDefault(name => name.Contains(keyword)) ?? string.Empty;
+        return _players.Keys.FirstOrDefault(playerName => playerName.Contains(keyword)) ?? string.Empty;
     }
 
     private static void SetPlayerProtection(CCSPlayerController? player)
