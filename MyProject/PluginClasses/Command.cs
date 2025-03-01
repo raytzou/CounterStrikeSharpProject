@@ -65,7 +65,7 @@ public class Command(ILogger<Command> logger) : ICommand
         _logger.LogInformation("{admin} changed map to {mapName} at {DT}", client?.PlayerName is null ? "console" : client.PlayerName, mapName, DateTime.Now);
         Server.PrintToChatAll($"Admin changed map to {mapName}");
 
-        Utility.MyAddTimer(changeMapTimeBuffer, () =>
+        Utility.AddTimer(changeMapTimeBuffer, () =>
         {
             if (Utility.GetMapsFromWorkshop().Contains(mapName))
                 Server.ExecuteCommand($"ds_workshop_changelevel {mapName}");
@@ -300,7 +300,7 @@ public class Command(ILogger<Command> logger) : ICommand
         float time = 1f;
         CounterStrikeSharp.API.Modules.Timers.Timer? timer = null;
 
-        timer = Utility.MyAddTimer(time, () =>
+        timer = Utility.AddTimer(time, () =>
         {
             ReviveCallBack(ref time, client, position, timer, weaponStatus);
         }, TimerFlags.REPEAT);

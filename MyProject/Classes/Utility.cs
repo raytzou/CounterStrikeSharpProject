@@ -40,7 +40,7 @@ namespace MyProject.Classes
         /// <summary>
         /// It's the same as AddTimer() in BasicPlugin, but I want to use it elsewhere
         /// </summary>
-        public static CounterStrikeSharp.API.Modules.Timers.Timer MyAddTimer(float interval, Action callback, TimerFlags? flags = null)
+        public static CounterStrikeSharp.API.Modules.Timers.Timer AddTimer(float interval, Action callback, TimerFlags? flags = null)
         {
             var timer = new CounterStrikeSharp.API.Modules.Timers.Timer(interval, callback, flags ?? 0);
             Timers.Add(timer);
