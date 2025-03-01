@@ -50,8 +50,13 @@ public class Main(
     private const int CostScoreToRevive = 50;
     private const float WeaponCheckTime = 3f;
 
+    // properties
+    public static Main Instance { get; private set; } = null!;
+    public Dictionary<string, int> Players => _players;
+
     public override void Load(bool hotreload)
     {
+        Instance = this;
         if (AppSettings.IsDebug)
             _logger.LogWarning("Debug mode is on");
         _logger.LogInformation("Server host time: {DT}", DateTime.Now);
