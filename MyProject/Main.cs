@@ -352,7 +352,9 @@ public class Main(
         if (player is null || !player.IsValid)
             return HookResult.Continue;
 
-        _logger.LogInformation("{client} has disconnected at {DT}", player.PlayerName, DateTime.Now);
+        if (!player.IsBot)
+            _logger.LogInformation("{client} has disconnected at {DT}", player.PlayerName, DateTime.Now);
+
         if (_position.ContainsKey(player.PlayerName))
             _position.Remove(player.PlayerName);
         if (_weaponStatus.ContainsKey(player.PlayerName))
