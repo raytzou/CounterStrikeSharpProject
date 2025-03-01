@@ -66,6 +66,75 @@ public class Main(
         RegisterEventHandler<EventRoundEnd>(RoundEndHandler, HookMode.Pre);
     }
 
+    private void MapStartListener(string mapName)
+    {
+        var hostname = ConVar.Find("hostname");
+
+        if (string.IsNullOrEmpty(hostname?.StringValue))
+            _logger.LogWarning("hostname is not be set");
+        else
+            _logger.LogInformation("Server name: {serverName}", hostname.StringValue);
+
+        Server.ExecuteCommand("mp_randomspawn 0");
+        InitializeFileds();
+        ResetDefaultWeapon();
+        SetHumanTeam();
+
+        AddTimer(2f, () =>
+        {
+            Server.NextWorldUpdateAsync(AddMoreSpawnPoint);
+            _bot.MapStartBehavior();
+        });
+
+        void ResetDefaultWeapon()
+        {
+            Server.ExecuteCommand($"mp_ct_default_primary \"\"");
+            Server.ExecuteCommand($"mp_ct_default_secondary \"{Utility.GetCsItemEnumValue(CsItem.USPS)}\"");
+            Server.ExecuteCommand($"mp_t_default_primary \"\"");
+            Server.ExecuteCommand($"mp_t_default_secondary \"{Utility.GetCsItemEnumValue(CsItem.Glock)}\"");
+        }
+
+        void SetHumanTeam()
+        {
+            var humanTeam = GetHumanTeam();
+
+            if (humanTeam == CsTeam.CounterTerrorist)
+                Server.ExecuteCommand("mp_humanteam ct");
+            else
+                Server.ExecuteCommand("mp_humanteam t");
+        }
+
+        void AddMoreSpawnPoint()
+        {
+            var TSpawnPoint = Utilities.FindAllEntitiesByDesignerName<SpawnPoint>("info_player_terrorist").FirstOrDefault();
+            var CTSpawnPoint = Utilities.FindAllEntitiesByDesignerName<SpawnPoint>("info_player_counterterrorist").FirstOrDefault();
+
+            if (TSpawnPoint is null)
+                _logger.LogWarning("T Spawn point not found. map: {mapName}", mapName);
+
+            if (CTSpawnPoint is null)
+                _logger.LogWarning("CT Spawn point not found. map: {mapName}", mapName);
+
+
+            for (int i = 0; i < SpawnPointCount; i++)
+            {
+                if (TSpawnPoint is not null)
+                {
+                    var newTSpawnPoint = Utilities.CreateEntityByName<CInfoPlayerTerrorist>("info_player_terrorist");
+                    newTSpawnPoint!.Teleport(TSpawnPoint.AbsOrigin);
+                    newTSpawnPoint.DispatchSpawn();
+                }
+
+                if (CTSpawnPoint is not null)
+                {
+                    var newCTSpawnPoint = Utilities.CreateEntityByName<CInfoPlayerCounterterrorist>("info_player_counterterrorist");
+                    newCTSpawnPoint!.Teleport(CTSpawnPoint.AbsOrigin);
+                    newCTSpawnPoint.DispatchSpawn();
+                }
+            }
+        }
+    }
+
     #region hook result
     private HookResult PlayerSpawnHandler(EventPlayerSpawn @event, GameEventInfo info)
     {
@@ -284,75 +353,6 @@ public class Main(
         return HookResult.Continue;
     }
     #endregion hook result
-
-    private void MapStartListener(string mapName)
-    {
-        var hostname = ConVar.Find("hostname");
-
-        if (string.IsNullOrEmpty(hostname?.StringValue))
-            _logger.LogWarning("hostname is not be set");
-        else
-            _logger.LogInformation("Server name: {serverName}", hostname.StringValue);
-
-        Server.ExecuteCommand("mp_randomspawn 0");
-        InitializeFileds();
-        ResetDefaultWeapon();
-        SetHumanTeam();
-
-        AddTimer(2f, () =>
-        {
-            Server.NextWorldUpdateAsync(AddMoreSpawnPoint);
-            _bot.MapStartBehavior();
-        });
-
-        void ResetDefaultWeapon()
-        {
-            Server.ExecuteCommand($"mp_ct_default_primary \"\"");
-            Server.ExecuteCommand($"mp_ct_default_secondary \"{Utility.GetCsItemEnumValue(CsItem.USPS)}\"");
-            Server.ExecuteCommand($"mp_t_default_primary \"\"");
-            Server.ExecuteCommand($"mp_t_default_secondary \"{Utility.GetCsItemEnumValue(CsItem.Glock)}\"");
-        }
-
-        void SetHumanTeam()
-        {
-            var humanTeam = GetHumanTeam();
-
-            if (humanTeam == CsTeam.CounterTerrorist)
-                Server.ExecuteCommand("mp_humanteam ct");
-            else
-                Server.ExecuteCommand("mp_humanteam t");
-        }
-
-        void AddMoreSpawnPoint()
-        {
-            var TSpawnPoint = Utilities.FindAllEntitiesByDesignerName<SpawnPoint>("info_player_terrorist").FirstOrDefault();
-            var CTSpawnPoint = Utilities.FindAllEntitiesByDesignerName<SpawnPoint>("info_player_counterterrorist").FirstOrDefault();
-
-            if (TSpawnPoint is null)
-                _logger.LogWarning("T Spawn point not found. map: {mapName}", mapName);
-
-            if (CTSpawnPoint is null)
-                _logger.LogWarning("CT Spawn point not found. map: {mapName}", mapName);
-
-
-            for (int i = 0; i < SpawnPointCount; i++)
-            {
-                if (TSpawnPoint is not null)
-                {
-                    var newTSpawnPoint = Utilities.CreateEntityByName<CInfoPlayerTerrorist>("info_player_terrorist");
-                    newTSpawnPoint!.Teleport(TSpawnPoint.AbsOrigin);
-                    newTSpawnPoint.DispatchSpawn();
-                }
-
-                if (CTSpawnPoint is not null)
-                {
-                    var newCTSpawnPoint = Utilities.CreateEntityByName<CInfoPlayerCounterterrorist>("info_player_counterterrorist");
-                    newCTSpawnPoint!.Teleport(CTSpawnPoint.AbsOrigin);
-                    newCTSpawnPoint.DispatchSpawn();
-                }
-            }
-        }
-    }
 
     #region commands
     [RequiresPermissions("@css/kick")]
