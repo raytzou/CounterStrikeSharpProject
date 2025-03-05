@@ -66,9 +66,9 @@ public class Main(
         RegisterEventHandler<EventPlayerSpawn>(PlayerSpawnHandler);
         RegisterEventHandler<EventPlayerDeath>(PlayerDeathHandler);
         RegisterEventHandler<EventRoundAnnounceWarmup>(WarmupHandler);
-        RegisterEventHandler<EventWarmupEnd>(WarmupEndHandler, HookMode.Pre);
+        RegisterEventHandler<EventWarmupEnd>(WarmupEndHandler);
         RegisterEventHandler<EventRoundStart>(RoundStartHandler);
-        RegisterEventHandler<EventRoundEnd>(RoundEndHandler, HookMode.Pre);
+        RegisterEventHandler<EventRoundEnd>(RoundEndHandler);
     }
 
     private void OnMapStart(string mapName)
