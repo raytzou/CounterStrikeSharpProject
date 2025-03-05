@@ -40,7 +40,6 @@ public class Bot(ILogger<Bot> logger) : IBot
             Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName)} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[0]}");
             Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName)} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[1]}");
             Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName)} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[2]}");
-            Server.NextWorldUpdateAsync(SetBotScore);
         }
     }
 
