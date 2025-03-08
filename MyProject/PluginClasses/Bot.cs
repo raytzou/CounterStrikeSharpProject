@@ -54,6 +54,8 @@ public class Bot(ILogger<Bot> logger) : IBot
     {
         SetBotMoneyToZero();
         SetBotScore();
+        SetSpecialBotModel();
+        
         _respawnTimes = _maxRespawnTimes;
 
         if (roundCount > 1)
@@ -62,7 +64,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             SetSpecialBotWeapon(BotProfile.Special[1], CsItem.M4A1S); // "[ELITE]mimic"
             SetSpecialBotWeapon(BotProfile.Special[2], CsItem.P90); // "[EXPERT]Rush"
 
-            Server.NextWorldUpdate(() =>
+            Server.NextFrameAsync(() =>
             {
                 foreach (var bot in Utilities.GetPlayers().Where(player => player.IsBot))
                 {
@@ -91,6 +93,22 @@ public class Bot(ILogger<Bot> logger) : IBot
                 client.InGameMoneyServices!.StartAccount = 0;
                 client.InGameMoneyServices.Account = 0;
             }
+        }
+
+        void SetSpecialBotModel()
+        {
+            Server.NextFrameAsync(() =>
+            {
+                var eagleEye = Utilities.GetPlayerFromSlot(Main.Instance.Players[BotProfile.Special[0]]);
+                var mimic = Utilities.GetPlayerFromSlot(Main.Instance.Players[BotProfile.Special[1]]);
+                var rush = Utilities.GetPlayerFromSlot(Main.Instance.Players[BotProfile.Special[2]]);
+                var random = new Random();
+                var randomSkin = Utility.WorkshopSkins.ElementAt(random.Next(Utility.WorkshopSkins.Count));
+
+                mimic?.PlayerPawn.Value!.SetModel(randomSkin.Value);
+                eagleEye?.PlayerPawn.Value!.SetModel(Utility.WorkshopSkins["[S.T.A.L.K.E.R]Merc"]);
+                rush?.PlayerPawn.Value!.SetModel(Utility.WorkshopSkins["[S.T.A.L.K.E.R]Kostym"]);
+            });
         }
     }
 
