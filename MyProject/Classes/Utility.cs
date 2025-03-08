@@ -15,9 +15,9 @@ namespace MyProject.Classes
         public static Dictionary<string, string> WorkshopSkins => _workshopSkins;
 
         public readonly static List<CounterStrikeSharp.API.Modules.Timers.Timer> _timers;
+        private static List<string> _mapsFromWorkShop;
+        private static List<string> _mapsInPhysicalDirectory;
         private static readonly Dictionary<CsItem, string> _enumValue;
-        private static readonly List<string> _mapsFromWorkShop;
-        private static readonly List<string> _mapsInPhysicalDirectory;
         private static readonly Dictionary<string, string> _workshopSkins;
 
         static Utility()
@@ -25,43 +25,57 @@ namespace MyProject.Classes
             _timers = [];
             _enumValue = [];
             _workshopSkins = [];
+            _mapsFromWorkShop = [];
+            _mapsInPhysicalDirectory = [];
 
-            foreach (var field in typeof(CsItem).GetFields(BindingFlags.Public | BindingFlags.Static))
+            InitializeEnumValues();
+            InitializeMaps();
+            InitializeWorkshopSkins();
+
+            static void InitializeEnumValues()
             {
-                var attribute = field.GetCustomAttribute<EnumMemberAttribute>();
-                if (attribute != null && attribute.Value != null)
+                foreach (var field in typeof(CsItem).GetFields(BindingFlags.Public | BindingFlags.Static))
                 {
-                    var value = (CsItem)field.GetValue(null)!;
-                    _enumValue[value] = attribute.Value;
+                    var attribute = field.GetCustomAttribute<EnumMemberAttribute>();
+                    if (attribute != null && attribute.Value != null)
+                    {
+                        var value = (CsItem)field.GetValue(null)!;
+                        _enumValue[value] = attribute.Value;
+                    }
                 }
             }
 
-            var mapListPath = Path.Join(Server.GameDirectory, "maplist.txt");
-            if (!File.Exists(mapListPath)) throw new Exception("maplist.txt could not be found in root folder");
-            _mapsFromWorkShop = [.. File.ReadAllLines(mapListPath)];
-
-            string mapFolderPath = Path.Join(Server.GameDirectory, "csgo", "maps");
-            _mapsInPhysicalDirectory = Directory.GetFiles(mapFolderPath)
-                .Select(Path.GetFileNameWithoutExtension)
-                .Where(mapName =>
-                    !string.IsNullOrEmpty(mapName) &&
-                    !mapName.Contains("vanity") &&
-                    !mapName.Contains("workshop_preview") &&
-                    !mapName.Contains("graphics_settings") &&
-                    !mapName.Contains("lobby_mapveto")).ToList()!;
-
-            var modelsPath = Path.Join(Server.GameDirectory, "models.txt");
-            if (!File.Exists(modelsPath)) throw new Exception("models.txt could not be found in root folder");
-
-            foreach (var line in File.ReadAllLines(modelsPath))
+            static void InitializeMaps()
             {
-                var split = line.Split(',');
-                var modelName = split[0];
-                var modelPath = split[1];
+                var mapListPath = Path.Join(Server.GameDirectory, "maplist.txt");
+                if (!File.Exists(mapListPath)) throw new Exception("maplist.txt could not be found in root folder");
+                _mapsFromWorkShop = File.ReadAllLines(mapListPath).ToList();
 
-                _workshopSkins.Add(modelName, modelPath);
+                string mapFolderPath = Path.Join(Server.GameDirectory, "csgo", "maps");
+                _mapsInPhysicalDirectory = Directory.GetFiles(mapFolderPath)
+                    .Select(Path.GetFileNameWithoutExtension)
+                    .Where(mapName =>
+                        !string.IsNullOrEmpty(mapName) &&
+                        !mapName.Contains("vanity") &&
+                        !mapName.Contains("workshop_preview") &&
+                        !mapName.Contains("graphics_settings") &&
+                        !mapName.Contains("lobby_mapveto")).ToList()!;
             }
 
+            static void InitializeWorkshopSkins()
+            {
+                var modelsPath = Path.Join(Server.GameDirectory, "models.txt");
+                if (!File.Exists(modelsPath)) throw new Exception("models.txt could not be found in root folder");
+
+                foreach (var line in File.ReadAllLines(modelsPath))
+                {
+                    var split = line.Split(',');
+                    var modelName = split[0];
+                    var modelPath = split[1];
+
+                    _workshopSkins.Add(modelName, modelPath);
+                }
+            }
         }
 
         /// <summary>
