@@ -13,7 +13,7 @@ namespace MyProject.Classes
         private static readonly Dictionary<CsItem, string> EnumValueCache;
 
         public static IEnumerable<string> AllMaps => GetMapsInPhysicalDirectory().Concat(GetMapsFromWorkshop());
-
+        
         static Utility()
         {
             EnumValueCache = [];
@@ -69,6 +69,29 @@ namespace MyProject.Classes
             if (!File.Exists(mapListPath)) throw new Exception("maplist.txt could not be found in root folder");
 
             return File.ReadAllLines(mapListPath);
+        }
+
+        /// <summary>
+        /// Get skins from workshop
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="Exception">Can't find models.txt</exception>
+        public static Dictionary<string,string> GetAllWorkshopSkins()
+        {
+            var modelsPath = Path.Join(Server.GameDirectory, "models.txt");
+            if (!File.Exists(modelsPath)) throw new Exception("models.txt could not be found in root folder");
+
+            var models = new Dictionary<string,string>();
+            foreach (var line in File.ReadAllLines(modelsPath))
+            {
+                var split = line.Split(',');
+                var modelName = split[0];
+                var modelPath = split[1];
+
+                models.Add(modelName, modelPath);
+            }
+
+            return models;
         }
 
         /// <summary>
