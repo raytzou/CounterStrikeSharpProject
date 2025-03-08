@@ -67,9 +67,9 @@ public class Command(ILogger<Command> logger) : ICommand
 
         Utility.AddTimer(changeMapTimeBuffer, () =>
         {
-            if (Utility.GetMapsFromWorkshop().Contains(mapName))
+            if (Utility.MapsFromWorkshop.Contains(mapName))
                 Server.ExecuteCommand($"ds_workshop_changelevel {mapName}");
-            else if (Utility.GetMapsInPhysicalDirectory().Contains(mapName))
+            else if (Utility.MapsInPhysicalDirectory.Contains(mapName))
                 Server.ExecuteCommand($"changelevel {mapName}");
         });
     }

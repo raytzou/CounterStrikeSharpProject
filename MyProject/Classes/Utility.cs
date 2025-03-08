@@ -9,14 +9,22 @@ namespace MyProject.Classes
 {
     public class Utility
     {
-        public readonly static List<CounterStrikeSharp.API.Modules.Timers.Timer> Timers = [];
-        private static readonly Dictionary<CsItem, string> EnumValueCache;
+        public static IEnumerable<string> MapsInPhysicalDirectory => _mapsInPhysicalDirectory;
+        public static IEnumerable<string> MapsFromWorkshop => _mapsFromWorkShop;
+        public static IEnumerable<string> AllMaps => _mapsInPhysicalDirectory.Concat(_mapsFromWorkShop);
+        public static Dictionary<string, string> WorkshopSkins => _workshopSkins;
 
-        public static IEnumerable<string> AllMaps => GetMapsInPhysicalDirectory().Concat(GetMapsFromWorkshop());
-        
+        public readonly static List<CounterStrikeSharp.API.Modules.Timers.Timer> _timers;
+        private static readonly Dictionary<CsItem, string> _enumValue;
+        private static readonly List<string> _mapsFromWorkShop;
+        private static readonly List<string> _mapsInPhysicalDirectory;
+        private static readonly Dictionary<string, string> _workshopSkins;
+
         static Utility()
         {
-            EnumValueCache = [];
+            _timers = [];
+            _enumValue = [];
+            _workshopSkins = [];
 
             foreach (var field in typeof(CsItem).GetFields(BindingFlags.Public | BindingFlags.Static))
             {
@@ -24,9 +32,36 @@ namespace MyProject.Classes
                 if (attribute != null && attribute.Value != null)
                 {
                     var value = (CsItem)field.GetValue(null)!;
-                    EnumValueCache[value] = attribute.Value;
+                    _enumValue[value] = attribute.Value;
                 }
             }
+
+            var mapListPath = Path.Join(Server.GameDirectory, "maplist.txt");
+            if (!File.Exists(mapListPath)) throw new Exception("maplist.txt could not be found in root folder");
+            _mapsFromWorkShop = [.. File.ReadAllLines(mapListPath)];
+
+            string mapFolderPath = Path.Join(Server.GameDirectory, "csgo", "maps");
+            _mapsInPhysicalDirectory = Directory.GetFiles(mapFolderPath)
+                .Select(Path.GetFileNameWithoutExtension)
+                .Where(mapName =>
+                    !string.IsNullOrEmpty(mapName) &&
+                    !mapName.Contains("vanity") &&
+                    !mapName.Contains("workshop_preview") &&
+                    !mapName.Contains("graphics_settings") &&
+                    !mapName.Contains("lobby_mapveto")).ToList()!;
+
+            var modelsPath = Path.Join(Server.GameDirectory, "models.txt");
+            if (!File.Exists(modelsPath)) throw new Exception("models.txt could not be found in root folder");
+
+            foreach (var line in File.ReadAllLines(modelsPath))
+            {
+                var split = line.Split(',');
+                var modelName = split[0];
+                var modelPath = split[1];
+
+                _workshopSkins.Add(modelName, modelPath);
+            }
+
         }
 
         /// <summary>
@@ -43,7 +78,7 @@ namespace MyProject.Classes
         public static CounterStrikeSharp.API.Modules.Timers.Timer AddTimer(float interval, Action callback, TimerFlags? flags = null)
         {
             var timer = new CounterStrikeSharp.API.Modules.Timers.Timer(interval, callback, flags ?? 0);
-            Timers.Add(timer);
+            _timers.Add(timer);
             return timer;
         }
 
@@ -54,62 +89,7 @@ namespace MyProject.Classes
         /// <returns><c>string</c> - The item entity name.</returns>
         public static string GetCsItemEnumValue(CsItem item)
         {
-            return EnumValueCache.TryGetValue(item, out var value) ? value : string.Empty;
-        }
-
-        /// <summary>
-        /// Get maps in the maplist.txt file
-        /// </summary>
-        /// <returns></returns>
-        /// <exception cref="Exception">Can't find maplist.txt</exception>
-        public static IEnumerable<string> GetMapsFromWorkshop()
-        {
-            // if there is an API like ServerCommandEx() from SourceMod then I don't need to use maplist.txt
-            var mapListPath = Path.Join(Server.GameDirectory, "maplist.txt");
-            if (!File.Exists(mapListPath)) throw new Exception("maplist.txt could not be found in root folder");
-
-            return File.ReadAllLines(mapListPath);
-        }
-
-        /// <summary>
-        /// Get skins from workshop
-        /// </summary>
-        /// <returns></returns>
-        /// <exception cref="Exception">Can't find models.txt</exception>
-        public static Dictionary<string,string> GetAllWorkshopSkins()
-        {
-            var modelsPath = Path.Join(Server.GameDirectory, "models.txt");
-            if (!File.Exists(modelsPath)) throw new Exception("models.txt could not be found in root folder");
-
-            var models = new Dictionary<string,string>();
-            foreach (var line in File.ReadAllLines(modelsPath))
-            {
-                var split = line.Split(',');
-                var modelName = split[0];
-                var modelPath = split[1];
-
-                models.Add(modelName, modelPath);
-            }
-
-            return models;
-        }
-
-        /// <summary>
-        /// Get maps in the physical directory
-        /// </summary>
-        /// <returns></returns>
-        public static IEnumerable<string> GetMapsInPhysicalDirectory()
-        {
-            string mapFolderPath = Path.Join(Server.GameDirectory, "csgo", "maps");
-
-            return Directory.GetFiles(mapFolderPath)
-                .Select(Path.GetFileNameWithoutExtension)
-                .Where(mapName =>
-                    !string.IsNullOrEmpty(mapName) &&
-                    !mapName.Contains("vanity") &&
-                    !mapName.Contains("workshop_preview") &&
-                    !mapName.Contains("graphics_settings") &&
-                    !mapName.Contains("lobby_mapveto"))!;
+            return _enumValue.TryGetValue(item, out var value) ? value : string.Empty;
         }
     }
 }
