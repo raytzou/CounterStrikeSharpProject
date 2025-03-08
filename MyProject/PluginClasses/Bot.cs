@@ -10,10 +10,12 @@ namespace MyProject.PluginClasses;
 public class Bot(ILogger<Bot> logger) : IBot
 {
     private readonly ILogger<Bot> _logger = logger;
-
     private int _level = 2;
     private int _respawnTimes = 0;
     private int _maxRespawnTimes = 20;
+
+    private const string EagleEyeModel = "[S.T.A.L.K.E.R]Merc";
+    private const string RushModel = "[S.T.A.L.K.E.R]Kostym";
 
     public int CurrentLevel => _level + 1;
     public int RespawnTimes => _respawnTimes;
@@ -106,8 +108,8 @@ public class Bot(ILogger<Bot> logger) : IBot
                 var randomSkin = Utility.WorkshopSkins.ElementAt(random.Next(Utility.WorkshopSkins.Count));
 
                 mimic?.PlayerPawn.Value!.SetModel(randomSkin.Value);
-                eagleEye?.PlayerPawn.Value!.SetModel(Utility.WorkshopSkins["[S.T.A.L.K.E.R]Merc"]);
-                rush?.PlayerPawn.Value!.SetModel(Utility.WorkshopSkins["[S.T.A.L.K.E.R]Kostym"]);
+                eagleEye?.PlayerPawn.Value!.SetModel(Utility.WorkshopSkins[EagleEyeModel]);
+                rush?.PlayerPawn.Value!.SetModel(Utility.WorkshopSkins[RushModel]);
             });
         }
     }
