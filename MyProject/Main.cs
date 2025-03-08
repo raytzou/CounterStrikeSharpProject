@@ -62,6 +62,7 @@ public class Main(
         _logger.LogInformation("Server host time: {DT}", DateTime.Now);
         RegisterListener<Listeners.OnMapStart>(OnMapStart);
         RegisterListener<Listeners.OnClientPutInServer>(OnClientPutInServer);
+        RegisterListener<Listeners.OnServerPrecacheResources>(OnServerPrecacheResources);
         RegisterEventHandler<EventPlayerDisconnect>(DisconnectHandler);
         RegisterEventHandler<EventPlayerSpawn>(PlayerSpawnHandler);
         RegisterEventHandler<EventPlayerDeath>(PlayerDeathHandler);
@@ -69,6 +70,14 @@ public class Main(
         RegisterEventHandler<EventWarmupEnd>(WarmupEndHandler);
         RegisterEventHandler<EventRoundStart>(RoundStartHandler);
         RegisterEventHandler<EventRoundEnd>(RoundEndHandler);
+    }
+
+    private void OnServerPrecacheResources(ResourceManifest manifest)
+    {
+        foreach(var skin in Utility.WorkshopSkins)
+        {
+            manifest.AddResource(skin.Value);
+        }
     }
 
     private void OnMapStart(string mapName)
