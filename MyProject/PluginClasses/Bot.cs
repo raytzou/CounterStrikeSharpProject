@@ -57,7 +57,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         SetBotMoneyToZero();
         SetBotScore();
         SetSpecialBotModel();
-        
+
         _respawnTimes = _maxRespawnTimes;
 
         if (roundCount > 1)
@@ -111,6 +111,17 @@ public class Bot(ILogger<Bot> logger) : IBot
                 eagleEye?.PlayerPawn.Value!.SetModel(Utility.WorkshopSkins[EagleEyeModel]);
                 rush?.PlayerPawn.Value!.SetModel(Utility.WorkshopSkins[RushModel]);
             });
+        }
+
+        void SetBotScore()
+        {
+            var eagleEye = Utilities.GetPlayerFromSlot(Main.Instance.Players[BotProfile.Special[0]]);
+            var mimic = Utilities.GetPlayerFromSlot(Main.Instance.Players[BotProfile.Special[1]]);
+            var rush = Utilities.GetPlayerFromSlot(Main.Instance.Players[BotProfile.Special[2]]);
+
+            eagleEye!.Score = 999;
+            mimic!.Score = 888;
+            rush!.Score = 777;
         }
     }
 
@@ -214,22 +225,6 @@ public class Bot(ILogger<Bot> logger) : IBot
                 Server.ExecuteCommand($"kick {client.PlayerName}");
 
             Server.ExecuteCommand($"bot_quota {BotProfile.Special.Count}");
-        }
-    }
-
-    private void SetBotScore()
-    {
-        foreach (var player in Utilities.GetPlayers())
-        {
-            if (player.IsBot)
-            {
-                if (player.PlayerName.Contains("EagleEye"))
-                    player.Score = 999;
-                else if (player.PlayerName.Contains("mimic"))
-                    player.Score = 888;
-                else if (player.PlayerName.Contains("Rush"))
-                    player.Score = 777;
-            }
         }
     }
 
