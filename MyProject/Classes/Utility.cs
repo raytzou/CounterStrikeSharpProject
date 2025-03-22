@@ -67,7 +67,11 @@ namespace MyProject.Classes
                 var modelsPath = Path.Join(Server.GameDirectory, "models.txt");
                 if (!File.Exists(modelsPath)) throw new Exception("models.txt could not be found in root folder");
 
-                foreach (var line in File.ReadAllLines(modelsPath))
+                var lines = File.ReadAllLines(modelsPath)
+                    .Select(line => line.Split(["//"], StringSplitOptions.None)[0].Trim())
+                    .Where(line => !string.IsNullOrWhiteSpace(line));
+
+                foreach (var line in lines)
                 {
                     var split = line.Split(',');
                     var modelName = split[0];
