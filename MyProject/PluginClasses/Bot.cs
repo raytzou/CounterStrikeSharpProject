@@ -107,9 +107,16 @@ public class Bot(ILogger<Bot> logger) : IBot
                 var random = new Random();
                 var randomSkin = Utility.WorkshopSkins.ElementAt(random.Next(Utility.WorkshopSkins.Count));
 
-                mimic?.PlayerPawn.Value!.SetModel(randomSkin.Value);
-                eagleEye?.PlayerPawn.Value!.SetModel(Utility.WorkshopSkins[EagleEyeModel]);
-                rush?.PlayerPawn.Value!.SetModel(Utility.WorkshopSkins[RushModel]);
+                var mimicPawn = mimic!.PlayerPawn.Value!;
+                mimicPawn.SetModel(randomSkin.Value.ModelPath);
+                if(randomSkin.Value.MeshGroupIndex.HasValue)
+                {
+                    mimicPawn.CBodyComponent!.SceneNode!.GetSkeletonInstance().ModelState.MeshGroupMask =
+                        Utility.ComputeMeshGroupMask([randomSkin.Value.MeshGroupIndex.Value], []);
+                }
+                
+                eagleEye!.PlayerPawn.Value!.SetModel(Utility.WorkshopSkins[EagleEyeModel].ModelPath);
+                rush!.PlayerPawn.Value!.SetModel(Utility.WorkshopSkins[RushModel].ModelPath);
             });
         }
 
