@@ -14,8 +14,8 @@ public class Bot(ILogger<Bot> logger) : IBot
     private int _respawnTimes = 0;
     private int _maxRespawnTimes = 20;
 
-    private const string EagleEyeModel = "[S.T.A.L.K.E.R]Merc";
-    private const string RushModel = "[S.T.A.L.K.E.R]Kostym";
+    private const string EagleEyeModel = "[???]Nano Girl";
+    private const string RushModel = "[Resident Evil 2]Hunk";
 
     public int CurrentLevel => _level + 1;
     public int RespawnTimes => _respawnTimes;
