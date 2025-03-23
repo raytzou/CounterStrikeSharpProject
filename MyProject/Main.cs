@@ -74,9 +74,11 @@ public class Main(
 
     private void OnServerPrecacheResources(ResourceManifest manifest)
     {
-        foreach(var skin in Utility.WorkshopSkins)
+        foreach (var skin in Utility.WorkshopSkins)
         {
-            manifest.AddResource(skin.Value);
+            manifest.AddResource(skin.Value.ModelPath);
+            if (skin.Value.ArmPath is not null)
+                manifest.AddResource(skin.Value.ArmPath);
         }
     }
 
