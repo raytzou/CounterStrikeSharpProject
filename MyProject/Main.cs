@@ -49,6 +49,7 @@ public class Main(
     private const int SpawnPointCount = 10;
     private const int CostScoreToRevive = 50;
     private const float WeaponCheckTime = 3f;
+    private const bool LogWeaponTracking = false;
 
     // properties
     public static Main Instance { get; private set; } = null!;
@@ -276,7 +277,7 @@ public class Main(
         {
             _weaponCheckTimer = AddTimer(WeaponCheckTime, () =>
             {
-                if (AppSettings.IsDebug)
+                if (AppSettings.IsDebug && LogWeaponTracking)
                     Server.PrintToChatAll("weapon check");
 
                 foreach (var pair in _weaponStatus)
@@ -284,7 +285,7 @@ public class Main(
                     if (!pair.Value.IsActive)
                         continue;
 
-                    if (AppSettings.IsDebug)
+                    if (AppSettings.IsDebug && LogWeaponTracking)
                         Server.PrintToChatAll($"tracking: {pair.Key}");
 
                     UpdateWeaponStatus(pair);
@@ -303,7 +304,7 @@ public class Main(
                     pair.Value.Weapons.Add(weapon.Value.DesignerName);
                 }
 
-                if (AppSettings.IsDebug)
+                if (AppSettings.IsDebug && LogWeaponTracking)
                 {
                     foreach (var cacheWeapon in pair.Value.Weapons)
                         Server.PrintToChatAll(cacheWeapon);
