@@ -75,12 +75,18 @@ public class Main(
 
     private void OnServerPrecacheResources(ResourceManifest manifest)
     {
+        var pathSet = new HashSet<string>();
+        var armSet = new HashSet<string>();
         foreach (var skin in Utility.WorkshopSkins)
         {
-            manifest.AddResource(skin.Value.ModelPath);
+            pathSet.Add(skin.Value.ModelPath);
             if (skin.Value.ArmPath is not null)
-                manifest.AddResource(skin.Value.ArmPath);
+                armSet.Add(skin.Value.ArmPath);
         }
+        foreach (var path in pathSet)
+            manifest.AddResource(path);
+        foreach (var path in armSet)
+            manifest.AddResource(path);
     }
 
     private void OnMapStart(string mapName)
