@@ -106,7 +106,7 @@ public class Main(
         Server.NextWorldUpdateAsync(() =>
         {
             AddMoreSpawnPoint();
-            _bot.MapStartBehavior();
+            AddTimer(2f, _bot.MapStartBehavior);
         });
 
         void ResetDefaultWeapon()
@@ -243,10 +243,7 @@ public class Main(
             StartWeaponCheckTimer();
         }
 
-        AddTimer(0.5f, () =>
-        {
-            _bot.RoundStartBehavior(_roundCount);
-        });
+        _bot.RoundStartBehavior(_roundCount);
 
         if (_roundCount == ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>())
         {
