@@ -109,12 +109,12 @@ public class Bot(ILogger<Bot> logger) : IBot
 
                 var mimicPawn = mimic!.PlayerPawn.Value!;
                 mimicPawn.SetModel(randomSkin.Value.ModelPath);
-                if(randomSkin.Value.MeshGroupIndex.HasValue)
+                if (randomSkin.Value.MeshGroupIndex.HasValue)
                 {
                     mimicPawn.CBodyComponent!.SceneNode!.GetSkeletonInstance().ModelState.MeshGroupMask =
                         Utility.ComputeMeshGroupMask([randomSkin.Value.MeshGroupIndex.Value], []);
                 }
-                
+
                 eagleEye!.PlayerPawn.Value!.SetModel(Utility.WorkshopSkins[EagleEyeModel].ModelPath);
                 rush!.PlayerPawn.Value!.SetModel(Utility.WorkshopSkins[RushModel].ModelPath);
             });
