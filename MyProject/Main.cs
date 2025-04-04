@@ -97,9 +97,9 @@ public class Main(
         ResetDefaultWeapon();
         SetHumanTeam();
 
-        AddTimer(2f, () =>
+        Server.NextWorldUpdateAsync(() =>
         {
-            Server.NextWorldUpdateAsync(AddMoreSpawnPoint);
+            AddMoreSpawnPoint();
             _bot.MapStartBehavior();
         });
 
@@ -237,7 +237,10 @@ public class Main(
             StartWeaponCheckTimer();
         }
 
-        _bot.RoundStartBehavior(_roundCount);
+        AddTimer(0.5f, () =>
+        {
+            _bot.RoundStartBehavior(_roundCount);
+        });
 
         if (_roundCount == ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>())
         {
