@@ -3,6 +3,7 @@ using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Timers;
+using CS2MenuManager.API.Menu;
 using Microsoft.Extensions.Logging;
 using MyProject.Classes;
 using MyProject.Models;
@@ -346,6 +347,26 @@ public class Command(ILogger<Command> logger) : ICommand
         {
             command.ReplyToCommand($"weapon cache: {weapon}");
         }
+    }
+
+    public void OnModelsCommand(CCSPlayerController client, CommandInfo command)
+    {
+        var menu = new ScreenMenu("Select Models", Main.Instance);
+
+        foreach (var skin in Utility.WorkshopSkins)
+        {
+            menu.AddItem(skin.Key, (player, option) =>
+            {
+                client.PlayerPawn.Value!.SetModel(skin.Value.ModelPath);
+                if (skin.Value.MeshGroupIndex.HasValue)
+                {
+                    client.PlayerPawn.Value.CBodyComponent!.SceneNode!.GetSkeletonInstance().ModelState.MeshGroupMask =
+                        Utility.ComputeMeshGroupMask(new int[] { skin.Value.MeshGroupIndex.Value }, new Dictionary<int, int>());
+                }
+            });
+        }
+
+        menu.Display(client);
     }
 
     private static void ReviveCallBack(ref float time, CCSPlayerController client, Position position, Timer? timer, Dictionary<string, WeaponStatus> weaponStatus)

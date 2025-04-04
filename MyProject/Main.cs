@@ -461,6 +461,12 @@ public class Main(
     {
         _command.OnReviveCommand(client, command, CostScoreToRevive, _position[client.PlayerName], _weaponStatus);
     }
+
+    [ConsoleCommand("css_models", "models command")]
+    public void OnModelsCommand(CCSPlayerController client, CommandInfo command)
+    {
+        _command.OnModelsCommand(client, command);
+    }
     #endregion commands
 
     private void InitializeFileds()
