@@ -55,7 +55,7 @@ public class Bot(ILogger<Bot> logger) : IBot
     public void RoundStartBehavior(int roundCount)
     {
         SetBotMoneyToZero();
-        SetBotScore();
+        SetSpecialBotScore();
         SetSpecialBotModel();
 
         _respawnTimes = _maxRespawnTimes;
@@ -120,7 +120,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             });
         }
 
-        void SetBotScore()
+        void SetSpecialBotScore()
         {
             var eagleEye = Utilities.GetPlayerFromSlot(Main.Instance.Players[BotProfile.Special[0]]);
             var mimic = Utilities.GetPlayerFromSlot(Main.Instance.Players[BotProfile.Special[1]]);
