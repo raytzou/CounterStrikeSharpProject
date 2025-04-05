@@ -8,6 +8,7 @@ using CounterStrikeSharp.API.Modules.Entities.Constants;
 using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
 using MyProject.Classes;
+using MyProject.Domains;
 using MyProject.Models;
 using MyProject.PluginInterfaces;
 
@@ -15,6 +16,7 @@ namespace MyProject;
 
 public class Main(
     ILogger<Main> logger,
+    ProjectDbContext dbContext,
     ICommand commmand,
     IBot bot
     ) : BasePlugin
@@ -27,6 +29,7 @@ public class Main(
     #endregion plugin info
 
     private readonly ILogger<Main> _logger = logger;
+    private readonly ProjectDbContext _dbContext = dbContext;
 
     // fields
     private readonly Dictionary<string, int> _players = []; // playerName -> slot
@@ -168,6 +171,8 @@ public class Main(
         if (!player.IsBot)
         {
             _logger.LogInformation("{client} has connected at {DT}, IP: {ipAddress}, SteamID: {steamID}", player.PlayerName, DateTime.Now, player.IpAddress, player.SteamID);
+            ProcessPlayerData();
+
             if (!_position.ContainsKey(player.PlayerName))
                 _position.Add(player.PlayerName, new Position());
             if (!_weaponStatus.ContainsKey(player.PlayerName))
@@ -178,6 +183,31 @@ public class Main(
             _players.Add(player.PlayerName, player.Slot);
         else
             _players[player.PlayerName] = player.Slot;
+
+        void ProcessPlayerData()
+        {
+            var playerSteamId = player.SteamID;
+            var playerData = _dbContext.Players.FirstOrDefault(p => p.SteamId == playerSteamId);
+            if (playerData is null)
+            {
+                _dbContext.Players.Add(new Player
+                {
+                    SteamId = player.SteamID,
+                    PlayerName = player.PlayerName,
+                    IpAddress = player.IpAddress ?? string.Empty,
+                    LastTimeConnect = DateTime.Now
+                });
+            }
+            else
+            {
+                playerData.LastTimeConnect = DateTime.Now;
+                playerData.PlayerName = player.PlayerName;
+                playerData.IpAddress = player.IpAddress ?? string.Empty;
+                _dbContext.Players.Update(playerData);
+            }
+
+            _dbContext.SaveChanges();
+        }
     }
 
     #region hook result
