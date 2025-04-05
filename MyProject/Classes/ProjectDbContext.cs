@@ -16,7 +16,8 @@ namespace MyProject.Classes
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<Player>()
-                .HasKey(p => p.SteamId);
+                .Property(p => p.SteamId)
+                .HasColumnType("bigint");
         }
     }
 }
