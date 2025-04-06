@@ -357,12 +357,7 @@ public class Command(ILogger<Command> logger) : ICommand
         {
             menu.AddItem(skin.Key, (player, option) =>
             {
-                client.PlayerPawn.Value!.SetModel(skin.Value.ModelPath);
-                if (skin.Value.MeshGroupIndex.HasValue)
-                {
-                    client.PlayerPawn.Value.CBodyComponent!.SceneNode!.GetSkeletonInstance().ModelState.MeshGroupMask =
-                        Utility.ComputeMeshGroupMask(new int[] { skin.Value.MeshGroupIndex.Value }, new Dictionary<int, int>());
-                }
+                Utility.SetClientModel(client, skin.Key);
             });
         }
 

@@ -1,4 +1,5 @@
 ﻿using CounterStrikeSharp.API;
+using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Entities.Constants;
 using CounterStrikeSharp.API.Modules.Timers;
 using Microsoft.Extensions.Logging;
@@ -150,6 +151,22 @@ namespace MyProject.Classes
             }
 
             return meshGroupMask;
+        }
+
+        /// <summary>
+        /// Set the model for a client.
+        /// </summary>
+        /// <param name="client">player controller</param>
+        /// <param name="modelName">skin name</param>
+        public static void SetClientModel(CCSPlayerController client, string modelName)
+        {
+            var skin = _workshopSkins[modelName];
+            client.PlayerPawn.Value!.SetModel(skin.ModelPath);
+            if (skin.MeshGroupIndex.HasValue)
+            {
+                client.PlayerPawn.Value.CBodyComponent!.SceneNode!.GetSkeletonInstance().ModelState.MeshGroupMask =
+                    Utility.ComputeMeshGroupMask(new int[] { skin.MeshGroupIndex.Value }, new Dictionary<int, int>());
+            }
         }
     }
 }
