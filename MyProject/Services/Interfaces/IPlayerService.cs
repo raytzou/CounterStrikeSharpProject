@@ -1,8 +1,6 @@
-﻿using MyProject.Domains;
-
-namespace MyProject.Services.Interfaces
+﻿namespace MyProject.Services.Interfaces
 {
-    public interface IPlayer
+    public interface IPlayerService
     {
         Domains.Player? Get(ulong steamId);
         void Add(Domains.Player player);

@@ -1,14 +1,13 @@
 ﻿using MyProject.Classes;
-using MyProject.Domains;
 using MyProject.Services.Interfaces;
 
 namespace MyProject.Services
 {
-    public class Player : IPlayer
+    public class PlayerService : IPlayerService
     {
         private ProjectDbContext _dbContext;
 
-        public Player(ProjectDbContext dbContext)
+        public PlayerService(ProjectDbContext dbContext)
         {
             _dbContext = dbContext;
         }

@@ -17,7 +17,7 @@ namespace MyProject;
 
 public class Main(
     ILogger<Main> logger,
-    IPlayer playerService,
+    IPlayerService playerService,
     ICommand commmand,
     IBot bot
     ) : BasePlugin
@@ -30,7 +30,7 @@ public class Main(
     #endregion plugin info
 
     private readonly ILogger<Main> _logger = logger;
-    private readonly IPlayer _playerService = playerService;
+    private readonly IPlayerService _playerService = playerService;
 
     // fields
     private readonly Dictionary<string, int> _players = []; // playerName -> slot

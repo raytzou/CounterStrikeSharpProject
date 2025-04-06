@@ -16,7 +16,7 @@ namespace MyProject.Classes
             var connectionString = AppSettings.Configuration?.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Cannot find the connection string");
             services.AddDbContext<ProjectDbContext>(options =>
                 options.UseSqlServer(connectionString));
-            services.AddSingleton<IPlayer, Player>();
+            services.AddSingleton<IPlayerService, PlayerService>();
             services.AddSingleton<ICommand, Command>();
             services.AddSingleton<IBot, Bot>();
         }
