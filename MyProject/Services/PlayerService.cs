@@ -1,4 +1,6 @@
-﻿using MyProject.Classes;
+﻿using CounterStrikeSharp.API.Core;
+using MyProject.Classes;
+using MyProject.Domains;
 using MyProject.Services.Interfaces;
 
 namespace MyProject.Services
@@ -12,24 +14,31 @@ namespace MyProject.Services
             _dbContext = dbContext;
         }
 
-        public Domains.Player? Get(ulong steamId)
+        public void PlayerJoin(CCSPlayerController client)
         {
-            return _dbContext.Players.FirstOrDefault(p => p.SteamId == steamId);
-        }
+            var playerSteamId = client.SteamID;
+            var playerData = _dbContext.Players
+                .FirstOrDefault(x => x.SteamId == playerSteamId);
+            if (playerData is null)
+            {
+                var newPlayer = new Player
+                {
+                    SteamId = playerSteamId,
+                    PlayerName = client.PlayerName,
+                    IpAddress = client.IpAddress ?? string.Empty,
+                    LastTimeConnect = DateTime.Now
+                };
+                _dbContext.Players.Add(newPlayer);
+            }
+            else
+            {
+                playerData.LastTimeConnect = DateTime.Now;
+                playerData.PlayerName = client.PlayerName;
+                playerData.IpAddress = client.IpAddress ?? string.Empty;
+                _dbContext.Players.Update(playerData);
+            }
 
-        public void Add(Domains.Player player)
-        {
-            _dbContext.Players.Add(player);
-        }
-
-        public void SaveChanges()
-        {
             _dbContext.SaveChanges();
-        }
-
-        public void Update(Domains.Player player)
-        {
-            _dbContext.Players.Update(player);
         }
     }
 }

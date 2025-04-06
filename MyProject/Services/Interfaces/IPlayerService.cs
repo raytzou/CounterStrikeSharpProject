@@ -1,10 +1,9 @@
-﻿namespace MyProject.Services.Interfaces
+﻿using CounterStrikeSharp.API.Core;
+
+namespace MyProject.Services.Interfaces
 {
     public interface IPlayerService
     {
-        Domains.Player? Get(ulong steamId);
-        void Add(Domains.Player player);
-        void Update(Domains.Player player);
-        void SaveChanges();
+        void PlayerJoin(CCSPlayerController client);
     }
 }

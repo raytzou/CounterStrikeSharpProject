@@ -8,7 +8,6 @@ using CounterStrikeSharp.API.Modules.Entities.Constants;
 using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
 using MyProject.Classes;
-using MyProject.Domains;
 using MyProject.Models;
 using MyProject.PluginInterfaces;
 using MyProject.Services.Interfaces;
@@ -172,7 +171,7 @@ public class Main(
         if (!player.IsBot)
         {
             _logger.LogInformation("{client} has connected at {DT}, IP: {ipAddress}, SteamID: {steamID}", player.PlayerName, DateTime.Now, player.IpAddress, player.SteamID);
-            ProcessPlayerData();
+            _playerService.PlayerJoin(player);
 
             if (!_position.ContainsKey(player.PlayerName))
                 _position.Add(player.PlayerName, new Position());
@@ -184,32 +183,6 @@ public class Main(
             _players.Add(player.PlayerName, player.Slot);
         else
             _players[player.PlayerName] = player.Slot;
-
-        void ProcessPlayerData()
-        {
-            var playerSteamId = player.SteamID;
-            var playerData = _playerService.Get(playerSteamId);
-            if (playerData is null)
-            {
-                var newPlayer = new Player
-                {
-                    SteamId = player.SteamID,
-                    PlayerName = player.PlayerName,
-                    IpAddress = player.IpAddress ?? string.Empty,
-                    LastTimeConnect = DateTime.Now
-                };
-                _playerService.Add(newPlayer);
-            }
-            else
-            {
-                playerData.LastTimeConnect = DateTime.Now;
-                playerData.PlayerName = player.PlayerName;
-                playerData.IpAddress = player.IpAddress ?? string.Empty;
-                _playerService.Update(playerData);
-            }
-
-            _playerService.SaveChanges();
-        }
     }
 
     #region hook result
