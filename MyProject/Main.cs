@@ -17,6 +17,7 @@ namespace MyProject;
 public class Main(
     ILogger<Main> logger,
     IPlayerService playerService,
+    IPlayerSkinService playerSkinService,
     ICommand commmand,
     IBot bot
     ) : BasePlugin
@@ -30,6 +31,7 @@ public class Main(
 
     private readonly ILogger<Main> _logger = logger;
     private readonly IPlayerService _playerService = playerService;
+    private readonly IPlayerSkinService _playerSkinService = playerSkinService;
 
     // fields
     private readonly Dictionary<string, int> _players = []; // playerName -> slot
@@ -199,7 +201,12 @@ public class Main(
             RemovePlayerProtection(player);
 
         if (!player.IsBot)
+        {
             _weaponStatus[player.PlayerName].IsActive = true;
+            var skinName = _playerSkinService.GetActiveSkinName(player.SteamID);
+            if (!string.IsNullOrEmpty(skinName))
+                Utility.SetClientModel(player, skinName);
+        }
 
         return HookResult.Continue;
     }
@@ -254,6 +261,16 @@ public class Main(
         {
             // End Game
             Server.ExecuteCommand("mp_maxrounds 1");
+        }
+
+        foreach (var client in Utilities.GetPlayers())
+        {
+            if (!client.IsBot)
+            {
+                var skinName = _playerSkinService.GetActiveSkinName(client.SteamID);
+                if (!string.IsNullOrEmpty(skinName))
+                    Utility.SetClientModel(client, skinName);
+            }
         }
 
         return HookResult.Continue;

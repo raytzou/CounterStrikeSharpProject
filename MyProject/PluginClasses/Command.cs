@@ -8,13 +8,18 @@ using Microsoft.Extensions.Logging;
 using MyProject.Classes;
 using MyProject.Models;
 using MyProject.PluginInterfaces;
+using MyProject.Services.Interfaces;
 using Timer = CounterStrikeSharp.API.Modules.Timers.Timer;
 
 namespace MyProject.PluginClasses;
 
-public class Command(ILogger<Command> logger) : ICommand
+public class Command(
+    ILogger<Command> logger,
+    IPlayerSkinService playerSkinService
+    ) : ICommand
 {
     private readonly ILogger<Command> _logger = logger;
+    private readonly IPlayerSkinService _playerSkinService = playerSkinService;
 
     public void OnKickCommand(CCSPlayerController client, CommandInfo command, string targetName)
     {
@@ -353,11 +358,17 @@ public class Command(ILogger<Command> logger) : ICommand
     {
         var menu = new ScreenMenu("Select Models", Main.Instance);
 
+        menu.AddItem("Default", (player, option) =>
+        {
+            player.PrintToCenter("Your model will be reset to default next round");
+            _playerSkinService.Reset(player.SteamID);
+        });
         foreach (var skin in Utility.WorkshopSkins)
         {
             menu.AddItem(skin.Key, (player, option) =>
             {
                 Utility.SetClientModel(client, skin.Key);
+                _playerSkinService.Update(player.SteamID, skin.Key);
             });
         }
 
