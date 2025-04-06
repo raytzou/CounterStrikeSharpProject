@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using MyProject.Classes;
 using MyProject.PluginInterfaces;
 
-namespace MyProject.PluginClasses;
+namespace MyProject.Plugins;
 
 public class Bot(ILogger<Bot> logger) : IBot
 {

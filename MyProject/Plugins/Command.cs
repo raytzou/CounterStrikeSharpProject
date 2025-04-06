@@ -11,7 +11,7 @@ using MyProject.PluginInterfaces;
 using MyProject.Services.Interfaces;
 using Timer = CounterStrikeSharp.API.Modules.Timers.Timer;
 
-namespace MyProject.PluginClasses;
+namespace MyProject.Plugins;
 
 public class Command(
     ILogger<Command> logger,
