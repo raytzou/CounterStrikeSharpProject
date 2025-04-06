@@ -5,14 +5,9 @@ using MyProject.Services.Interfaces;
 
 namespace MyProject.Services
 {
-    public class PlayerSkinService : IPlayerSkinService
+    public class PlayerSkinService(ProjectDbContext dbContext) : IPlayerSkinService
     {
-        private readonly ProjectDbContext _dbContext;
-
-        public PlayerSkinService(ProjectDbContext dbContext)
-        {
-            _dbContext = dbContext;
-        }
+        private readonly ProjectDbContext _dbContext = dbContext;
 
         public string GetActiveSkinName(ulong steamId) => _dbContext.PlayerSkins
             .FirstOrDefault(x => x.SteamId == steamId && x.IsActive)?.SkinName ?? string.Empty;
