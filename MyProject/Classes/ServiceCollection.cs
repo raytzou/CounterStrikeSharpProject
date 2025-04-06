@@ -3,9 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MyProject.Plugins;
-using MyProject.PluginInterfaces;
 using MyProject.Services;
 using MyProject.Services.Interfaces;
+using MyProject.Plugins.PluginInterfaces;
 
 namespace MyProject.Classes
 {

@@ -1,6 +1,6 @@
 ﻿using CounterStrikeSharp.API.Core;
 
-namespace MyProject.PluginInterfaces
+namespace MyProject.Plugins.PluginInterfaces
 {
     public interface IBot
     {

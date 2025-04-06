@@ -9,7 +9,7 @@ using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
 using MyProject.Classes;
 using MyProject.Models;
-using MyProject.PluginInterfaces;
+using MyProject.Plugins.PluginInterfaces;
 using MyProject.Services.Interfaces;
 
 namespace MyProject;
