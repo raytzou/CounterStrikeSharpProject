@@ -17,7 +17,7 @@ namespace MyProject;
 
 public class Main(
     ILogger<Main> logger,
-    IPlayerData playerData,
+    IPlayer playerService,
     ICommand commmand,
     IBot bot
     ) : BasePlugin
@@ -30,7 +30,7 @@ public class Main(
     #endregion plugin info
 
     private readonly ILogger<Main> _logger = logger;
-    private readonly IPlayerData _playerData = playerData;
+    private readonly IPlayer _playerService = playerService;
 
     // fields
     private readonly Dictionary<string, int> _players = []; // playerName -> slot
@@ -188,7 +188,7 @@ public class Main(
         void ProcessPlayerData()
         {
             var playerSteamId = player.SteamID;
-            var playerData = _playerData.Get(playerSteamId);
+            var playerData = _playerService.Get(playerSteamId);
             if (playerData is null)
             {
                 var newPlayer = new Player
@@ -198,17 +198,17 @@ public class Main(
                     IpAddress = player.IpAddress ?? string.Empty,
                     LastTimeConnect = DateTime.Now
                 };
-                _playerData.Add(newPlayer);
+                _playerService.Add(newPlayer);
             }
             else
             {
                 playerData.LastTimeConnect = DateTime.Now;
                 playerData.PlayerName = player.PlayerName;
                 playerData.IpAddress = player.IpAddress ?? string.Empty;
-                _playerData.Update(playerData);
+                _playerService.Update(playerData);
             }
 
-            _playerData.SaveChanges();
+            _playerService.SaveChanges();
         }
     }
 

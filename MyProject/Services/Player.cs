@@ -4,21 +4,21 @@ using MyProject.Services.Interfaces;
 
 namespace MyProject.Services
 {
-    public class PlayerData : IPlayerData
+    public class Player : IPlayer
     {
         private ProjectDbContext _dbContext;
 
-        public PlayerData(ProjectDbContext dbContext)
+        public Player(ProjectDbContext dbContext)
         {
             _dbContext = dbContext;
         }
 
-        public Player? Get(ulong steamId)
+        public Domains.Player? Get(ulong steamId)
         {
             return _dbContext.Players.FirstOrDefault(p => p.SteamId == steamId);
         }
 
-        public void Add(Player player)
+        public void Add(Domains.Player player)
         {
             _dbContext.Players.Add(player);
         }
@@ -28,7 +28,7 @@ namespace MyProject.Services
             _dbContext.SaveChanges();
         }
 
-        public void Update(Player player)
+        public void Update(Domains.Player player)
         {
             _dbContext.Players.Update(player);
         }
