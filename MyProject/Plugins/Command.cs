@@ -7,7 +7,7 @@ using CS2MenuManager.API.Menu;
 using Microsoft.Extensions.Logging;
 using MyProject.Classes;
 using MyProject.Models;
-using MyProject.Plugins.PluginInterfaces;
+using MyProject.Plugins.Interfaces;
 using MyProject.Services.Interfaces;
 using Timer = CounterStrikeSharp.API.Modules.Timers.Timer;
 

@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MyProject.Plugins;
 using MyProject.Services;
 using MyProject.Services.Interfaces;
-using MyProject.Plugins.PluginInterfaces;
+using MyProject.Plugins.Interfaces;
 
 namespace MyProject.Classes
 {

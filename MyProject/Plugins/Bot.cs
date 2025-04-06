@@ -3,7 +3,7 @@ using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Entities.Constants;
 using Microsoft.Extensions.Logging;
 using MyProject.Classes;
-using MyProject.Plugins.PluginInterfaces;
+using MyProject.Plugins.Interfaces;
 
 namespace MyProject.Plugins;
 
