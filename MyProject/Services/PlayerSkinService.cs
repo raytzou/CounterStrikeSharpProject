@@ -1,5 +1,4 @@
-﻿using CounterStrikeSharp.API.Core;
-using MyProject.Classes;
+﻿using MyProject.Classes;
 using MyProject.Domains;
 using MyProject.Services.Interfaces;
 
@@ -17,7 +16,7 @@ namespace MyProject.Services
             var currentSkins = _dbContext.PlayerSkins
                 .Where(x => x.SteamId == steamId && x.IsActive)
                 .ToList();
-            
+
             currentSkins.ForEach(x =>
             {
                 x.IsActive = false;
@@ -56,5 +55,5 @@ namespace MyProject.Services
 
             _dbContext.SaveChanges();
         }
-    } 
+    }
 }
