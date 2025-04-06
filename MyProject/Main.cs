@@ -11,12 +11,13 @@ using MyProject.Classes;
 using MyProject.Domains;
 using MyProject.Models;
 using MyProject.PluginInterfaces;
+using MyProject.Services.Interfaces;
 
 namespace MyProject;
 
 public class Main(
     ILogger<Main> logger,
-    ProjectDbContext dbContext,
+    IPlayerData playerData,
     ICommand commmand,
     IBot bot
     ) : BasePlugin
@@ -29,7 +30,7 @@ public class Main(
     #endregion plugin info
 
     private readonly ILogger<Main> _logger = logger;
-    private readonly ProjectDbContext _dbContext = dbContext;
+    private readonly IPlayerData _playerData = playerData;
 
     // fields
     private readonly Dictionary<string, int> _players = []; // playerName -> slot
@@ -187,26 +188,27 @@ public class Main(
         void ProcessPlayerData()
         {
             var playerSteamId = player.SteamID;
-            var playerData = _dbContext.Players.FirstOrDefault(p => p.SteamId == playerSteamId);
+            var playerData = _playerData.Get(playerSteamId);
             if (playerData is null)
             {
-                _dbContext.Players.Add(new Player
+                var newPlayer = new Player
                 {
                     SteamId = player.SteamID,
                     PlayerName = player.PlayerName,
                     IpAddress = player.IpAddress ?? string.Empty,
                     LastTimeConnect = DateTime.Now
-                });
+                };
+                _playerData.Add(newPlayer);
             }
             else
             {
                 playerData.LastTimeConnect = DateTime.Now;
                 playerData.PlayerName = player.PlayerName;
                 playerData.IpAddress = player.IpAddress ?? string.Empty;
-                _dbContext.Players.Update(playerData);
+                _playerData.Update(playerData);
             }
 
-            _dbContext.SaveChanges();
+            _playerData.SaveChanges();
         }
     }
 

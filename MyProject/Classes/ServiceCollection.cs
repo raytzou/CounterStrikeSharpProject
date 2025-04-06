@@ -4,6 +4,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MyProject.PluginClasses;
 using MyProject.PluginInterfaces;
+using MyProject.Services;
+using MyProject.Services.Interfaces;
 
 namespace MyProject.Classes
 {
@@ -14,6 +16,7 @@ namespace MyProject.Classes
             var connectionString = AppSettings.Configuration?.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Cannot find the connection string");
             services.AddDbContext<ProjectDbContext>(options =>
                 options.UseSqlServer(connectionString));
+            services.AddSingleton<IPlayerData, PlayerData>();
             services.AddSingleton<ICommand, Command>();
             services.AddSingleton<IBot, Bot>();
         }
