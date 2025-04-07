@@ -40,5 +40,20 @@ namespace MyProject.Services
 
             _dbContext.SaveChanges();
         }
+
+        public void UpdateDefaultSkin(ulong steamId, string skinPath)
+        {
+            var playerData = _dbContext.Players
+                .FirstOrDefault(x => x.SteamId == steamId);
+            if (playerData is null)
+            {
+                _logger.LogError("Player with SteamID {steamId} not found.", steamId);
+                return;
+            }
+
+            playerData.DefaultSkinModelPath = skinPath;
+            _dbContext.Players.Update(playerData);
+            _dbContext.SaveChanges();
+        }
     }
 }
