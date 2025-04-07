@@ -6,5 +6,6 @@ namespace MyProject.Services.Interfaces
     {
         void PlayerJoin(CCSPlayerController client);
         void UpdateDefaultSkin(ulong steamId, string skinPath);
+        string GetDefaultSkin(ulong steamId);
     }
 }
