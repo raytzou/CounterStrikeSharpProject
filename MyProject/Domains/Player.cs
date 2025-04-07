@@ -15,5 +15,7 @@ namespace MyProject.Domains
         public string IpAddress { get; set; } = null!;
         [Column("last_time_connect")]
         public DateTime LastTimeConnect { get; set; }
+        [Column("default_skin_model_path")]
+        public string DefaultSkinModelPath { get; set; } = null!;
     }
 }
