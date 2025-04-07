@@ -1,18 +1,18 @@
 ﻿using CounterStrikeSharp.API.Core;
+using Microsoft.Extensions.Logging;
 using MyProject.Classes;
 using MyProject.Domains;
 using MyProject.Services.Interfaces;
 
 namespace MyProject.Services
 {
-    public class PlayerService : IPlayerService
+    public class PlayerService(
+        ILogger<PlayerService> logger,
+        ProjectDbContext dbContext
+        ) : IPlayerService
     {
-        private ProjectDbContext _dbContext;
-
-        public PlayerService(ProjectDbContext dbContext)
-        {
-            _dbContext = dbContext;
-        }
+        private readonly ILogger<PlayerService> _logger = logger;
+        private ProjectDbContext _dbContext = dbContext;
 
         public void PlayerJoin(CCSPlayerController client)
         {
