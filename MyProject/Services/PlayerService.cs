@@ -14,7 +14,7 @@ namespace MyProject.Services
         private readonly ILogger<PlayerService> _logger = logger;
         private ProjectDbContext _dbContext = dbContext;
 
-        public string GetDefaultSkin(ulong steamId) => _dbContext.Players.FirstOrDefault(player => player.SteamId == steamId)?.DefaultSkinModelPath ?? string.Empty;
+        public string GetDefaultSkin(ulong steamId) => _dbContext.Players.FirstOrDefault(player => player.SteamId == steamId)?.DefaultSkinModelPath ?? throw new NullReferenceException($"Cannot get the default skin SteamID: {steamId}");
 
         public void PlayerJoin(CCSPlayerController client)
         {
