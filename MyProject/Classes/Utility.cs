@@ -160,12 +160,32 @@ namespace MyProject.Classes
         /// <param name="modelName">skin name</param>
         public static void SetClientModel(CCSPlayerController client, string modelName)
         {
+            if (!_workshopSkins.ContainsKey(modelName))
+            {
+                if (!isPath(modelName))
+                    throw new ArgumentException($"{modelName} is not a default skin path nor a workshop skin name");
+                client.PlayerPawn.Value!.SetModel(modelName);
+                return;
+            }
             var skin = _workshopSkins[modelName];
             client.PlayerPawn.Value!.SetModel(skin.ModelPath);
             if (skin.MeshGroupIndex.HasValue)
             {
                 client.PlayerPawn.Value.CBodyComponent!.SceneNode!.GetSkeletonInstance().ModelState.MeshGroupMask =
                     Utility.ComputeMeshGroupMask(new int[] { skin.MeshGroupIndex.Value }, new Dictionary<int, int>());
+            }
+
+            static bool isPath(string path)
+            {
+                try
+                {
+                    Path.GetFullPath(path);
+                    return true;
+                }
+                catch (Exception)
+                {
+                    return false;
+                }
             }
         }
     }
