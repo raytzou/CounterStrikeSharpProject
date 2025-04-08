@@ -15,10 +15,12 @@ namespace MyProject.Plugins;
 
 public class Command(
     ILogger<Command> logger,
+    IPlayerService playerService,
     IPlayerSkinService playerSkinService
     ) : ICommand
 {
     private readonly ILogger<Command> _logger = logger;
+    private readonly IPlayerService _playerService = playerService;
     private readonly IPlayerSkinService _playerSkinService = playerSkinService;
 
     public void OnKickCommand(CCSPlayerController client, CommandInfo command, string targetName)
@@ -360,7 +362,8 @@ public class Command(
 
         menu.AddItem("Default", (player, option) =>
         {
-            player.PrintToCenter("Your model will be reset to default next round");
+            var defaultSkin = _playerService.GetDefaultSkin(player.SteamID);
+            Utility.SetClientModel(client, defaultSkin);
             _playerSkinService.Reset(player.SteamID);
         });
         foreach (var skin in Utility.WorkshopSkins)
