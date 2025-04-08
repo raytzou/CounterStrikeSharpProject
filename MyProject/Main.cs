@@ -43,6 +43,7 @@ public class Main(
     private int _winStreak = 0;
     private int _looseStreak = 0;
     private bool _respawnBot = false;
+    private bool[] _skinUpdated = new bool[64];
 
     // plugins
     private readonly ICommand _command = commmand;
@@ -70,6 +71,7 @@ public class Main(
         RegisterListener<Listeners.OnClientPutInServer>(OnClientPutInServer);
         RegisterListener<Listeners.OnServerPrecacheResources>(OnServerPrecacheResources);
         RegisterEventHandler<EventPlayerDisconnect>(DisconnectHandler);
+        RegisterEventHandler<EventPlayerTeam>(PlayerJoinTeamHandler);
         RegisterEventHandler<EventPlayerSpawn>(PlayerSpawnHandler);
         RegisterEventHandler<EventPlayerDeath>(PlayerDeathHandler);
         RegisterEventHandler<EventRoundAnnounceWarmup>(WarmupHandler);
@@ -188,6 +190,20 @@ public class Main(
     }
 
     #region hook result
+    private HookResult PlayerJoinTeamHandler(EventPlayerTeam @event, GameEventInfo info)
+    {
+        var player = @event.Userid;
+        if (player is null || !player.IsValid || player.IsBot || _skinUpdated[player.Slot])
+            return HookResult.Continue;
+        Server.NextFrameAsync(() =>
+        {
+            var defaultSkin = player.PlayerPawn.Value!.CBodyComponent?.SceneNode?.GetSkeletonInstance().ModelState.ModelName ?? throw new NullReferenceException($"Cannot update player default skin {player.SteamID}");
+            _playerService.UpdateDefaultSkin(player.SteamID, defaultSkin);
+            _skinUpdated[player.Slot] = true;
+        });
+        return HookResult.Continue;
+    }
+
     private HookResult PlayerSpawnHandler(EventPlayerSpawn @event, GameEventInfo info)
     {
         var player = @event.Userid;
@@ -493,6 +509,7 @@ public class Main(
 
     private void InitializeFileds()
     {
+        Array.Clear(_skinUpdated, 0, _skinUpdated.Length);
         _roundCount = 0;
         _winStreak = 0;
         _warmup = true;
