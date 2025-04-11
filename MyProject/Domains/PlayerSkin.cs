@@ -9,9 +9,11 @@ namespace MyProject.Domains
         [Key]
         public Guid Id { get; set; }
 
-        [ForeignKey("")]
         [Column("steam_id")]
         public ulong SteamId { get; set; }
+
+        [ForeignKey(nameof(SteamId))]
+        public virtual Player Player { get; set; } = null!;
 
         [Column("skin_name")]
         public string SkinName { get; set; } = null!;
