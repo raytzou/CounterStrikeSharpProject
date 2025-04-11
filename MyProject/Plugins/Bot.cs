@@ -152,7 +152,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    public void RespawnBot(CCSPlayerController bot, int currentRound)
+    public async Task RespawnBotAsync(CCSPlayerController bot, int currentRound)
     {
         if (_respawnTimes <= 0 ||
             bot.PlayerName == BotProfile.Special[0] ||
@@ -160,18 +160,23 @@ public class Bot(ILogger<Bot> logger) : IBot
             bot.PlayerName == BotProfile.Special[2])
             return;
 
-        bot.Respawn();
-        _respawnTimes--;
+        await Server.NextFrameAsync(bot.Respawn);
 
         if (currentRound > 1)
         {
-            Server.NextFrameAsync(() =>
+            await Server.NextFrameAsync(() =>
             {
                 bot.RemoveWeapons();
                 bot.PlayerPawn.Value!.WeaponServices!.PreventWeaponPickup = false;
-                bot.GiveNamedItem(GetBotTeam(Server.MapName) == "ct" ? CsItem.M4A1 : CsItem.AK47);
             });
-        };
+
+            await Server.NextFrameAsync(() =>
+            {
+                bot.GiveNamedItem(GetBotTeam(Server.MapName) == "ct" ? CsItem.M4A1 : CsItem.AK47);
+                bot.PlayerPawn.Value!.WeaponServices!.PreventWeaponPickup = true;
+            });
+        }
+        _respawnTimes--;
     }
 
     private static string GetBotTeam(string mapName)

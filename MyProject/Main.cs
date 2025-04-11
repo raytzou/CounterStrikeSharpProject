@@ -238,10 +238,14 @@ public class Main(
         {
             if (_respawnBot && player.IsBot)
             {
-                Server.NextFrameAsync(() =>
-                {
-                    _bot.RespawnBot(player, _roundCount);
-                });
+                _ = _bot.RespawnBotAsync(player, _roundCount)
+                    .ContinueWith(task =>
+                    {
+                        if (task.IsFaulted || task.Exception is not null)
+                        {
+                            _logger.LogError("Failed to respawn bot: {error}", task.Exception?.Message);
+                        }
+                    });
             }
             else if (_position.TryGetValue(player.PlayerName, out Position? playerPosition))
             {
