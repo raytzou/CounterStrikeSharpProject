@@ -32,13 +32,11 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void AddSpecialBot()
         {
-            if (GetBotTeam(Server.MapName) == CsTeam.None)
-            {
-                _logger.LogWarning("Bot team not found. {mapName}", Server.MapName);
+            var botTeam = GetBotTeam(Server.MapName);
+            if (botTeam == CsTeam.None)
                 return;
-            }
 
-            var team = GetBotTeam(Server.MapName) == CsTeam.CounterTerrorist ? "ct" : "t";
+            var team = botTeam == CsTeam.CounterTerrorist ? "ct" : "t";
             Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[0]}");
             Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[1]}");
             Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[2]}");
@@ -136,6 +134,8 @@ public class Bot(ILogger<Bot> logger) : IBot
         void SetDefaultWeapon()
         {
             var botTeam = GetBotTeam(Server.MapName);
+            if (botTeam == CsTeam.None)
+                return;
             var team = (botTeam == CsTeam.CounterTerrorist) ? "ct" : "t";
 
             Server.ExecuteCommand($"mp_{team}_default_primary {GetDefaultPrimaryWeapon()}");
@@ -173,14 +173,16 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             await Server.NextFrameAsync(() =>
             {
-                bot.GiveNamedItem(GetBotTeam(Server.MapName) == CsTeam.CounterTerrorist ? CsItem.M4A1 : CsItem.AK47);
+                var botTeam = GetBotTeam(Server.MapName);
+                if (botTeam == CsTeam.None) return;
+                bot.GiveNamedItem(botTeam == CsTeam.CounterTerrorist ? CsItem.M4A1 : CsItem.AK47);
                 bot.PlayerPawn.Value!.WeaponServices!.PreventWeaponPickup = true;
             });
         }
         _respawnTimes--;
     }
 
-    private static CsTeam GetBotTeam(string mapName)
+    private CsTeam GetBotTeam(string mapName)
     {
         switch (mapName[..3])
         {
@@ -195,6 +197,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                     mapName == "pango")
                     return CsTeam.CounterTerrorist;
 
+                _logger.LogWarning("Bot team not found. {mapName}", Server.MapName);
                 return CsTeam.None;
         }
     }
@@ -205,10 +208,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         var botTeam = GetBotTeam(Server.MapName);
         if (botTeam == CsTeam.None)
-        {
-            _logger.LogError("Bot team not found. {mapName}", Server.MapName);
             return;
-        }
 
         var difficulty = level switch
         {
