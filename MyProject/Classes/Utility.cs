@@ -16,7 +16,7 @@ namespace MyProject.Classes
         public static IEnumerable<string> AllMaps => _mapsInPhysicalDirectory.Concat(_mapsFromWorkShop);
         public static Dictionary<string, SkinInfo> WorkshopSkins => _workshopSkins;
 
-        public readonly static List<CounterStrikeSharp.API.Modules.Timers.Timer> _timers;
+        private readonly static List<CounterStrikeSharp.API.Modules.Timers.Timer> _timers;
         private static List<string> _mapsFromWorkShop;
         private static List<string> _mapsInPhysicalDirectory;
         private static readonly Dictionary<CsItem, string> _enumValue;
