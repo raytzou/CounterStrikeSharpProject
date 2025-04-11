@@ -198,12 +198,16 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    private static void KickAndFillBot(int quota, int level)
+    private void KickAndFillBot(int quota, int level)
     {
         KickOnlyTrashes();
 
         var botTeam = GetBotTeam(Server.MapName);
-        if (botTeam == string.Empty) return;
+        if (botTeam == string.Empty)
+        {
+            _logger.LogError("Bot team not found. {mapName}", Server.MapName);
+            return;
+        }
 
         var difficulty = level switch
         {
