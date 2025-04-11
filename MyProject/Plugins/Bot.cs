@@ -1,6 +1,7 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Entities.Constants;
+using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
 using MyProject.Classes;
 using MyProject.Plugins.Interfaces;
@@ -31,17 +32,16 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void AddSpecialBot()
         {
-            var botTeam = GetBotTeam(Server.MapName);
-
-            if (botTeam == string.Empty)
+            if (GetBotTeam(Server.MapName) == CsTeam.None)
             {
                 _logger.LogWarning("Bot team not found. {mapName}", Server.MapName);
                 return;
             }
 
-            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName)} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[0]}");
-            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName)} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[1]}");
-            Server.ExecuteCommand($"bot_add_{GetBotTeam(Server.MapName)} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[2]}");
+            var team = GetBotTeam(Server.MapName) == CsTeam.CounterTerrorist ? "ct" : "t";
+            Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[0]}");
+            Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[1]}");
+            Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[2]}");
         }
     }
 
@@ -136,15 +136,16 @@ public class Bot(ILogger<Bot> logger) : IBot
         void SetDefaultWeapon()
         {
             var botTeam = GetBotTeam(Server.MapName);
+            var team = (botTeam == CsTeam.CounterTerrorist) ? "ct" : "t";
 
-            Server.ExecuteCommand($"mp_{botTeam}_default_primary {GetDefaultPrimaryWeapon()}");
-            Server.ExecuteCommand($"mp_{botTeam}_default_secondary \"\"");
+            Server.ExecuteCommand($"mp_{team}_default_primary {GetDefaultPrimaryWeapon()}");
+            Server.ExecuteCommand($"mp_{team}_default_secondary \"\"");
 
             string GetDefaultPrimaryWeapon()
             {
-                if (botTeam == "ct")
+                if (botTeam == CsTeam.CounterTerrorist)
                     return Utility.GetCsItemEnumValue(CsItem.M4A4);
-                else if (botTeam == "t")
+                else if (botTeam == CsTeam.Terrorist)
                     return Utility.GetCsItemEnumValue(CsItem.AK47);
 
                 return string.Empty;
@@ -172,29 +173,29 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             await Server.NextFrameAsync(() =>
             {
-                bot.GiveNamedItem(GetBotTeam(Server.MapName) == "ct" ? CsItem.M4A1 : CsItem.AK47);
+                bot.GiveNamedItem(GetBotTeam(Server.MapName) == CsTeam.CounterTerrorist ? CsItem.M4A1 : CsItem.AK47);
                 bot.PlayerPawn.Value!.WeaponServices!.PreventWeaponPickup = true;
             });
         }
         _respawnTimes--;
     }
 
-    private static string GetBotTeam(string mapName)
+    private static CsTeam GetBotTeam(string mapName)
     {
         switch (mapName[..3])
         {
             case "cs_":
-                return "t";
+                return CsTeam.Terrorist;
             case "de_":
-                return "ct";
+                return CsTeam.CounterTerrorist;
             default:
                 if (mapName == "cs2_whiterun" ||
                     mapName == "sandstone_new" ||
                     mapName == "legend4" ||
                     mapName == "pango")
-                    return "ct";
+                    return CsTeam.CounterTerrorist;
 
-                return string.Empty;
+                return CsTeam.None;
         }
     }
 
@@ -203,7 +204,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         KickOnlyTrashes();
 
         var botTeam = GetBotTeam(Server.MapName);
-        if (botTeam == string.Empty)
+        if (botTeam == CsTeam.None)
         {
             _logger.LogError("Bot team not found. {mapName}", Server.MapName);
             return;
@@ -221,7 +222,8 @@ public class Bot(ILogger<Bot> logger) : IBot
         for (int i = 1; i <= quota - BotProfile.Special.Count; i++)
         {
             string botName = $"\"[{BotProfile.Grade[level]}]{BotProfile.NameGroup[level]}#{i:D2}\"";
-            Server.ExecuteCommand($"bot_add_{botTeam} {difficulty} {botName}");
+            var team = (botTeam == CsTeam.CounterTerrorist) ? "ct" : "t";
+            Server.ExecuteCommand($"bot_add_{team} {difficulty} {botName}");
         }
 
         Server.ExecuteCommand($"bot_quota {quota}");
