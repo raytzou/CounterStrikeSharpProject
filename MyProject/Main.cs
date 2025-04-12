@@ -68,6 +68,7 @@ public class Main(
             _logger.LogWarning("Debug mode is on");
         _logger.LogInformation("Server host time: {DT}", DateTime.Now);
         RegisterListener<Listeners.OnMapStart>(OnMapStart);
+        RegisterListener<Listeners.OnMapEnd>(OnMapEnd);
         RegisterListener<Listeners.OnClientPutInServer>(OnClientPutInServer);
         RegisterListener<Listeners.OnServerPrecacheResources>(OnServerPrecacheResources);
         RegisterEventHandler<EventPlayerDisconnect>(DisconnectHandler);
@@ -164,6 +165,11 @@ public class Main(
                 }
             }
         }
+    }
+
+    private void OnMapEnd()
+    {
+        _playerManagementService.SaveAllCachesToDB();
     }
 
     private void OnClientPutInServer(int playerSlot)
@@ -280,7 +286,6 @@ public class Main(
         {
             // End Game
             Server.ExecuteCommand("mp_maxrounds 1");
-            _playerManagementService.SaveAllCachesToDB();
         }
 
         foreach (var client in Utilities.GetPlayers())
