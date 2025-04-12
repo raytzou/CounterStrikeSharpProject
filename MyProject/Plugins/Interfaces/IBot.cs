@@ -12,11 +12,11 @@ namespace MyProject.Plugins.Interfaces
 
         void MapStartBehavior();
 
-        void WarmupEndBehavior(int botQuota);
+        void WarmupEndBehavior();
 
         void RoundStartBehavior(int roundCount);
 
-        void RoundEndBehavior(int botQuota, int roundCount, int winStreak, int looseStreak);
+        void RoundEndBehavior(int roundCount, int winStreak, int looseStreak);
 
         Task RespawnBotAsync(CCSPlayerController bot, int currentRound);
     }

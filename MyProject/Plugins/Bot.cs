@@ -43,11 +43,11 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    public void WarmupEndBehavior(int botQuota)
+    public void WarmupEndBehavior()
     {
         Server.ExecuteCommand("sv_cheats 0");
         Server.ExecuteCommand("bot_stop 0");
-        KickAndFillBot(botQuota, GetDifficultyLevel(0, 0));
+        KickAndFillBot(GetDifficultyLevel(0, 0));
     }
 
     public void RoundStartBehavior(int roundCount)
@@ -123,12 +123,12 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    public void RoundEndBehavior(int botQuota, int roundCount, int winStreak, int looseStreak)
+    public void RoundEndBehavior(int roundCount, int winStreak, int looseStreak)
     {
         if (roundCount > 0)
         {
             SetDefaultWeapon();
-            KickAndFillBot(botQuota, GetDifficultyLevel(winStreak, looseStreak));
+            KickAndFillBot(GetDifficultyLevel(winStreak, looseStreak));
         }
 
         void SetDefaultWeapon()
@@ -202,7 +202,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    private void KickAndFillBot(int quota, int level)
+    private void KickAndFillBot(int level)
     {
         KickOnlyTrashes();
 
@@ -219,14 +219,17 @@ public class Bot(ILogger<Bot> logger) : IBot
             _ => BotProfile.Difficulty.easy,
         };
 
-        for (int i = 1; i <= quota - BotProfile.Special.Count; i++)
+        var spawnPointCount = botTeam == CsTeam.CounterTerrorist ?
+            Utilities.FindAllEntitiesByDesignerName<SpawnPoint>("info_player_counterterrorist").Count()
+            : Utilities.FindAllEntitiesByDesignerName<SpawnPoint>("info_player_terrorist").Count();
+        for (int i = 1; i <= spawnPointCount - BotProfile.Special.Count; i++)
         {
             string botName = $"\"[{BotProfile.Grade[level]}]{BotProfile.NameGroup[level]}#{i:D2}\"";
             var team = (botTeam == CsTeam.CounterTerrorist) ? "ct" : "t";
             Server.ExecuteCommand($"bot_add_{team} {difficulty} {botName}");
         }
 
-        Server.ExecuteCommand($"bot_quota {quota}");
+        Server.ExecuteCommand($"bot_quota {spawnPointCount}");
 
         void KickOnlyTrashes()
         {

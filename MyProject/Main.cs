@@ -50,7 +50,6 @@ public class Main(
     private readonly IBot _bot = bot;
 
     // constants
-    private const int BotQuota = 20;
     private const float ChangeMapTimeBuffer = 2f;
     private const int SpawnPointCount = 10;
     private const int CostScoreToRevive = 50;
@@ -379,7 +378,7 @@ public class Main(
         if (!_warmup)
         {
             if (!AppSettings.IsDebug)
-                _bot.RoundEndBehavior(BotQuota, _roundCount, _winStreak, _looseStreak);
+                _bot.RoundEndBehavior(_roundCount, _winStreak, _looseStreak);
 
             Server.ExecuteCommand("mp_randomspawn 0");
             _weaponCheckTimer?.Kill();
@@ -401,7 +400,7 @@ public class Main(
         _roundCount = 1;
         _warmup = false;
         if (!AppSettings.IsDebug)
-            _bot.WarmupEndBehavior(BotQuota);
+            _bot.WarmupEndBehavior();
         return HookResult.Continue;
     }
 
