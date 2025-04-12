@@ -99,9 +99,9 @@ public class Bot(ILogger<Bot> logger) : IBot
         {
             Server.NextFrameAsync(() =>
             {
-                var eagleEye = Utilities.GetPlayerFromSlot(Main.Instance.Players[BotProfile.Special[0]]);
-                var mimic = Utilities.GetPlayerFromSlot(Main.Instance.Players[BotProfile.Special[1]]);
-                var rush = Utilities.GetPlayerFromSlot(Main.Instance.Players[BotProfile.Special[2]]);
+                var eagleEye = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[0]));
+                var mimic = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[1]));
+                var rush = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[2]));
                 var random = new Random();
                 var randomSkin = Utility.WorkshopSkins.ElementAt(random.Next(Utility.WorkshopSkins.Count));
 
@@ -113,9 +113,9 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void SetSpecialBotScore()
         {
-            var eagleEye = Utilities.GetPlayerFromSlot(Main.Instance.Players[BotProfile.Special[0]]);
-            var mimic = Utilities.GetPlayerFromSlot(Main.Instance.Players[BotProfile.Special[1]]);
-            var rush = Utilities.GetPlayerFromSlot(Main.Instance.Players[BotProfile.Special[2]]);
+            var eagleEye = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[0]));
+            var mimic = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[1]));
+            var rush = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[2]));
 
             eagleEye!.Score = 999;
             mimic!.Score = 888;

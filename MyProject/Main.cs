@@ -58,7 +58,7 @@ public class Main(
 
     // properties
     public static Main Instance { get; private set; } = null!;
-    public Dictionary<string, int> Players => _players;
+    public int GetPlayerSlot(string playerName) => _players.TryGetValue(playerName, out int slot) ? slot : throw new Exception("Player not found");
 
     public override void Load(bool hotreload)
     {
