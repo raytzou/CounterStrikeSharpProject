@@ -220,15 +220,7 @@ public class Main(
         if (!player.IsBot)
         {
             _weaponStatus[player.PlayerName].IsActive = true;
-            Server.NextFrameAsync(() =>
-            {
-                var playerCache = _playerService.GetPlayerCache(player.SteamID);
-                var skinName = playerCache.PlayerSkins.FirstOrDefault(cache => cache.IsActive)?.SkinName ?? string.Empty;
-                if (!string.IsNullOrEmpty(skinName))
-                    Utility.SetClientModel(player, skinName);
-                else
-                    Utility.SetClientModel(player, playerCache.DefaultSkinModelPath);
-            });
+            SetClientModel(player);
         }
 
         return HookResult.Continue;
@@ -295,15 +287,7 @@ public class Main(
         {
             if (!client.IsBot)
             {
-                Server.NextFrameAsync(() =>
-                {
-                    var playerCache = _playerService.GetPlayerCache(client.SteamID);
-                    var skinName = playerCache.PlayerSkins.FirstOrDefault(cache => cache.IsActive)?.SkinName ?? string.Empty;
-                    if (!string.IsNullOrEmpty(skinName))
-                        Utility.SetClientModel(client, skinName);
-                    else
-                        Utility.SetClientModel(client, playerCache.DefaultSkinModelPath);
-                });
+                SetClientModel(client);
             }
         }
 
@@ -586,5 +570,18 @@ public class Main(
                 _logger.LogWarning("Cannot identify the category of map: {mapName}", mapName);
                 return CsTeam.Terrorist;
         }
+    }
+
+    private void SetClientModel(CCSPlayerController client)
+    {
+        Server.NextFrameAsync(() =>
+        {
+            var playerCache = _playerService.GetPlayerCache(client.SteamID);
+            var skinName = playerCache.PlayerSkins.FirstOrDefault(cache => cache.IsActive)?.SkinName ?? string.Empty;
+            if (!string.IsNullOrEmpty(skinName))
+                Utility.SetClientModel(client, skinName);
+            else
+                Utility.SetClientModel(client, playerCache.DefaultSkinModelPath);
+        });
     }
 }
