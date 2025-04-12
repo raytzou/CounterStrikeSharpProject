@@ -17,7 +17,6 @@ namespace MyProject;
 public class Main(
     ILogger<Main> logger,
     IPlayerService playerService,
-    IPlayerSkinService playerSkinService,
     IPlayerManagementService playerManagementService,
     ICommand commmand,
     IBot bot
