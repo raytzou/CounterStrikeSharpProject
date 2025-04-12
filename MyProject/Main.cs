@@ -415,7 +415,10 @@ public class Main(
             return HookResult.Continue;
 
         if (!player.IsBot)
+        {
             _logger.LogInformation("{client} has disconnected at {DT}", player.PlayerName, DateTime.Now);
+            _playerManagementService.SaveCacheToDB(player.SteamID);
+        }
 
         if (_position.ContainsKey(player.PlayerName))
             _position.Remove(player.PlayerName);
