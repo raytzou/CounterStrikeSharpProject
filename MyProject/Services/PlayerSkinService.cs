@@ -55,5 +55,26 @@ namespace MyProject.Services
 
             _dbContext.SaveChanges();
         }
+
+        public void SaveToDBFromCache(IEnumerable<PlayerSkin> skinsFromCache)
+        {
+            foreach (var skin in skinsFromCache)
+            {
+                var existingSkin = _dbContext.PlayerSkins
+                    .FirstOrDefault(x => x.SteamId == skin.SteamId && x.SkinName == skin.SkinName);
+                if (existingSkin is null)
+                {
+                    _dbContext.PlayerSkins.Add(skin);
+                }
+                else
+                {
+                    existingSkin.IsActive = skin.IsActive;
+                    existingSkin.ExpiresAt = skin.ExpiresAt;
+                    _dbContext.PlayerSkins.Update(existingSkin);
+                }
+            }
+
+            _dbContext.SaveChanges();
+        }
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace MyProject.Services.Interfaces
+﻿using MyProject.Domains;
+
+namespace MyProject.Services.Interfaces
 {
     public interface IPlayerSkinService
     {
@@ -7,5 +9,6 @@
         void Reset(ulong steamId);
 
         string GetActiveSkinName(ulong steamId);
+        void SaveToDBFromCache(IEnumerable<PlayerSkin> skinsFromCache);
     }
 }
