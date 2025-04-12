@@ -3,5 +3,6 @@
     public interface IPlayerManagementService
     {
         void SaveAllCachesToDB();
+        void SaveCacheToDB(ulong steamId);
     }
 }

@@ -25,5 +25,13 @@ namespace MyProject.Services
                 _playerSkinService.SaveToDBFromCache(cache.PlayerSkins);
             }
         }
+
+        public void SaveCacheToDB(ulong steamId)
+        {
+            var cache = _playerService.GetPlayerCache(steamId);
+
+            _playerService.SaveCacheToDB(cache);
+            _playerSkinService.SaveToDBFromCache(cache.PlayerSkins);
+        }
     }
 }
