@@ -14,5 +14,6 @@ namespace MyProject.Services.Interfaces
         void ResetPlayerSkinFromCache(Player playerCache);
         void UpdateCache(Player player);
         void SaveCachesToDB(IEnumerable<Player> caches);
+        void SaveCacheToDB(Player player);
     }
 }

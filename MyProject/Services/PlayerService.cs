@@ -90,5 +90,11 @@ namespace MyProject.Services
             _dbContext.Players.UpdateRange(caches);
             _dbContext.SaveChanges();
         }
+
+        public void SaveCacheToDB(Player player)
+        {
+            _dbContext.Players.Update(player);
+            _dbContext.SaveChanges();
+        }
     }
 }
