@@ -6,6 +6,7 @@ using CounterStrikeSharp.API.Modules.Timers;
 using CS2MenuManager.API.Menu;
 using Microsoft.Extensions.Logging;
 using MyProject.Classes;
+using MyProject.Domains;
 using MyProject.Models;
 using MyProject.Plugins.Interfaces;
 using MyProject.Services.Interfaces;
@@ -359,19 +360,37 @@ public class Command(
     public void OnModelsCommand(CCSPlayerController client, CommandInfo command)
     {
         var menu = new ScreenMenu("Select Models", Main.Instance);
+        var playerCache = _playerService.GetPlayerCache(client.SteamID);
 
         menu.AddItem("Default", (player, option) =>
         {
-            var defaultSkin = _playerService.GetDefaultSkin(player.SteamID);
-            Utility.SetClientModel(client, defaultSkin);
-            _playerSkinService.Reset(player.SteamID);
+            var defaultSkin = playerCache.DefaultSkinModelPath;
+            Utility.SetClientModel(player, defaultSkin);
+            _playerService.ResetPlayerSkinFromCache(playerCache);
         });
         foreach (var skin in Utility.WorkshopSkins)
         {
             menu.AddItem(skin.Key, (player, option) =>
             {
-                Utility.SetClientModel(client, skin.Key);
-                _playerSkinService.Update(player.SteamID, skin.Key);
+                Utility.SetClientModel(player, skin.Key);
+                _playerService.ResetPlayerSkinFromCache(playerCache);
+                var playerSkin = playerCache.PlayerSkins.FirstOrDefault(cacheSkin => cacheSkin.SkinName == skin.Key);
+                if (playerSkin is not null)
+                    playerSkin.IsActive = true;
+                else
+                {
+                    var newCacheSkin = new PlayerSkin
+                    {
+                        Id = Guid.NewGuid(),
+                        SteamId = player.SteamID,
+                        SkinName = skin.Key,
+                        AcquiredAt = DateTime.Now,
+                        IsActive = true,
+                        ExpiresAt = null
+                    };
+                    playerCache.PlayerSkins.Add(newCacheSkin);
+                    _playerService.UpdateCache(playerCache);
+                }
             });
         }
 
