@@ -23,14 +23,14 @@ namespace MyProject.Services
                 .FirstOrDefault(x => x.SteamId == playerSteamId);
             if (playerData is null)
             {
-                var newPlayer = new Player
+                playerData = new Player
                 {
                     SteamId = playerSteamId,
                     PlayerName = client.PlayerName,
                     IpAddress = client.IpAddress ?? string.Empty,
                     LastTimeConnect = DateTime.Now
                 };
-                _dbContext.Players.Add(newPlayer);
+                _dbContext.Players.Add(playerData);
             }
             else
             {
