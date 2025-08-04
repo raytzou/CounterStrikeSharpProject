@@ -2,6 +2,7 @@
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
+using CounterStrikeSharp.API.Modules.Entities.Constants;
 using CounterStrikeSharp.API.Modules.Timers;
 using CS2MenuManager.API.Menu;
 using Microsoft.Extensions.Logging;
@@ -418,6 +419,9 @@ public class Command(
                 {
                     if (AppSettings.IsDebug)
                         client.PrintToChat($"try to give: {weapon}");
+                    if (weapon == Utility.GetCsItemEnumValue(CsItem.C4))
+                        continue;
+
                     client.GiveNamedItem(weapon);
                 }
             });
