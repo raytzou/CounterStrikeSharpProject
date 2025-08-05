@@ -245,6 +245,12 @@ public class Main(
         }
 
         return HookResult.Continue;
+
+        static void SetPlayerProtection(CCSPlayerController? player)
+        {
+            if (player is not null && player.PlayerPawn.Value is not null)
+                player.PlayerPawn.Value.TakesDamage = false;
+        }
     }
 
     private HookResult PlayerDeathHandler(EventPlayerDeath @event, GameEventInfo info)
@@ -561,12 +567,6 @@ public class Main(
             return string.Empty;
 
         return _players.Keys.FirstOrDefault(playerName => playerName.Contains(keyword)) ?? string.Empty;
-    }
-
-    private static void SetPlayerProtection(CCSPlayerController? player)
-    {
-        if (player is not null && player.PlayerPawn.Value is not null)
-            player.PlayerPawn.Value.TakesDamage = false;
     }
 
     private static void RemovePlayerProtection(CCSPlayerController? player)
