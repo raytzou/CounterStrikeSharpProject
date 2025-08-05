@@ -358,9 +358,9 @@ public class Command(
         }
     }
 
-    public void OnModelsCommand(CCSPlayerController client, CommandInfo command)
+    public void OnModelsCommand(CCSPlayerController client, CommandInfo command, Main thePlugin)
     {
-        var menu = new ScreenMenu("Select Models", Main.Instance);
+        var menu = new ScreenMenu("Select Models", thePlugin);
         var playerCache = _playerService.GetPlayerCache(client.SteamID);
 
         menu.AddItem("Default", (player, option) =>

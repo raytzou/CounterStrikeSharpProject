@@ -57,7 +57,7 @@ public class Main(
     private const bool LogWeaponTracking = false;
 
     // properties
-    public static Main Instance { get; private set; } = null!;
+    public static Main Instance { get; private set; } = null!; // To Do: remove singleton one day
     public int GetPlayerSlot(string playerName) => _players.TryGetValue(playerName, out int slot) ? slot : throw new Exception("Player not found");
 
     public override void Load(bool hotreload)
@@ -534,7 +534,7 @@ public class Main(
     [ConsoleCommand("css_models", "models command")]
     public void OnModelsCommand(CCSPlayerController client, CommandInfo command)
     {
-        _command.OnModelsCommand(client, command);
+        _command.OnModelsCommand(client, command, this);
     }
     #endregion commands
 

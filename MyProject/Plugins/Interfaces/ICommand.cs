@@ -26,6 +26,6 @@ namespace MyProject.Plugins.Interfaces
 
         void OnDebugCommand(CCSPlayerController client, CommandInfo command, Dictionary<string, WeaponStatus> weaponStatus);
 
-        void OnModelsCommand(CCSPlayerController client, CommandInfo command);
+        void OnModelsCommand(CCSPlayerController client, CommandInfo command, Main thePlugin);
     }
 }
