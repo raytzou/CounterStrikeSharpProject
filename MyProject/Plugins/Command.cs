@@ -4,6 +4,7 @@ using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Entities.Constants;
 using CounterStrikeSharp.API.Modules.Timers;
+using CounterStrikeSharp.API.Modules.Utils;
 using CS2MenuManager.API.Menu;
 using Microsoft.Extensions.Logging;
 using MyProject.Classes;
@@ -290,7 +291,13 @@ public class Command(
     {
         if (client is null) return;
 
-        if (client.PlayerPawn.Value!.Health > 0)
+        if (client.Team == CounterStrikeSharp.API.Modules.Utils.CsTeam.Spectator)
+        {
+            command.ReplyToCommand("[css] You are in spectator mode, cannot revive.");
+            return;
+        }
+
+        if (client.PawnIsAlive)
         {
             command.ReplyToCommand("[css] You are alive."); // after connecting server, the Health is alawys 100, no matter player is dead or alive
             return;
@@ -300,6 +307,25 @@ public class Command(
         {
             command.ReplyToCommand($"[css] You don't have enough score ({costScore}) to revive.");
             return;
+        }
+
+        if (position.Origin is null || position.Rotation is null || position.Velocity is null)
+        {
+            var humanTeam = Main.Instance.HumanTeam;
+            var humanSpawnPoint = new SpawnPoint(0);
+
+            if (humanTeam == CounterStrikeSharp.API.Modules.Utils.CsTeam.Terrorist)
+            {
+                humanSpawnPoint = Utilities.FindAllEntitiesByDesignerName<SpawnPoint>("info_player_terrorist").First();
+            }
+            else if (humanTeam == CounterStrikeSharp.API.Modules.Utils.CsTeam.CounterTerrorist)
+            {
+                humanSpawnPoint = Utilities.FindAllEntitiesByDesignerName<SpawnPoint>("info_player_counterterrorist").First();
+            }
+
+            position.Origin = humanSpawnPoint.AbsOrigin!;
+            position.Rotation = humanSpawnPoint.AbsRotation!;
+            position.Velocity = humanSpawnPoint.AbsVelocity!;
         }
 
         if (AppSettings.IsDebug)
@@ -414,6 +440,21 @@ public class Command(
             {
                 client.Pawn.Value!.Teleport(position.Origin, position.Rotation, position.Velocity);
                 client.RemoveWeapons();
+
+                if (weaponStatus[client.PlayerName].Weapons.Count == 0)
+                {
+                    weaponStatus[client.PlayerName].Weapons.Add(Utility.GetCsItemEnumValue(CsItem.Knife));
+                    if (client.Team == CsTeam.Terrorist)
+                    {
+                        //var defaultTSecondaryWeapon = ConVar.Find("mp_t_default_secondary")!.StringValue; // StringValue won't work with value length that over specific bits I guess
+                        weaponStatus[client.PlayerName].Weapons.Add(Utility.GetCsItemEnumValue(CsItem.Glock));
+                    }
+                    else if (client.Team == CsTeam.CounterTerrorist)
+                    {
+                        //var defaultCTSecondaryWeapon = ConVar.Find("mp_ct_default_secondary")!.StringValue;
+                        weaponStatus[client.PlayerName].Weapons.Add(Utility.GetCsItemEnumValue(CsItem.USP));
+                    }
+                }
 
                 foreach (var weapon in weaponStatus[client.PlayerName].Weapons)
                 {

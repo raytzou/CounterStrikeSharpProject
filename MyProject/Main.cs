@@ -59,6 +59,7 @@ public class Main(
     // properties
     public static Main Instance { get; private set; } = null!; // To Do: remove singleton one day
     public int GetPlayerSlot(string playerName) => _players.TryGetValue(playerName, out int slot) ? slot : throw new Exception("Player not found");
+    public CsTeam HumanTeam => GetHumanTeam();
 
     public override void Load(bool hotreload)
     {
