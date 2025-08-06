@@ -24,4 +24,5 @@ GitHub Repository https://github.com/raytzou/CounterStrikeSharpProject
 
 ## 未來 To Do
 - 思考遊戲主題，發展成 Coop/PvE，打 BOSS
+- 解決 GitHub Project 內建立的 issue
 - 不知道，還在想
