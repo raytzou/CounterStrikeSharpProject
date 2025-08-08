@@ -18,13 +18,11 @@ namespace MyProject.Plugins;
 
 public class Command(
     ILogger<Command> logger,
-    IPlayerService playerService,
-    IPlayerSkinService playerSkinService
+    IPlayerService playerService
     ) : ICommand
 {
     private readonly ILogger<Command> _logger = logger;
     private readonly IPlayerService _playerService = playerService;
-    private readonly IPlayerSkinService _playerSkinService = playerSkinService;
 
     public void OnKickCommand(CCSPlayerController client, CommandInfo command, string targetName)
     {
