@@ -17,6 +17,8 @@ public class Bot(ILogger<Bot> logger) : IBot
 
     private const string EagleEyeModel = "[???]Nano Girl";
     private const string RushModel = "[Resident Evil 2]Hunk";
+    private const int MidBossRound = 4;
+    private const int FinalBossRound = 7;
 
     public int CurrentLevel => _level + 1;
     public int RespawnTimes => _respawnTimes;
@@ -27,20 +29,8 @@ public class Bot(ILogger<Bot> logger) : IBot
         Server.ExecuteCommand("sv_cheats 1");
         Server.ExecuteCommand("bot_stop 1");
         Server.ExecuteCommand("bot_kick");
-        AddSpecialBot();
+        AddSpecialBot(0);
         _level = 2;
-
-        void AddSpecialBot()
-        {
-            var botTeam = GetBotTeam(Server.MapName);
-            if (botTeam == CsTeam.None)
-                return;
-
-            var team = botTeam == CsTeam.CounterTerrorist ? "ct" : "t";
-            Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[0]}");
-            Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[1]}");
-            Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[2]}");
-        }
     }
 
     public void WarmupEndBehavior()
@@ -53,24 +43,32 @@ public class Bot(ILogger<Bot> logger) : IBot
     public void RoundStartBehavior(int roundCount)
     {
         SetBotMoneyToZero();
-        SetSpecialBotAttribute();
-        SetSpecialBotModel();
 
-        _respawnTimes = _maxRespawnTimes;
-
-        if (roundCount > 1)
+        if (roundCount != MidBossRound && roundCount != FinalBossRound)
         {
-            SetSpecialBotWeapon(BotProfile.Special[0], CsItem.AWP); // "[ELITE]EagleEye"
-            SetSpecialBotWeapon(BotProfile.Special[1], CsItem.M4A1S); // "[ELITE]mimic"
-            SetSpecialBotWeapon(BotProfile.Special[2], CsItem.P90); // "[EXPERT]Rush"
+            SetSpecialBotAttribute();
+            SetSpecialBotModel();
 
-            Server.NextFrameAsync(() =>
+            _respawnTimes = _maxRespawnTimes;
+
+            if (roundCount > 1)
             {
-                foreach (var bot in Utilities.GetPlayers().Where(player => player.IsBot))
+                SetSpecialBotWeapon(BotProfile.Special[0], CsItem.AWP); // "[ELITE]EagleEye"
+                SetSpecialBotWeapon(BotProfile.Special[1], CsItem.M4A1S); // "[ELITE]mimic"
+                SetSpecialBotWeapon(BotProfile.Special[2], CsItem.P90); // "[EXPERT]Rush"
+
+                Server.NextFrameAsync(() =>
                 {
-                    bot.PlayerPawn.Value!.WeaponServices!.PreventWeaponPickup = true;
-                }
-            });
+                    foreach (var bot in Utilities.GetPlayers().Where(player => player.IsBot))
+                    {
+                        bot.PlayerPawn.Value!.WeaponServices!.PreventWeaponPickup = true;
+                    }
+                });
+            }
+        }
+        else
+        {
+            _respawnTimes = 0;
         }
 
         void SetSpecialBotWeapon(string botName, CsItem item)
@@ -130,7 +128,28 @@ public class Bot(ILogger<Bot> logger) : IBot
         if (roundCount > 0)
         {
             SetDefaultWeapon();
-            KickAndFillBot(GetDifficultyLevel(winStreak, looseStreak));
+            if (roundCount == MidBossRound - 1)
+            {
+                Server.ExecuteCommand("bot_kick");
+                AddSpecialBot(roundCount, true);
+            }
+            else if (roundCount == FinalBossRound - 1)
+            {
+                Server.ExecuteCommand("bot_kick");
+                AddSpecialBot(roundCount, true);
+            }
+            else
+            {
+                var specialBotsExist = Utilities.GetPlayers().Any(player =>
+                player.PlayerName.Contains(BotProfile.Special[0]) ||
+                player.PlayerName.Contains(BotProfile.Special[1]) ||
+                player.PlayerName.Contains(BotProfile.Special[2]));
+                if (!specialBotsExist)
+                {
+                    AddSpecialBot(roundCount);
+                }
+                KickAndFillBot(GetDifficultyLevel(winStreak, looseStreak));
+            }
         }
 
         void SetDefaultWeapon()
@@ -258,6 +277,28 @@ public class Bot(ILogger<Bot> logger) : IBot
         void SetMaxRespawnTimes(int level)
         {
             _maxRespawnTimes = (level < 3) ? 20 : (level == 4) ? 50 : 80;
+        }
+    }
+
+    private void AddSpecialBot(int roundCount, bool isBoss = false)
+    {
+        var botTeam = GetBotTeam(Server.MapName);
+        if (botTeam == CsTeam.None)
+            return;
+
+        var team = botTeam == CsTeam.CounterTerrorist ? "ct" : "t";
+        if (isBoss)
+        {
+            if (roundCount == MidBossRound - 1)
+                Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.easy)} {BotProfile.Boss[0]}");
+            else if (roundCount == FinalBossRound - 1)
+                Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.easy)} {BotProfile.Boss[1]}");
+        }
+        else
+        {
+            Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[0]}");
+            Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[1]}");
+            Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[2]}");
         }
     }
 }

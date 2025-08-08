@@ -22,5 +22,11 @@
             { 1, "[ELITE]mimic" },
             { 2, "[EXPERT]Rush" },
         };
+
+        public static Dictionary<int, string> Boss => new()
+        {
+            { 0, "[BOSS]FirstBoss" },
+            { 1, "[BOSS]FinalBoss" }
+        };
     }
 }
