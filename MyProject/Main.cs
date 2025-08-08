@@ -601,6 +601,11 @@ public class Main(
         Server.NextFrameAsync(() =>
         {
             var playerCache = _playerService.GetPlayerCache(client.SteamID);
+            if (playerCache is null)
+            {
+                _logger.LogWarning("Setting model failed, player cache is not found. ID: {steamID}", client.SteamID);
+                return;
+            }
             var skinName = playerCache.PlayerSkins.FirstOrDefault(cache => cache.IsActive)?.SkinName ?? string.Empty;
             if (!string.IsNullOrEmpty(skinName))
                 Utility.SetClientModel(client, skinName);

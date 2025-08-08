@@ -387,6 +387,13 @@ public class Command(
         var menu = new ScreenMenu("Select Models", thePlugin);
         var playerCache = _playerService.GetPlayerCache(client.SteamID);
 
+        if (playerCache is null)
+        {
+            command.ReplyToCommand("Cannot open model menu, please reconnect to server!");
+            _logger.LogWarning("Cannot open model menu, player cache is not found. SteamID: {steamID}", client.SteamID);
+            return;
+        }
+
         menu.AddItem("Default", (player, option) =>
         {
             var defaultSkin = playerCache.DefaultSkinModelPath;

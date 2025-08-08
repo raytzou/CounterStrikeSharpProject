@@ -8,7 +8,7 @@ namespace MyProject.Services.Interfaces
         void PlayerJoin(CCSPlayerController client);
         void UpdateDefaultSkin(ulong steamId, string skinPath);
         string GetDefaultSkin(ulong steamId);
-        Player GetPlayerCache(ulong steamId);
+        Player? GetPlayerCache(ulong steamId);
         IEnumerable<Player> GetAllCaches();
         void ClearPlayerCache();
         void ResetPlayerSkinFromCache(Player playerCache);
