@@ -1,16 +1,12 @@
-﻿using MyProject.Classes;
-using MyProject.Services.Interfaces;
+﻿using MyProject.Services.Interfaces;
 
 namespace MyProject.Services
 {
     public class PlayerManagementService(
-        ProjectDbContext dbContext,
         IPlayerService playerService,
         IPlayerSkinService playerSkinService
         ) : IPlayerManagementService
     {
-        private readonly ProjectDbContext _dbContext = dbContext;
-
         private readonly IPlayerService _playerService = playerService;
         private readonly IPlayerSkinService _playerSkinService = playerSkinService;
 
