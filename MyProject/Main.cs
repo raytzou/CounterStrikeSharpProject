@@ -263,7 +263,7 @@ public class Main(
 
         if (!_warmup)
         {
-            if (_respawnBot && player.IsBot)
+            if (_respawnBot && player.IsBot && player.Team != GetHumanTeam())
             {
                 _ = _bot.RespawnBotAsync(player, _roundCount)
                     .ContinueWith(task =>
