@@ -18,7 +18,7 @@ public class Bot(ILogger<Bot> logger) : IBot
     private const string EagleEyeModel = "[???]Nano Girl";
     private const string RushModel = "[Resident Evil 2]Hunk";
     private const int MidBossRound = 4;
-    private const int FinalBossRound = 7;
+    private const int FinalBossRound = 8;
 
     public int CurrentLevel => _level + 1;
     public int RespawnTimes => _respawnTimes;
@@ -123,20 +123,18 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    public void RoundEndBehavior(int roundCount, int winStreak, int looseStreak)
+    public async Task RoundEndBehavior(int roundCount, int winStreak, int looseStreak)
     {
         if (roundCount > 0)
         {
             SetDefaultWeapon();
-            if (roundCount == MidBossRound - 1)
+            if (roundCount == MidBossRound - 1 || roundCount == FinalBossRound - 1)
             {
                 Server.ExecuteCommand("bot_kick");
-                AddSpecialBot(roundCount, true);
-            }
-            else if (roundCount == FinalBossRound - 1)
-            {
-                Server.ExecuteCommand("bot_kick");
-                AddSpecialBot(roundCount, true);
+                await Server.NextWorldUpdateAsync(() =>
+                {
+                    AddSpecialBot(roundCount, true);
+                });
             }
             else
             {

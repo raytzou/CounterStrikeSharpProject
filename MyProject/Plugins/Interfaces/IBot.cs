@@ -16,7 +16,7 @@ namespace MyProject.Plugins.Interfaces
 
         void RoundStartBehavior(int roundCount);
 
-        void RoundEndBehavior(int roundCount, int winStreak, int looseStreak);
+        Task RoundEndBehavior(int roundCount, int winStreak, int looseStreak);
 
         Task RespawnBotAsync(CCSPlayerController bot, int currentRound);
     }
