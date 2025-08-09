@@ -138,15 +138,19 @@ public class Bot(ILogger<Bot> logger) : IBot
             }
             else
             {
+                if (roundCount < FinalBossRound - 1)
+                    KickAndFillBot(GetDifficultyLevel(winStreak, looseStreak));
+                else if (roundCount == FinalBossRound)
+                    Server.ExecuteCommand("bot_kick");
+
                 var specialBotsExist = Utilities.GetPlayers().Any(player =>
-                player.PlayerName.Contains(BotProfile.Special[0]) ||
-                player.PlayerName.Contains(BotProfile.Special[1]) ||
-                player.PlayerName.Contains(BotProfile.Special[2]));
+                    player.PlayerName.Contains(BotProfile.Special[0]) ||
+                    player.PlayerName.Contains(BotProfile.Special[1]) ||
+                    player.PlayerName.Contains(BotProfile.Special[2]));
                 if (!specialBotsExist)
                 {
                     AddSpecialBot(roundCount);
                 }
-                KickAndFillBot(GetDifficultyLevel(winStreak, looseStreak));
             }
         }
 
