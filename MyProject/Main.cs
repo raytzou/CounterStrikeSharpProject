@@ -552,22 +552,22 @@ public class Main(
 
     private string GetTargetNameByKeyword(string keyword)
     {
+        string normalizedKeyword = keyword.Trim().ToLowerInvariant();
+        string targetName = string.Empty;
         int ctr = 0;
 
         foreach (var playerName in _players.Keys)
         {
-            if (playerName.Contains(keyword))
+            if (playerName.ToLowerInvariant().Contains(normalizedKeyword))
             {
                 ctr++;
+                targetName = playerName;
                 if (ctr > 1)
                     break;
             }
         }
 
-        if (ctr != 1)
-            return string.Empty;
-
-        return _players.Keys.FirstOrDefault(playerName => playerName.Contains(keyword)) ?? string.Empty;
+        return ctr == 1 ? targetName : string.Empty;
     }
 
     private static void RemovePlayerProtection(CCSPlayerController? player)
