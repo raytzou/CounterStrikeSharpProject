@@ -245,28 +245,49 @@ public class Command(
             return;
         }
 
+        if (command.GetArg(1) == "@all")
+        {
+            foreach (var target in Utilities.GetPlayers())
+            {
+                target.CommitSuicide(true, true);
+            }
+            Server.PrintToChatAll($"Admin slew all players");
+            _logger.LogInformation("[css] {admin} slew all players at {DT}", client?.PlayerName is null ? "console" : client.PlayerName, DateTime.Now);
+            return;
+        }
+        else if (command.GetArg(1) == "@ct")
+        {
+            foreach (var target in Utilities.GetPlayers().Where(p => p.Team == CsTeam.CounterTerrorist))
+            {
+                target.CommitSuicide(true, true);
+            }
+            Server.PrintToChatAll($"Admin slew all CT players");
+            _logger.LogInformation("[css] {admin} slew all CT players at {DT}", client?.PlayerName is null ? "console" : client.PlayerName, DateTime.Now);
+            return;
+        }
+        else if (command.GetArg(1) == "@t")
+        {
+            foreach (var target in Utilities.GetPlayers().Where(p => p.Team == CsTeam.Terrorist))
+            {
+                target.CommitSuicide(true, true);
+            }
+            Server.PrintToChatAll($"Admin slew all T players");
+            _logger.LogInformation("[css] {admin} slew all T players at {DT}", client?.PlayerName is null ? "console" : client.PlayerName, DateTime.Now);
+            return;
+        }
+
         if (string.IsNullOrEmpty(targetName))
         {
             command.ReplyToCommand("[css] Target not found.");
             return;
         }
 
-        var player = GetPlayerControllerByName();
+        var player = Utilities.GetPlayers().First(target => target.PlayerName == targetName);
 
-        player!.CommitSuicide(true, true);
+        player.CommitSuicide(true, true);
         command.ReplyToCommand($"[css] You slay {targetName}");
         _logger.LogInformation("[css] {admin} slew {targetName} at {DT}", client?.PlayerName is null ? "console" : client.PlayerName, targetName, DateTime.Now);
         Server.PrintToChatAll($"Admin slew {targetName}");
-
-        CCSPlayerController? GetPlayerControllerByName()
-        {
-            foreach (var client in Utilities.GetPlayers())
-            {
-                if (client.PlayerName == targetName) return client;
-            }
-
-            return null;
-        }
     }
 
     public void OnGodCommand(CCSPlayerController client, CommandInfo command)
