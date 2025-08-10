@@ -349,7 +349,7 @@ public class Main(
         {
             _weaponCheckTimer = AddTimer(WeaponCheckTime, () =>
             {
-                if (AppSettings.IsDebug && AppSettings.LogWeaponTracking)
+                if (AppSettings.LogWeaponTracking)
                     Server.PrintToChatAll("weapon check");
 
                 foreach (var pair in _weaponStatus)
@@ -357,7 +357,7 @@ public class Main(
                     if (!pair.Value.IsActive)
                         continue;
 
-                    if (AppSettings.IsDebug && AppSettings.LogWeaponTracking)
+                    if (AppSettings.LogWeaponTracking)
                         Server.PrintToChatAll($"tracking: {pair.Key}");
 
                     UpdateWeaponStatus(pair);
@@ -376,7 +376,7 @@ public class Main(
                     pair.Value.Weapons.Add(weapon.Value.DesignerName);
                 }
 
-                if (AppSettings.IsDebug && AppSettings.LogWeaponTracking)
+                if (AppSettings.LogWeaponTracking)
                 {
                     foreach (var cacheWeapon in pair.Value.Weapons)
                         Server.PrintToChatAll(cacheWeapon);
