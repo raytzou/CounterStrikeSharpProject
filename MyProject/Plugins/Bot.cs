@@ -252,6 +252,9 @@ public class Bot(ILogger<Bot> logger) : IBot
                 string botName = $"\"[{BotProfile.Grade[level]}]{BotProfile.NameGroup[level]}#{i:D2}\"";
                 var team = (botTeam == CsTeam.CounterTerrorist) ? "ct" : "t";
                 Server.ExecuteCommand($"bot_add_{team} {difficulty} {botName}");
+
+                if (AppSettings.LogBotAdd)
+                    _logger.LogInformation($"FillNormalBot() bot_add_{team} {difficulty} {botName}");
             }
         });
     }
@@ -285,17 +288,36 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (isBoss)
             {
                 if (roundCount == MidBossRound - 1)
+                {
                     Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.easy)} {BotProfile.Boss[0]}");
+                    if (AppSettings.LogBotAdd)
+                    {
+                        _logger.LogInformation("AddSpecialBot()");
+                        _logger.LogInformation($"bot_add_{team} {nameof(BotProfile.Difficulty.easy)} {BotProfile.Boss[0]}");
+                    }
+                }
                 else if (roundCount == FinalBossRound - 1)
+                {
                     Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.easy)} {BotProfile.Boss[1]}");
-
-
+                    if (AppSettings.LogBotAdd)
+                    {
+                        _logger.LogInformation("AddSpecialBot()");
+                        _logger.LogInformation($"bot_add_{team} {nameof(BotProfile.Difficulty.easy)} {BotProfile.Boss[1]}");
+                    }
+                }
             }
             else
             {
                 Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[0]}");
                 Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[1]}");
                 Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[2]}");
+                if (AppSettings.LogBotAdd)
+                {
+                    _logger.LogInformation("AddSpecialBot()");
+                    _logger.LogInformation($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[0]}");
+                    _logger.LogInformation($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[1]}");
+                    _logger.LogInformation($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[2]}");
+                }
             }
         });
     }
