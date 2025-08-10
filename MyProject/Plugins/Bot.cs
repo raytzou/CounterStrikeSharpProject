@@ -25,7 +25,7 @@ public class Bot(ILogger<Bot> logger) : IBot
     public int RespawnTimes => _respawnTimes;
     public int MaxRespawnTimes => _maxRespawnTimes;
 
-    public async void MapStartBehavior()
+    public async Task MapStartBehavior()
     {
         Server.ExecuteCommand("sv_cheats 1");
         Server.ExecuteCommand("bot_stop 1");
@@ -42,7 +42,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         await FixBotAddedInHumanTeam(0);
     }
 
-    public void RoundStartBehavior(int roundCount)
+    public async Task RoundStartBehavior(int roundCount)
     {
         SetBotMoneyToZero();
 
@@ -59,7 +59,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 SetSpecialBotWeapon(BotProfile.Special[1], CsItem.M4A1S); // "[ELITE]mimic"
                 SetSpecialBotWeapon(BotProfile.Special[2], CsItem.P90); // "[EXPERT]Rush"
 
-                Server.NextFrameAsync(() =>
+                await Server.NextFrameAsync(() =>
                 {
                     foreach (var bot in Utilities.GetPlayers().Where(player => player.IsBot))
                     {

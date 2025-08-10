@@ -10,11 +10,11 @@ namespace MyProject.Plugins.Interfaces
 
         int RespawnTimes { get; }
 
-        void MapStartBehavior();
+        Task MapStartBehavior();
 
         Task WarmupEndBehavior();
 
-        void RoundStartBehavior(int roundCount);
+        Task RoundStartBehavior(int roundCount);
 
         Task RoundEndBehavior(int roundCount, int winStreak, int looseStreak);
 

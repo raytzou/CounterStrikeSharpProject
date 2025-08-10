@@ -97,7 +97,7 @@ public class Main(
             manifest.AddResource(path);
     }
 
-    private void OnMapStart(string mapName)
+    private async void OnMapStart(string mapName)
     {
         var hostname = ConVar.Find("hostname");
 
@@ -112,11 +112,8 @@ public class Main(
         SetHumanTeam();
         _playerService.ClearPlayerCache();
 
-        Server.NextWorldUpdateAsync(() =>
-        {
-            AddMoreSpawnPoint();
-            AddTimer(2f, _bot.MapStartBehavior);
-        });
+        await AddMoreSpawnPoint();
+        await _bot.MapStartBehavior();
 
         void ResetDefaultWeapon()
         {
@@ -136,50 +133,53 @@ public class Main(
                 Server.ExecuteCommand("mp_humanteam t");
         }
 
-        void AddMoreSpawnPoint()
+        async Task AddMoreSpawnPoint()
         {
-            var TSpawnPoints = Utilities.FindAllEntitiesByDesignerName<SpawnPoint>("info_player_terrorist").ToList();
-            var CTSpawnPoints = Utilities.FindAllEntitiesByDesignerName<SpawnPoint>("info_player_counterterrorist").ToList();
-
-            if (TSpawnPoints.Count == 0)
-                _logger.LogWarning("T Spawn point not found. map: {mapName}", mapName);
-
-            if (CTSpawnPoints.Count == 0)
-                _logger.LogWarning("CT Spawn point not found. map: {mapName}", mapName);
-
-            var random = new Random();
-
-            // Check and duplicate T spawn points if needed
-            if (TSpawnPoints.Count > 0 && TSpawnPoints.Count < SpawnPointCount)
+            await Server.NextWorldUpdateAsync(() =>
             {
-                int neededSpawns = SpawnPointCount - TSpawnPoints.Count;
-                _logger.LogInformation("T team has {current} spawn points, duplicating {needed} more to reach {target}",
-                    TSpawnPoints.Count, neededSpawns, SpawnPointCount);
+                var TSpawnPoints = Utilities.FindAllEntitiesByDesignerName<SpawnPoint>("info_player_terrorist").ToList();
+                var CTSpawnPoints = Utilities.FindAllEntitiesByDesignerName<SpawnPoint>("info_player_counterterrorist").ToList();
 
-                for (int i = 0; i < neededSpawns; i++)
+                if (TSpawnPoints.Count == 0)
+                    _logger.LogWarning("T Spawn point not found. map: {mapName}", mapName);
+
+                if (CTSpawnPoints.Count == 0)
+                    _logger.LogWarning("CT Spawn point not found. map: {mapName}", mapName);
+
+                var random = new Random();
+
+                // Check and duplicate T spawn points if needed
+                if (TSpawnPoints.Count > 0 && TSpawnPoints.Count < SpawnPointCount)
                 {
-                    var randomSpawnPoint = TSpawnPoints[random.Next(TSpawnPoints.Count)];
-                    var newTSpawnPoint = Utilities.CreateEntityByName<CInfoPlayerTerrorist>("info_player_terrorist");
-                    newTSpawnPoint!.Teleport(randomSpawnPoint.AbsOrigin, randomSpawnPoint.AbsRotation);
-                    newTSpawnPoint.DispatchSpawn();
+                    int neededSpawns = SpawnPointCount - TSpawnPoints.Count;
+                    _logger.LogInformation("T team has {current} spawn points, duplicating {needed} more to reach {target}",
+                        TSpawnPoints.Count, neededSpawns, SpawnPointCount);
+
+                    for (int i = 0; i < neededSpawns; i++)
+                    {
+                        var randomSpawnPoint = TSpawnPoints[random.Next(TSpawnPoints.Count)];
+                        var newTSpawnPoint = Utilities.CreateEntityByName<CInfoPlayerTerrorist>("info_player_terrorist");
+                        newTSpawnPoint!.Teleport(randomSpawnPoint.AbsOrigin, randomSpawnPoint.AbsRotation);
+                        newTSpawnPoint.DispatchSpawn();
+                    }
                 }
-            }
 
-            // Check and duplicate CT spawn points if needed
-            if (CTSpawnPoints.Count > 0 && CTSpawnPoints.Count < SpawnPointCount)
-            {
-                int neededSpawns = SpawnPointCount - CTSpawnPoints.Count;
-                _logger.LogInformation("CT team has {current} spawn points, duplicating {needed} more to reach {target}",
-                    CTSpawnPoints.Count, neededSpawns, SpawnPointCount);
-
-                for (int i = 0; i < neededSpawns; i++)
+                // Check and duplicate CT spawn points if needed
+                if (CTSpawnPoints.Count > 0 && CTSpawnPoints.Count < SpawnPointCount)
                 {
-                    var randomSpawnPoint = CTSpawnPoints[random.Next(CTSpawnPoints.Count)];
-                    var newCTSpawnPoint = Utilities.CreateEntityByName<CInfoPlayerCounterterrorist>("info_player_counterterrorist");
-                    newCTSpawnPoint!.Teleport(randomSpawnPoint.AbsOrigin, randomSpawnPoint.AbsRotation);
-                    newCTSpawnPoint.DispatchSpawn();
+                    int neededSpawns = SpawnPointCount - CTSpawnPoints.Count;
+                    _logger.LogInformation("CT team has {current} spawn points, duplicating {needed} more to reach {target}",
+                        CTSpawnPoints.Count, neededSpawns, SpawnPointCount);
+
+                    for (int i = 0; i < neededSpawns; i++)
+                    {
+                        var randomSpawnPoint = CTSpawnPoints[random.Next(CTSpawnPoints.Count)];
+                        var newCTSpawnPoint = Utilities.CreateEntityByName<CInfoPlayerCounterterrorist>("info_player_counterterrorist");
+                        newCTSpawnPoint!.Teleport(randomSpawnPoint.AbsOrigin, randomSpawnPoint.AbsRotation);
+                        newCTSpawnPoint.DispatchSpawn();
+                    }
                 }
-            }
+            });
         }
     }
 
