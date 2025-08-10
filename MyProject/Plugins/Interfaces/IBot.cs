@@ -12,7 +12,7 @@ namespace MyProject.Plugins.Interfaces
 
         void MapStartBehavior();
 
-        void WarmupEndBehavior();
+        Task WarmupEndBehavior();
 
         void RoundStartBehavior(int roundCount);
 
