@@ -241,7 +241,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 Server.ExecuteCommand($"bot_add_{team} {difficulty} {botName}");
 
                 if (AppSettings.LogBotAdd)
-                    _logger.LogInformation($"FillNormalBot() bot_add_{team} {difficulty} {botName}");
+                    _logger.LogInformation("FillNormalBot() bot_add_{team} {difficulty} {botName}", team, difficulty, botName);
             }
         });
     }
@@ -278,7 +278,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 if (AppSettings.LogBotAdd)
                 {
                     _logger.LogInformation("AddSpecialBot()");
-                    _logger.LogInformation($"bot_add_{team} {nameof(BotProfile.Difficulty.easy)} {BotProfile.Boss[0]}");
+                    _logger.LogInformation("bot_add_{team} {difficulty} {boss}", team, nameof(BotProfile.Difficulty.easy), BotProfile.Boss[0]);
                 }
             }
             else if (roundCount == FinalBossRound - 1)
@@ -287,7 +287,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 if (AppSettings.LogBotAdd)
                 {
                     _logger.LogInformation("AddSpecialBot()");
-                    _logger.LogInformation($"bot_add_{team} {nameof(BotProfile.Difficulty.easy)} {BotProfile.Boss[1]}");
+                    _logger.LogInformation("bot_add_{team} {difficulty} {boss}", team, nameof(BotProfile.Difficulty.easy), BotProfile.Boss[1]);
                 }
             }
             else
@@ -298,9 +298,9 @@ public class Bot(ILogger<Bot> logger) : IBot
                 if (AppSettings.LogBotAdd)
                 {
                     _logger.LogInformation("AddSpecialBot()");
-                    _logger.LogInformation($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[0]}");
-                    _logger.LogInformation($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[1]}");
-                    _logger.LogInformation($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[2]}");
+                    _logger.LogInformation("bot_add_{team} {difficulty} {special}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Special[0]);
+                    _logger.LogInformation("bot_add_{team} {difficulty} {special}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Special[1]);
+                    _logger.LogInformation("bot_add_{team} {difficulty} {special}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Special[2]);
                 }
             }
         });
