@@ -306,7 +306,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         });
     }
 
-    private async Task KickBotAsync()
+    private static async Task KickBotAsync()
     {
         await Server.NextFrameAsync(() =>
         {
@@ -315,7 +315,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         });
     }
 
-    private async Task FixBotAddedInHumanTeam(int roundCount)
+    private static async Task FixBotAddedInHumanTeam(int roundCount)
     {
         await Server.NextFrameAsync(() =>
         {
