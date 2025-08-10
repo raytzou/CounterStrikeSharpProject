@@ -265,6 +265,7 @@ public class Main(
         {
             if (_respawnBot && player.IsBot && player.Team != GetHumanTeam())
             {
+                Server.ExecuteCommand("mp_randomspawn 1");
                 _ = _bot.RespawnBotAsync(player, _roundCount)
                     .ContinueWith(task =>
                     {
@@ -295,7 +296,6 @@ public class Main(
         if (!_warmup)
         {
             _respawnBot = true;
-            Server.ExecuteCommand("mp_randomspawn 1");
             HandleRoundStartMessages();
             RemoveProtectionFromAllPlayers();
             ActivateAllWeaponStatuses();
