@@ -548,7 +548,7 @@ public class Main(
 
         foreach (var playerName in _players.Keys)
         {
-            if (playerName.ToLowerInvariant().Contains(normalizedKeyword))
+            if (playerName.Contains(normalizedKeyword, StringComparison.InvariantCultureIgnoreCase))
             {
                 ctr++;
                 targetName = playerName;
