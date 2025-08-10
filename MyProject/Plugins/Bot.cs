@@ -27,8 +27,8 @@ public class Bot(ILogger<Bot> logger) : IBot
 
     public async void MapStartBehavior()
     {
-        Server.ExecuteCommand("sv_cheats 0");
-        Server.ExecuteCommand("bot_stop 0");
+        Server.ExecuteCommand("sv_cheats 1");
+        Server.ExecuteCommand("bot_stop 1");
         Server.ExecuteCommand("bot_kick");
         await AddSpecialBot(0);
         _level = 2;
@@ -36,8 +36,8 @@ public class Bot(ILogger<Bot> logger) : IBot
 
     public async Task WarmupEndBehavior()
     {
-        Server.ExecuteCommand("sv_cheats 1");
-        Server.ExecuteCommand("bot_stop 1");
+        Server.ExecuteCommand("sv_cheats 0");
+        Server.ExecuteCommand("bot_stop 0");
         await FillNormalBot(GetDifficultyLevel(0, 0));
         await FixBotAddedInHumanTeam(0);
     }
