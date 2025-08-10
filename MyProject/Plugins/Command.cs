@@ -293,17 +293,14 @@ public class Command(
     public void OnGodCommand(CCSPlayerController client, CommandInfo command)
     {
         if (client is null) return;
-        if (ConVar.Find("sv_cheats")!.GetPrimitiveValue<bool>())
-        {
-            var takeDamage = client.PlayerPawn.Value!.TakesDamage;
+        var takeDamage = client.PlayerPawn.Value!.TakesDamage;
 
-            if (takeDamage)
-                command.ReplyToCommand("[css] God mode on");
-            else
-                command.ReplyToCommand("[css] God mode off");
+        if (takeDamage)
+            command.ReplyToCommand("[css] God mode on");
+        else
+            command.ReplyToCommand("[css] God mode off");
 
-            client.PlayerPawn.Value.TakesDamage = !takeDamage;
-        }
+        client.PlayerPawn.Value.TakesDamage = !takeDamage;
     }
 
     public void OnReviveCommand(CCSPlayerController client, CommandInfo command, int costScore, Position position, Dictionary<string, WeaponStatus> weaponStatus)
