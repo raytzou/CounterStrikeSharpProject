@@ -55,9 +55,9 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             if (roundCount > 1)
             {
-                SetSpecialBotWeapon(BotProfile.Special[0], CsItem.AWP); // "[ELITE]EagleEye"
-                SetSpecialBotWeapon(BotProfile.Special[1], CsItem.M4A1S); // "[ELITE]mimic"
-                SetSpecialBotWeapon(BotProfile.Special[2], CsItem.P90); // "[EXPERT]Rush"
+                await SetSpecialBotWeapon(BotProfile.Special[0], CsItem.AWP); // "[ELITE]EagleEye"
+                await SetSpecialBotWeapon(BotProfile.Special[1], CsItem.M4A1S); // "[ELITE]mimic"
+                await SetSpecialBotWeapon(BotProfile.Special[2], CsItem.P90); // "[EXPERT]Rush"
 
                 await Server.NextFrameAsync(() =>
                 {
@@ -73,17 +73,22 @@ public class Bot(ILogger<Bot> logger) : IBot
             _respawnTimes = 0;
         }
 
-        void SetSpecialBotWeapon(string botName, CsItem item)
+        async Task SetSpecialBotWeapon(string botName, CsItem item)
         {
             var bot = Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(botName));
             var botActiveWeapon = bot!.PlayerPawn.Value!.WeaponServices?.ActiveWeapon.Value?.DesignerName;
             var itemValue = Utility.GetCsItemEnumValue(item);
 
-            if (string.IsNullOrEmpty(botActiveWeapon) || botActiveWeapon != itemValue)
+            await Server.NextFrameAsync(async () =>
             {
                 bot.PlayerPawn.Value.WeaponServices!.PreventWeaponPickup = false;
-                bot.GiveNamedItem(itemValue);
-            }
+                if (botActiveWeapon != itemValue)
+                {
+                    if (!string.IsNullOrEmpty(botActiveWeapon))
+                        bot.RemoveWeapons();
+                    await Server.NextFrameAsync(() => bot.GiveNamedItem(itemValue));
+                }
+            });
         }
 
         void SetBotMoneyToZero()
