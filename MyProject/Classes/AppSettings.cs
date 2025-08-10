@@ -8,6 +8,7 @@ namespace MyProject.Classes
     {
         public static IConfigurationRoot? Configuration { get; private set; }
         public static bool IsDebug => Configuration?.GetValue<bool>("DebugMode") == true;
+        public static bool LogWeaponTracking => Configuration?.GetValue<bool>("LogWeaponTracking") == true;
 
         static AppSettings()
         {

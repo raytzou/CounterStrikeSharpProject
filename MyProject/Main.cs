@@ -54,7 +54,6 @@ public class Main(
     private const int SpawnPointCount = 20;
     private const int CostScoreToRevive = 50;
     private const float WeaponCheckTime = 3f;
-    private const bool LogWeaponTracking = false;
 
     // properties
     public static Main Instance { get; private set; } = null!; // To Do: remove singleton one day
@@ -350,7 +349,7 @@ public class Main(
         {
             _weaponCheckTimer = AddTimer(WeaponCheckTime, () =>
             {
-                if (AppSettings.IsDebug && LogWeaponTracking)
+                if (AppSettings.IsDebug && AppSettings.LogWeaponTracking)
                     Server.PrintToChatAll("weapon check");
 
                 foreach (var pair in _weaponStatus)
@@ -358,7 +357,7 @@ public class Main(
                     if (!pair.Value.IsActive)
                         continue;
 
-                    if (AppSettings.IsDebug && LogWeaponTracking)
+                    if (AppSettings.IsDebug && AppSettings.LogWeaponTracking)
                         Server.PrintToChatAll($"tracking: {pair.Key}");
 
                     UpdateWeaponStatus(pair);
@@ -377,7 +376,7 @@ public class Main(
                     pair.Value.Weapons.Add(weapon.Value.DesignerName);
                 }
 
-                if (AppSettings.IsDebug && LogWeaponTracking)
+                if (AppSettings.IsDebug && AppSettings.LogWeaponTracking)
                 {
                     foreach (var cacheWeapon in pair.Value.Weapons)
                         Server.PrintToChatAll(cacheWeapon);
