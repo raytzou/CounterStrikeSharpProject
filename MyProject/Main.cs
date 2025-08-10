@@ -37,13 +37,13 @@ public class Main(
     private readonly Dictionary<string, int> _players = []; // playerName -> slot
     private readonly Dictionary<string, Position> _position = [];
     private readonly Dictionary<string, WeaponStatus> _weaponStatus = [];
+    private readonly bool[] _skinUpdated = new bool[64];
     private CounterStrikeSharp.API.Modules.Timers.Timer? _weaponCheckTimer = null;
     private int _roundCount = 0;
     private bool _warmup = true;
     private int _winStreak = 0;
     private int _looseStreak = 0;
     private bool _respawnBot = false;
-    private bool[] _skinUpdated = new bool[64];
 
     // plugins
     private readonly ICommand _command = commmand;
