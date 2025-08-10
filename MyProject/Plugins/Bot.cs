@@ -36,8 +36,12 @@ public class Bot(ILogger<Bot> logger) : IBot
 
     public async Task WarmupEndBehavior()
     {
-        Server.ExecuteCommand("sv_cheats 0");
-        Server.ExecuteCommand("bot_stop 0");
+        if (!AppSettings.IsDebug)
+        {
+            Server.ExecuteCommand("sv_cheats 0");
+            Server.ExecuteCommand("bot_stop 0");
+        }
+
         await FillNormalBot(GetDifficultyLevel(0, 0));
         await FixBotAddedInHumanTeam(0);
     }
@@ -284,6 +288,8 @@ public class Bot(ILogger<Bot> logger) : IBot
                     Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.easy)} {BotProfile.Boss[0]}");
                 else if (roundCount == FinalBossRound - 1)
                     Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.easy)} {BotProfile.Boss[1]}");
+
+
             }
             else
             {

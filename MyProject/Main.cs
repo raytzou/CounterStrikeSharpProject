@@ -402,9 +402,7 @@ public class Main(
 
         if (!_warmup)
         {
-            if (!AppSettings.IsDebug)
-                _bot.RoundEndBehavior(_roundCount, _winStreak, _looseStreak);
-
+            _bot.RoundEndBehavior(_roundCount, _winStreak, _looseStreak);
             Server.ExecuteCommand("mp_randomspawn 0");
             _weaponCheckTimer?.Kill();
             _roundCount++;
@@ -424,8 +422,7 @@ public class Main(
     {
         _roundCount = 1;
         _warmup = false;
-        if (!AppSettings.IsDebug)
-            _bot.WarmupEndBehavior();
+        _bot.WarmupEndBehavior();
         return HookResult.Continue;
     }
 
