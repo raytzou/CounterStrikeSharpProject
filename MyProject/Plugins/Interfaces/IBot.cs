@@ -10,7 +10,7 @@ namespace MyProject.Plugins.Interfaces
 
         int RespawnTimes { get; }
 
-        Task MapStartBehavior();
+        void MapStartBehavior();
 
         Task WarmupEndBehavior();
 

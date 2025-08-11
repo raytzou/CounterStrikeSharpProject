@@ -96,7 +96,7 @@ public class Main(
             manifest.AddResource(path);
     }
 
-    private async void OnMapStart(string mapName)
+    private void OnMapStart(string mapName)
     {
         var hostname = ConVar.Find("hostname");
 
@@ -111,8 +111,8 @@ public class Main(
         SetHumanTeam();
         _playerService.ClearPlayerCache();
 
-        await AddMoreSpawnPoint();
-        await _bot.MapStartBehavior();
+        AddMoreSpawnPoint();
+        Server.NextWorldUpdate(() => _bot.MapStartBehavior());
 
         void ResetDefaultWeapon()
         {
@@ -132,9 +132,9 @@ public class Main(
                 Server.ExecuteCommand("mp_humanteam t");
         }
 
-        async Task AddMoreSpawnPoint()
+        void AddMoreSpawnPoint()
         {
-            await Server.NextWorldUpdateAsync(() =>
+            Server.NextWorldUpdate(() =>
             {
                 var TSpawnPoints = Utilities.FindAllEntitiesByDesignerName<SpawnPoint>("info_player_terrorist").ToList();
                 var CTSpawnPoints = Utilities.FindAllEntitiesByDesignerName<SpawnPoint>("info_player_counterterrorist").ToList();

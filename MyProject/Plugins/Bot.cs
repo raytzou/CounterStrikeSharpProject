@@ -25,12 +25,12 @@ public class Bot(ILogger<Bot> logger) : IBot
     public int RespawnTimes => _respawnTimes;
     public int MaxRespawnTimes => _maxRespawnTimes;
 
-    public async Task MapStartBehavior()
+    public void MapStartBehavior()
     {
         Server.ExecuteCommand("sv_cheats 1");
         Server.ExecuteCommand("bot_stop 1");
         Server.ExecuteCommand("bot_kick");
-        await AddSpecialBot(0);
+        AddSpecialBot(0);
         _level = 2;
     }
 
@@ -140,7 +140,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         {
             SetDefaultWeapon();
             await KickBotAsync();
-            await AddSpecialBot(roundCount);
+            AddSpecialBot(roundCount);
             if (roundCount != MidBossRound - 1 && roundCount != FinalBossRound - 1 && roundCount != FinalBossRound)
                 await FillNormalBot(GetDifficultyLevel(winStreak, looseStreak));
             await FixBotAddedInHumanTeam(roundCount);
@@ -263,47 +263,44 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    private async Task AddSpecialBot(int roundCount)
+    private void AddSpecialBot(int roundCount)
     {
-        await Server.NextFrameAsync(() =>
-        {
-            var botTeam = GetBotTeam(Server.MapName);
-            if (botTeam == CsTeam.None)
-                return;
+        var botTeam = GetBotTeam(Server.MapName);
+        if (botTeam == CsTeam.None)
+            return;
 
-            var team = botTeam == CsTeam.CounterTerrorist ? "ct" : "t";
-            if (roundCount == MidBossRound - 1)
+        var team = botTeam == CsTeam.CounterTerrorist ? "ct" : "t";
+        if (roundCount == MidBossRound - 1)
+        {
+            Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.easy)} {BotProfile.Boss[0]}");
+            if (AppSettings.LogBotAdd)
             {
-                Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.easy)} {BotProfile.Boss[0]}");
-                if (AppSettings.LogBotAdd)
-                {
-                    _logger.LogInformation("AddSpecialBot()");
-                    _logger.LogInformation("bot_add_{team} {difficulty} {boss}", team, nameof(BotProfile.Difficulty.easy), BotProfile.Boss[0]);
-                }
+                _logger.LogInformation("AddSpecialBot()");
+                _logger.LogInformation("bot_add_{team} {difficulty} {boss}", team, nameof(BotProfile.Difficulty.easy), BotProfile.Boss[0]);
             }
-            else if (roundCount == FinalBossRound - 1)
+        }
+        else if (roundCount == FinalBossRound - 1)
+        {
+            Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.easy)} {BotProfile.Boss[1]}");
+            if (AppSettings.LogBotAdd)
             {
-                Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.easy)} {BotProfile.Boss[1]}");
-                if (AppSettings.LogBotAdd)
-                {
-                    _logger.LogInformation("AddSpecialBot()");
-                    _logger.LogInformation("bot_add_{team} {difficulty} {boss}", team, nameof(BotProfile.Difficulty.easy), BotProfile.Boss[1]);
-                }
+                _logger.LogInformation("AddSpecialBot()");
+                _logger.LogInformation("bot_add_{team} {difficulty} {boss}", team, nameof(BotProfile.Difficulty.easy), BotProfile.Boss[1]);
             }
-            else
+        }
+        else
+        {
+            Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[0]}");
+            Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[1]}");
+            Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[2]}");
+            if (AppSettings.LogBotAdd)
             {
-                Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[0]}");
-                Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[1]}");
-                Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[2]}");
-                if (AppSettings.LogBotAdd)
-                {
-                    _logger.LogInformation("AddSpecialBot()");
-                    _logger.LogInformation("bot_add_{team} {difficulty} {special}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Special[0]);
-                    _logger.LogInformation("bot_add_{team} {difficulty} {special}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Special[1]);
-                    _logger.LogInformation("bot_add_{team} {difficulty} {special}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Special[2]);
-                }
+                _logger.LogInformation("AddSpecialBot()");
+                _logger.LogInformation("bot_add_{team} {difficulty} {special}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Special[0]);
+                _logger.LogInformation("bot_add_{team} {difficulty} {special}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Special[1]);
+                _logger.LogInformation("bot_add_{team} {difficulty} {special}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Special[2]);
             }
-        });
+        }
     }
 
     private static async Task KickBotAsync()
