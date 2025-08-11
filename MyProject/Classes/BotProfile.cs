@@ -14,7 +14,18 @@
 
         public static string[] Grade => ["*", "**", "***", "X", "XX", "XXX", "OTAKU", "TIKU", "ZAKO"];
 
-        public static string[] NameGroup => ["Rookie", "Casual", "Regular", "Veteran", "Skilled", "Pro", "GemaHaijin", "Dorei", "Helper"];
+        public static Dictionary<string, Difficulty> NameGroup => new()
+        {
+            { "Rookie", Difficulty.easy },
+            { "Casual", Difficulty.normal },
+            { "Regular", Difficulty.normal },
+            { "Veteran", Difficulty.hard },
+            { "Skilled", Difficulty.hard },
+            { "Pro", Difficulty.hard },
+            { "GemaHaijin", Difficulty.expert },
+            { "Dorei", Difficulty.expert },
+            { "Helper", Difficulty.normal }
+        };
 
         public static Dictionary<int, string> Special => new()
         {
