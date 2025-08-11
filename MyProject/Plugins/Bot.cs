@@ -236,7 +236,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             for (int i = 1; i <= BotQuota - BotProfile.Special.Count; i++)
             {
-                string botName = $"\"[{BotProfile.Grade[level]}]{BotProfile.NameGroup[level]}#{i:D2}\"";
+                string botName = $"\"[{BotProfile.Grade[level]}]{BotProfile.NameGroup.Keys.ToList()[level]}#{i:D2}\"";
                 var team = (botTeam == CsTeam.CounterTerrorist) ? "ct" : "t";
                 Server.ExecuteCommand($"bot_add_{team} {difficulty} {botName}");
 
