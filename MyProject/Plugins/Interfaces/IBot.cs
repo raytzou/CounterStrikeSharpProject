@@ -14,10 +14,10 @@ namespace MyProject.Plugins.Interfaces
 
         Task WarmupEndBehavior();
 
-        Task RoundStartBehavior(int roundCount);
+        Task RoundStartBehavior();
 
-        Task RoundEndBehavior(int roundCount, int winStreak, int looseStreak);
+        Task RoundEndBehavior(int winStreak, int looseStreak);
 
-        Task RespawnBotAsync(CCSPlayerController bot, int currentRound);
+        Task RespawnBotAsync(CCSPlayerController bot);
     }
 }

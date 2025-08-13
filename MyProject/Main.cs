@@ -59,6 +59,7 @@ public class Main(
     public static Main Instance { get; private set; } = null!; // To Do: remove singleton one day
     public int GetPlayerSlot(string playerName) => _players.TryGetValue(playerName, out int slot) ? slot : throw new Exception("Player not found");
     public CsTeam HumanTeam => GetHumanTeam();
+    public int RoundCount => _roundCount;
 
     public override void Load(bool hotreload)
     {
@@ -265,7 +266,7 @@ public class Main(
             if (_respawnBot && player.IsBot && player.Team != GetHumanTeam())
             {
                 Server.ExecuteCommand("mp_randomspawn 1");
-                _ = _bot.RespawnBotAsync(player, _roundCount)
+                _ = _bot.RespawnBotAsync(player)
                     .ContinueWith(task =>
                     {
                         if (task.IsFaulted || task.Exception is not null)
@@ -301,7 +302,7 @@ public class Main(
             StartWeaponCheckTimer();
         }
 
-        _bot.RoundStartBehavior(_roundCount);
+        _bot.RoundStartBehavior();
 
         if (_roundCount == ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>())
         {
@@ -402,7 +403,7 @@ public class Main(
 
         if (!_warmup)
         {
-            _bot.RoundEndBehavior(_roundCount, _winStreak, _looseStreak);
+            _bot.RoundEndBehavior(_winStreak, _looseStreak);
             Server.ExecuteCommand("mp_randomspawn 0");
             _weaponCheckTimer?.Kill();
             _roundCount++;
@@ -463,7 +464,7 @@ public class Main(
     [ConsoleCommand("css_info", "Server Info")]
     public void OnInfoCommand(CCSPlayerController client, CommandInfo command)
     {
-        _command.OnInfoCommand(client, command, _players.Count, _roundCount, _bot.RespawnTimes);
+        _command.OnInfoCommand(client, command, _players.Count, _bot.RespawnTimes);
     }
 
     [RequiresPermissions("@css/changemap")]

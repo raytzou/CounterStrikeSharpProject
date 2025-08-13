@@ -46,18 +46,18 @@ public class Bot(ILogger<Bot> logger) : IBot
         await FixBotAddedInHumanTeam(0);
     }
 
-    public async Task RoundStartBehavior(int roundCount)
+    public async Task RoundStartBehavior()
     {
         SetBotMoneyToZero();
 
-        if (roundCount != MidBossRound && roundCount != FinalBossRound)
+        if (Main.Instance.RoundCount != MidBossRound && Main.Instance.RoundCount != FinalBossRound)
         {
             SetSpecialBotAttribute();
             SetSpecialBotModel();
 
             _respawnTimes = _maxRespawnTimes;
 
-            if (roundCount > 1)
+            if (Main.Instance.RoundCount > 1)
             {
                 await SetSpecialBotWeapon(BotProfile.Special[0], CsItem.AWP); // "[ELITE]EagleEye"
                 await SetSpecialBotWeapon(BotProfile.Special[1], CsItem.M4A1S); // "[ELITE]mimic"
@@ -129,21 +129,21 @@ public class Bot(ILogger<Bot> logger) : IBot
             eagleEye!.Score = 999;
             mimic!.Score = 888;
             rush!.Score = 777;
-            if (roundCount > 1)
+            if (Main.Instance.RoundCount > 1)
                 rush!.PlayerPawn.Value!.Health = 250;
         }
     }
 
-    public async Task RoundEndBehavior(int roundCount, int winStreak, int looseStreak)
+    public async Task RoundEndBehavior(int winStreak, int looseStreak)
     {
-        if (roundCount > 0)
+        if (Main.Instance.RoundCount > 0)
         {
             SetDefaultWeapon();
             await KickBotAsync();
-            AddSpecialBot(roundCount);
-            if (roundCount != MidBossRound - 1 && roundCount != FinalBossRound - 1 && roundCount != FinalBossRound)
+            AddSpecialBot(Main.Instance.RoundCount);
+            if (Main.Instance.RoundCount != MidBossRound - 1 && Main.Instance.RoundCount != FinalBossRound - 1 && Main.Instance.RoundCount != FinalBossRound)
                 await FillNormalBot(GetDifficultyLevel(winStreak, looseStreak));
-            await FixBotAddedInHumanTeam(roundCount);
+            await FixBotAddedInHumanTeam(Main.Instance.RoundCount);
         }
 
         void SetDefaultWeapon()
@@ -168,7 +168,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    public async Task RespawnBotAsync(CCSPlayerController bot, int currentRound)
+    public async Task RespawnBotAsync(CCSPlayerController bot)
     {
         if (_respawnTimes <= 0 ||
             bot.PlayerName == BotProfile.Special[0] ||
@@ -178,7 +178,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         await Server.NextFrameAsync(bot.Respawn);
 
-        if (currentRound > 1)
+        if (Main.Instance.RoundCount > 1)
         {
             await Server.NextFrameAsync(() =>
             {
