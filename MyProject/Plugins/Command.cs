@@ -44,12 +44,12 @@ public class Command(
         Server.PrintToChatAll($"Admin kicked {targetName}");
     }
 
-    public void OnInfoCommand(CCSPlayerController client, CommandInfo command, int playerCount, int botRespawnRemaining)
+    public void OnInfoCommand(CCSPlayerController client, CommandInfo command, int botRespawnRemaining)
     {
         command.ReplyToCommand("----------");
         command.ReplyToCommand($"Server local time: {DateTime.Now}");
         command.ReplyToCommand($"Current map: {Server.MapName}");
-        command.ReplyToCommand($"Player: {playerCount}/{Server.MaxPlayers}");
+        command.ReplyToCommand($"Player: {Main.Instance.PlayerCount}/{Server.MaxPlayers}");
         command.ReplyToCommand($"Round: {Main.Instance.RoundCount}/{ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>()}");
         command.ReplyToCommand($"Bot respawn remaining: {botRespawnRemaining}");
         command.ReplyToCommand("----------");
