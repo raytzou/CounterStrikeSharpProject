@@ -307,8 +307,16 @@ public class Command(
         client.PlayerPawn.Value.TakesDamage = !takeDamage;
     }
 
-    public void OnReviveCommand(CCSPlayerController client, CommandInfo command, int costScore, Position position, Dictionary<string, WeaponStatus> weaponStatus)
+    public void OnReviveCommand(CCSPlayerController client, CommandInfo command, Position position, Dictionary<string, WeaponStatus> weaponStatus)
     {
+        var reviveCost = Main.Instance?.Config?.CostScoreToRevive;
+
+        if (reviveCost is null)
+        {
+            _logger.LogError("Singleton instance or Config instance is null");
+            return;
+        }
+
         if (client is null) return;
 
         if (client.Team == CounterStrikeSharp.API.Modules.Utils.CsTeam.Spectator)
@@ -323,9 +331,9 @@ public class Command(
             return;
         }
 
-        if (client.Score - costScore < 0 && !AppSettings.IsDebug)
+        if (client.Score - reviveCost < 0 && !AppSettings.IsDebug)
         {
-            command.ReplyToCommand($"[css] You don't have enough score ({costScore}) to revive.");
+            command.ReplyToCommand($"[css] You don't have enough score ({reviveCost}) to revive.");
             return;
         }
 

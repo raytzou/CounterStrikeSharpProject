@@ -14,13 +14,21 @@ using MyProject.Services.Interfaces;
 
 namespace MyProject;
 
+public class MainConfig : BasePluginConfig
+{
+    public float ChangeMapTimeBuffer = 2f;
+    public int SpawnPointCount = 20;
+    public int CostScoreToRevive = 50;
+    public float WeaponCheckTime = 3f;
+}
+
 public class Main(
     ILogger<Main> logger,
     IPlayerService playerService,
     IPlayerManagementService playerManagementService,
     ICommand commmand,
     IBot bot
-    ) : BasePlugin
+    ) : BasePlugin, IPluginConfig<MainConfig>
 {
     #region plugin info
     public override string ModuleAuthor => "cynicat";
@@ -49,14 +57,9 @@ public class Main(
     private readonly ICommand _command = commmand;
     private readonly IBot _bot = bot;
 
-    // constants
-    private const float ChangeMapTimeBuffer = 2f;
-    private const int SpawnPointCount = 20;
-    private const int CostScoreToRevive = 50;
-    private const float WeaponCheckTime = 3f;
-
     // properties
     public static Main Instance { get; private set; } = null!; // To Do: remove singleton one day
+    public required MainConfig Config { get; set; }
     public int GetPlayerSlot(string playerName) => _players.TryGetValue(playerName, out int slot) ? slot : throw new Exception("Player not found");
     public CsTeam HumanTeam => GetHumanTeam();
     public int RoundCount => _roundCount;
@@ -80,6 +83,11 @@ public class Main(
         RegisterEventHandler<EventWarmupEnd>(WarmupEndHandler);
         RegisterEventHandler<EventRoundStart>(RoundStartHandler);
         RegisterEventHandler<EventRoundEnd>(RoundEndHandler);
+    }
+
+    public void OnConfigParsed(MainConfig config)
+    {
+        Config = config;
     }
 
     private void OnServerPrecacheResources(ResourceManifest manifest)
@@ -150,11 +158,11 @@ public class Main(
                 var random = new Random();
 
                 // Check and duplicate T spawn points if needed
-                if (TSpawnPoints.Count > 0 && TSpawnPoints.Count < SpawnPointCount)
+                if (TSpawnPoints.Count > 0 && TSpawnPoints.Count < Config.SpawnPointCount)
                 {
-                    int neededSpawns = SpawnPointCount - TSpawnPoints.Count;
+                    int neededSpawns = Config.SpawnPointCount - TSpawnPoints.Count;
                     _logger.LogInformation("T team has {current} spawn points, duplicating {needed} more to reach {target}",
-                        TSpawnPoints.Count, neededSpawns, SpawnPointCount);
+                        TSpawnPoints.Count, neededSpawns, Config.SpawnPointCount);
 
                     for (int i = 0; i < neededSpawns; i++)
                     {
@@ -166,11 +174,11 @@ public class Main(
                 }
 
                 // Check and duplicate CT spawn points if needed
-                if (CTSpawnPoints.Count > 0 && CTSpawnPoints.Count < SpawnPointCount)
+                if (CTSpawnPoints.Count > 0 && CTSpawnPoints.Count < Config.SpawnPointCount)
                 {
-                    int neededSpawns = SpawnPointCount - CTSpawnPoints.Count;
+                    int neededSpawns = Config.SpawnPointCount - CTSpawnPoints.Count;
                     _logger.LogInformation("CT team has {current} spawn points, duplicating {needed} more to reach {target}",
-                        CTSpawnPoints.Count, neededSpawns, SpawnPointCount);
+                        CTSpawnPoints.Count, neededSpawns, Config.SpawnPointCount);
 
                     for (int i = 0; i < neededSpawns; i++)
                     {
@@ -346,7 +354,7 @@ public class Main(
 
         void StartWeaponCheckTimer()
         {
-            _weaponCheckTimer = AddTimer(WeaponCheckTime, () =>
+            _weaponCheckTimer = AddTimer(Config.WeaponCheckTime, () =>
             {
                 if (AppSettings.LogWeaponTracking)
                     Server.PrintToChatAll("weapon check");
@@ -467,7 +475,7 @@ public class Main(
     [ConsoleCommand("css_map", "Change map")]
     public void OnChangeMapCommand(CCSPlayerController client, CommandInfo command)
     {
-        _command.OnChangeMapCommand(client, command, ChangeMapTimeBuffer);
+        _command.OnChangeMapCommand(client, command, Config.ChangeMapTimeBuffer);
     }
 
     [RequiresPermissions("@css/changemap")]
@@ -514,7 +522,7 @@ public class Main(
     [ConsoleCommand("css_revive", "revive command")]
     public void OnReviveCommand(CCSPlayerController client, CommandInfo command)
     {
-        _command.OnReviveCommand(client, command, CostScoreToRevive, _position[client.PlayerName], _weaponStatus);
+        _command.OnReviveCommand(client, command, _position[client.PlayerName], _weaponStatus);
     }
 
     [ConsoleCommand("css_models", "models command")]
