@@ -311,7 +311,7 @@ public class Command(
     {
         var reviveCost = Main.Instance?.Config?.CostScoreToRevive;
 
-        if (reviveCost is null)
+        if (Main.Instance is null || reviveCost is null)
         {
             _logger.LogError("Singleton instance or Config instance is null");
             return;
