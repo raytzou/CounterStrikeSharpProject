@@ -454,9 +454,7 @@ public class Main(
     [ConsoleCommand("css_kick", "Kick player")]
     public void OnKickCommand(CCSPlayerController client, CommandInfo command)
     {
-        string targetName = GetTargetNameByKeyword(command.GetArg(1));
-
-        _command.OnKickCommand(client, command, targetName);
+        _command.OnKickCommand(client, command);
     }
 
     [ConsoleCommand("css_info", "Server Info")]
@@ -496,9 +494,7 @@ public class Main(
     [ConsoleCommand("css_slay", "Slay Player")]
     public void OnSlayCommand(CCSPlayerController client, CommandInfo command)
     {
-        var targetName = GetTargetNameByKeyword(command.GetArg(1));
-
-        _command.OnSlayCommand(client, command, targetName);
+        _command.OnSlayCommand(client, command);
     }
 
     [RequiresPermissions("@css/cheats")]
@@ -539,7 +535,31 @@ public class Main(
         _weaponStatus.Clear();
     }
 
-    private string GetTargetNameByKeyword(string keyword)
+    private static void RemovePlayerProtection(CCSPlayerController? player)
+    {
+        if (player is not null && player.PlayerPawn.Value is not null)
+            player.PlayerPawn.Value.TakesDamage = true;
+    }
+
+    private void SetClientModel(CCSPlayerController client)
+    {
+        Server.NextFrameAsync(() =>
+        {
+            var playerCache = _playerService.GetPlayerCache(client.SteamID);
+            if (playerCache is null)
+            {
+                _logger.LogWarning("Setting model failed, player cache is not found. ID: {steamID}", client.SteamID);
+                return;
+            }
+            var skinName = playerCache.PlayerSkins.FirstOrDefault(cache => cache.IsActive)?.SkinName ?? string.Empty;
+            if (!string.IsNullOrEmpty(skinName))
+                Utility.SetClientModel(client, skinName);
+            else
+                Utility.SetClientModel(client, playerCache.DefaultSkinModelPath);
+        });
+    }
+
+    public string GetTargetNameByKeyword(string keyword)
     {
         string normalizedKeyword = keyword.Trim().ToLowerInvariant();
         string targetName = string.Empty;
@@ -559,13 +579,7 @@ public class Main(
         return ctr == 1 ? targetName : string.Empty;
     }
 
-    private static void RemovePlayerProtection(CCSPlayerController? player)
-    {
-        if (player is not null && player.PlayerPawn.Value is not null)
-            player.PlayerPawn.Value.TakesDamage = true;
-    }
-
-    private CsTeam GetHumanTeam()
+    public CsTeam GetHumanTeam()
     {
         var mapName = Server.MapName;
         switch (mapName[..3])
@@ -583,23 +597,5 @@ public class Main(
                 _logger.LogWarning("Cannot identify the category of map: {mapName}", mapName);
                 return CsTeam.Terrorist;
         }
-    }
-
-    private void SetClientModel(CCSPlayerController client)
-    {
-        Server.NextFrameAsync(() =>
-        {
-            var playerCache = _playerService.GetPlayerCache(client.SteamID);
-            if (playerCache is null)
-            {
-                _logger.LogWarning("Setting model failed, player cache is not found. ID: {steamID}", client.SteamID);
-                return;
-            }
-            var skinName = playerCache.PlayerSkins.FirstOrDefault(cache => cache.IsActive)?.SkinName ?? string.Empty;
-            if (!string.IsNullOrEmpty(skinName))
-                Utility.SetClientModel(client, skinName);
-            else
-                Utility.SetClientModel(client, playerCache.DefaultSkinModelPath);
-        });
     }
 }

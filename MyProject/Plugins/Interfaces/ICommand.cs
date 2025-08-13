@@ -6,7 +6,7 @@ namespace MyProject.Plugins.Interfaces
 {
     public interface ICommand
     {
-        void OnKickCommand(CCSPlayerController client, CommandInfo command, string targetName);
+        void OnKickCommand(CCSPlayerController client, CommandInfo command);
 
         void OnInfoCommand(CCSPlayerController client, CommandInfo command, int botRespawnRemaining);
 
@@ -18,7 +18,7 @@ namespace MyProject.Plugins.Interfaces
 
         void OnPlayersCommand(CCSPlayerController client, CommandInfo command);
 
-        void OnSlayCommand(CCSPlayerController client, CommandInfo command, string targetName);
+        void OnSlayCommand(CCSPlayerController client, CommandInfo command);
 
         void OnGodCommand(CCSPlayerController client, CommandInfo command);
 

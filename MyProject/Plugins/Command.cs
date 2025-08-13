@@ -24,13 +24,15 @@ public class Command(
     private readonly ILogger<Command> _logger = logger;
     private readonly IPlayerService _playerService = playerService;
 
-    public void OnKickCommand(CCSPlayerController client, CommandInfo command, string targetName)
+    public void OnKickCommand(CCSPlayerController client, CommandInfo command)
     {
         if (command.ArgCount < 2)
         {
             command.ReplyToCommand("[css] Usage: css_kick <target>");
             return;
         }
+
+        var targetName = Main.Instance.GetTargetNameByKeyword(command.GetArg(1));
 
         if (string.IsNullOrEmpty(targetName))
         {
@@ -237,7 +239,7 @@ public class Command(
         }
     }
 
-    public void OnSlayCommand(CCSPlayerController client, CommandInfo command, string targetName)
+    public void OnSlayCommand(CCSPlayerController client, CommandInfo command)
     {
         if (command.ArgCount < 2)
         {
@@ -275,6 +277,8 @@ public class Command(
             _logger.LogInformation("[css] {admin} slew all T players at {DT}", client?.PlayerName is null ? "console" : client.PlayerName, DateTime.Now);
             return;
         }
+
+        var targetName = Main.Instance.GetTargetNameByKeyword(command.GetArg(1));
 
         if (string.IsNullOrEmpty(targetName))
         {
