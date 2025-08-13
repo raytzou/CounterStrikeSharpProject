@@ -207,10 +207,7 @@ public class Main(
                 _weaponStatus.Add(player.PlayerName, new WeaponStatus());
         }
 
-        if (!_players.ContainsKey(player.PlayerName))
-            _players.Add(player.PlayerName, player.Slot);
-        else
-            _players[player.PlayerName] = player.Slot;
+        _players[player.PlayerName] = player.Slot;
     }
 
     #region hook result
