@@ -63,7 +63,7 @@ public class Main(
     public int GetPlayerSlot(string playerName) => _players.TryGetValue(playerName, out int slot) ? slot : throw new Exception("Player not found");
     public CsTeam HumanTeam => GetHumanTeam();
     public int RoundCount => _roundCount;
-    public static int PlayerCount => Utilities.GetPlayers().Count(p => !p.IsBot);
+    public int PlayerCount => Utilities.GetPlayers().Count(p => !p.IsBot);
 
     public override void Load(bool hotreload)
     {
