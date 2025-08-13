@@ -493,7 +493,7 @@ public class Command(
 
                 foreach (var weapon in weaponStatus[client.PlayerName].Weapons)
                 {
-                    if (AppSettings.IsDebug)
+                    if (AppSettings.LogWeaponTracking)
                         client.PrintToChat($"try to give: {weapon}");
                     if (weapon == Utility.GetCsItemEnumValue(CsItem.C4))
                         continue;
