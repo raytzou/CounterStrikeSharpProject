@@ -54,7 +54,6 @@ public class Main(
     public static Main Instance { get; private set; } = null!; // To Do: remove singleton one day
     public required MainConfig Config { get; set; }
     public int GetPlayerSlot(string playerName) => _players.TryGetValue(playerName, out int slot) ? slot : throw new Exception("Player not found");
-    public CsTeam HumanTeam => GetHumanTeam();
     public int RoundCount => _roundCount;
     public int PlayerCount => Utilities.GetPlayers().Count(p => !p.IsBot);
 

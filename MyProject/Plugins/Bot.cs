@@ -313,7 +313,7 @@ public class Bot(ILogger<Bot> logger) : IBot
     {
         await Server.NextFrameAsync(() =>
         {
-            var humanTeam = Main.Instance.HumanTeam;
+            var humanTeam = Main.Instance.GetHumanTeam();
             if (humanTeam == CsTeam.None)
                 return;
             foreach (var bot in Utilities.GetPlayers().Where(player => player.IsBot && player.Team == humanTeam))

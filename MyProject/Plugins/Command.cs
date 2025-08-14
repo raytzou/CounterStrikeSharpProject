@@ -339,7 +339,7 @@ public class Command(
 
         if (position.Origin is null || position.Rotation is null || position.Velocity is null)
         {
-            var humanTeam = Main.Instance.HumanTeam;
+            var humanTeam = Main.Instance.GetHumanTeam();
             var humanSpawnPoint = new SpawnPoint(0);
 
             if (humanTeam == CounterStrikeSharp.API.Modules.Utils.CsTeam.Terrorist)
