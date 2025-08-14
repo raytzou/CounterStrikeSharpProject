@@ -5,6 +5,7 @@ using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Entities.Constants;
+using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
 using MyProject.Classes;
@@ -63,6 +64,7 @@ public class Main(
         if (AppSettings.IsDebug)
             _logger.LogWarning("Debug mode is on");
         _logger.LogInformation("Server host time: {DT}", DateTime.Now);
+        RegisterListener<Listeners.OnTick>(OnTick);
         RegisterListener<Listeners.OnMapStart>(OnMapStart);
         RegisterListener<Listeners.OnMapEnd>(OnMapEnd);
         RegisterListener<Listeners.OnClientPutInServer>(OnClientPutInServer);
@@ -96,6 +98,11 @@ public class Main(
             manifest.AddResource(path);
         foreach (var path in armSet)
             manifest.AddResource(path);
+    }
+
+    private void OnTick()
+    {
+        DisplayEveryoneOnRadar();
     }
 
     private void OnMapStart(string mapName)
@@ -557,6 +564,43 @@ public class Main(
             else
                 Utility.SetClientModel(client, playerCache.DefaultSkinModelPath);
         });
+    }
+
+    private static void DisplayEveryoneOnRadar()
+    {
+        var players = Utilities.GetPlayers();
+        foreach (var player in players)
+        {
+            var pawn = player.PlayerPawn.Value;
+            if (pawn == null) continue;
+
+            pawn.EntitySpottedState.Spotted = true;
+            Utilities.SetStateChanged(pawn, "CCSPlayerPawn", "m_entitySpottedState", Schema.GetSchemaOffset("EntitySpottedState_t", "m_bSpotted"));
+
+            Span<uint> spottedByMask = pawn.EntitySpottedState.SpottedByMask;
+
+            for (int i = 0; i < spottedByMask.Length; i++)
+            {
+                spottedByMask[i] = 0;
+            }
+
+            foreach (var otherPlayer in players)
+            {
+                if (otherPlayer.Index != player.Index)
+                {
+                    int playerIndex = (int)otherPlayer.Index;
+                    int maskIndex = playerIndex / 32;
+                    int bitIndex = playerIndex % 32;
+
+                    if (maskIndex < spottedByMask.Length)
+                    {
+                        spottedByMask[maskIndex] |= (uint)(1 << bitIndex);
+                    }
+                }
+            }
+
+            Utilities.SetStateChanged(pawn, "CCSPlayerPawn", "m_entitySpottedState", Schema.GetSchemaOffset("EntitySpottedState_t", "m_bSpottedByMask"));
+        }
     }
 
     public string GetTargetNameByKeyword(string keyword)
