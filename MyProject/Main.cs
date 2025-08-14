@@ -14,14 +14,6 @@ using MyProject.Services.Interfaces;
 
 namespace MyProject;
 
-public class MainConfig : BasePluginConfig
-{
-    public float ChangeMapTimeBuffer = 2f;
-    public int SpawnPointCount = 20;
-    public int CostScoreToRevive = 50;
-    public float WeaponCheckTime = 3f;
-}
-
 public class Main(
     ILogger<Main> logger,
     IPlayerService playerService,
