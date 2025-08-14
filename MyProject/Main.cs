@@ -102,7 +102,8 @@ public class Main(
 
     private void OnTick()
     {
-        DisplayEveryoneOnRadar();
+        if (_roundCount == Config.MidBossRound || _roundCount == Config.FinalBossRound)
+            DisplayEveryoneOnRadar();
     }
 
     private void OnMapStart(string mapName)
