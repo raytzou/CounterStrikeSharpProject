@@ -11,5 +11,7 @@ namespace MyProject.Classes
         public int BotQuota = 20;
         public int MidBossRound = 4;
         public int FinalBossRound = 8;
+        public string EagleEyeModel = "[???]Nano Girl";
+        public string RushModel = "[Resident Evil 2]Hunk";
     }
 }

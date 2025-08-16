@@ -16,8 +16,6 @@ public class Bot(ILogger<Bot> logger) : IBot
     private int _respawnTimes = 0;
     private int _maxRespawnTimes = 20;
 
-    private const string EagleEyeModel = "[???]Nano Girl";
-    private const string RushModel = "[Resident Evil 2]Hunk";
     private static readonly Regex NormalBotNameRegex = new(@"^\[(?<Grade>[^\]]+)\](?<Group>[^#]+)#(?<Num>\d{1,2})$");
 
     public int CurrentLevel => _level + 1;
@@ -114,8 +112,8 @@ public class Bot(ILogger<Bot> logger) : IBot
                 var randomSkin = Utility.WorkshopSkins.ElementAt(random.Next(Utility.WorkshopSkins.Count));
 
                 Utility.SetClientModel(mimic!, randomSkin.Key);
-                Utility.SetClientModel(eagleEye!, EagleEyeModel);
-                Utility.SetClientModel(rush!, RushModel);
+                Utility.SetClientModel(eagleEye!, Main.Instance.Config.EagleEyeModel);
+                Utility.SetClientModel(rush!, Main.Instance.Config.RushModel);
             });
         }
 
