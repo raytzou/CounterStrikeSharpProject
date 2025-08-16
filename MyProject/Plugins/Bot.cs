@@ -333,7 +333,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         });
     }
 
-    private void KickNormalBot()
+    private static void KickNormalBot()
     {
         foreach (var bot in Utilities.GetPlayers().Where(p => p.IsBot))
         {
@@ -346,7 +346,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    private void KickSpecialBot()
+    private static void KickSpecialBot()
     {
         var specialBot = BotProfile.Special.Values.ToHashSet();
 
@@ -359,7 +359,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    private void KickBoss()
+    private static void KickBoss()
     {
         var boss = BotProfile.Boss.Values.ToHashSet();
 
