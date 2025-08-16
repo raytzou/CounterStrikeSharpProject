@@ -44,7 +44,7 @@ public class Main(
     private bool _warmup = true;
     private int _winStreak = 0;
     private int _looseStreak = 0;
-    private bool _respawnBot = false;
+    private bool _isRoundEnd = false;
 
     // plugins
     private readonly ICommand _command = commmand;
@@ -266,19 +266,14 @@ public class Main(
             !player.IsValid)
             return HookResult.Continue;
 
-        if (!_warmup)
+        if (!_warmup && !_isRoundEnd)
         {
-            if (_respawnBot && player.IsBot && player.Team != GetHumanTeam())
+            if (player.IsBot && player.Team != GetHumanTeam())
             {
                 Server.ExecuteCommand("mp_randomspawn 1");
-                _ = _bot.RespawnBotAsync(player)
-                    .ContinueWith(task =>
-                    {
-                        if (task.IsFaulted || task.Exception is not null)
-                        {
-                            _logger.LogError("Failed to respawn bot: {error}", task.Exception?.Message);
-                        }
-                    });
+                var specialAndBoss = BotProfile.Special.Select(s => s.Value).Concat(BotProfile.Boss.Select(s => s.Value)).ToHashSet();
+                if (specialAndBoss.Contains(player.PlayerName)) return HookResult.Continue;
+                Server.NextFrameAsync(() => _bot.RespawnBotAsync(player));
             }
             else if (_position.TryGetValue(player.PlayerName, out Position? playerPosition))
             {
@@ -298,9 +293,9 @@ public class Main(
 
     private HookResult RoundStartHandler(EventRoundStart eventRoundStart, GameEventInfo gameEventInfo)
     {
+        _isRoundEnd = false;
         if (!_warmup)
         {
-            _respawnBot = true;
             HandleRoundStartMessages();
             RemoveProtectionFromAllPlayers();
             ActivateAllWeaponStatuses();
@@ -393,8 +388,7 @@ public class Main(
 
     private HookResult RoundEndHandler(EventRoundEnd eventRoundEnd, GameEventInfo gameEventInfo)
     {
-        _respawnBot = false;
-
+        _isRoundEnd = true;
         if (eventRoundEnd.Winner == (int)GetHumanTeam())
         {
             _winStreak++;

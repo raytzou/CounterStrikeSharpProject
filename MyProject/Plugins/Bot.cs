@@ -5,6 +5,7 @@ using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
 using MyProject.Classes;
 using MyProject.Plugins.Interfaces;
+using System.Text.RegularExpressions;
 
 namespace MyProject.Plugins;
 
@@ -17,6 +18,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
     private const string EagleEyeModel = "[???]Nano Girl";
     private const string RushModel = "[Resident Evil 2]Hunk";
+    private static readonly Regex NormalBotNameRegex = new(@"^\[(?<Grade>[^\]]+)\](?<Group>[^#]+)#(?<Num>\d{1,2})$");
 
     public int CurrentLevel => _level + 1;
     public int RespawnTimes => _respawnTimes;
@@ -27,11 +29,11 @@ public class Bot(ILogger<Bot> logger) : IBot
         Server.ExecuteCommand("sv_cheats 1");
         Server.ExecuteCommand("bot_stop 1");
         Server.ExecuteCommand("bot_kick");
-        AddSpecialBot(0);
+        AddSpecialOrBoss(0);
         _level = 2;
     }
 
-    public async Task WarmupEndBehavior()
+    public void WarmupEndBehavior()
     {
         if (!AppSettings.IsDebug)
         {
@@ -39,8 +41,8 @@ public class Bot(ILogger<Bot> logger) : IBot
             Server.ExecuteCommand("bot_stop 0");
         }
 
-        await FillNormalBot(GetDifficultyLevel(0, 0));
-        await FixBotAddedInHumanTeam(0);
+        FillNormalBot(GetDifficultyLevel(0, 0));
+        FixQuota(0);
     }
 
     public async Task RoundStartBehavior()
@@ -131,16 +133,21 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    public async Task RoundEndBehavior(int winStreak, int looseStreak)
+    public void RoundEndBehavior(int winStreak, int looseStreak)
     {
         if (Main.Instance.RoundCount > 0)
         {
             SetDefaultWeapon();
-            await KickBotAsync();
-            AddSpecialBot(Main.Instance.RoundCount);
+            AddSpecialOrBoss(Main.Instance.RoundCount);
+            KickNormalBot();
             if (Main.Instance.RoundCount != Main.Instance.Config.MidBossRound - 1 && Main.Instance.RoundCount != Main.Instance.Config.FinalBossRound - 1 && Main.Instance.RoundCount != Main.Instance.Config.FinalBossRound)
-                await FillNormalBot(GetDifficultyLevel(winStreak, looseStreak));
-            await FixBotAddedInHumanTeam(Main.Instance.RoundCount);
+            {
+                KickBoss();
+                FillNormalBot(GetDifficultyLevel(winStreak, looseStreak));
+            }
+            else if (Main.Instance.RoundCount == Main.Instance.Config.MidBossRound - 1 || Main.Instance.RoundCount == Main.Instance.Config.FinalBossRound - 1)
+                KickSpecialBot();
+            FixQuota(Main.Instance.RoundCount);
         }
 
         void SetDefaultWeapon()
@@ -167,10 +174,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
     public async Task RespawnBotAsync(CCSPlayerController bot)
     {
-        if (_respawnTimes <= 0 ||
-            bot.PlayerName == BotProfile.Special[0] ||
-            bot.PlayerName == BotProfile.Special[1] ||
-            bot.PlayerName == BotProfile.Special[2])
+        if (_respawnTimes <= 0)
             return;
 
         await Server.NextFrameAsync(bot.Respawn);
@@ -214,9 +218,9 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    private async Task FillNormalBot(int level)
+    private void FillNormalBot(int level)
     {
-        await Server.NextFrameAsync(() =>
+        Server.NextFrameAsync(() =>
         {
             var botTeam = GetBotTeam(Server.MapName);
             if (botTeam == CsTeam.None)
@@ -260,7 +264,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    private void AddSpecialBot(int roundCount)
+    private void AddSpecialOrBoss(int roundCount)
     {
         var botTeam = GetBotTeam(Server.MapName);
         if (botTeam == CsTeam.None)
@@ -269,27 +273,49 @@ public class Bot(ILogger<Bot> logger) : IBot
         var team = botTeam == CsTeam.CounterTerrorist ? "ct" : "t";
         if (roundCount == Main.Instance.Config.MidBossRound - 1)
         {
-            Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.easy)} {BotProfile.Boss[0]}");
+            var midBossSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Boss[0]) == 1;
+            if (!midBossSpawn)
+            {
+                KickBoss();
+                Server.NextFrameAsync(() => Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Boss[0]}"));
+            }
             if (AppSettings.LogBotAdd)
             {
                 _logger.LogInformation("AddSpecialBot()");
-                _logger.LogInformation("bot_add_{team} {difficulty} {boss}", team, nameof(BotProfile.Difficulty.easy), BotProfile.Boss[0]);
+                _logger.LogInformation("bot_add_{team} {difficulty} {boss}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Boss[0]);
             }
         }
         else if (roundCount == Main.Instance.Config.FinalBossRound - 1)
         {
-            Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.easy)} {BotProfile.Boss[1]}");
+            var finalBossSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Boss[1]) == 1;
+            if (!finalBossSpawn)
+            {
+                KickBoss();
+                Server.NextFrame(() => Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Boss[1]}"));
+            }
             if (AppSettings.LogBotAdd)
             {
                 _logger.LogInformation("AddSpecialBot()");
-                _logger.LogInformation("bot_add_{team} {difficulty} {boss}", team, nameof(BotProfile.Difficulty.easy), BotProfile.Boss[1]);
+                _logger.LogInformation("bot_add_{team} {difficulty} {boss}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Boss[1]);
             }
         }
         else
         {
-            Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[0]}");
-            Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[1]}");
-            Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[2]}");
+            var specialBotSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Special[0]) == 1 &&
+                Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Special[1]) == 1 &&
+                Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Special[2]) == 1;
+
+            if (!specialBotSpawn)
+            {
+                KickSpecialBot();
+                Server.NextFrameAsync(() =>
+                {
+                    Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[0]}");
+                    Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[1]}");
+                    Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[2]}");
+                });
+            }
+
             if (AppSettings.LogBotAdd)
             {
                 _logger.LogInformation("AddSpecialBot()");
@@ -309,18 +335,49 @@ public class Bot(ILogger<Bot> logger) : IBot
         });
     }
 
-    private static async Task FixBotAddedInHumanTeam(int roundCount)
+    private void KickNormalBot()
     {
-        await Server.NextFrameAsync(() =>
+        foreach (var bot in Utilities.GetPlayers().Where(p => p.IsBot))
         {
-            var humanTeam = Main.Instance.GetHumanTeam();
-            if (humanTeam == CsTeam.None)
-                return;
-            foreach (var bot in Utilities.GetPlayers().Where(player => player.IsBot && player.Team == humanTeam))
-            {
-                Server.ExecuteCommand($"kick \"{bot.PlayerName}\"");
-            }
+            var match = NormalBotNameRegex.Match(bot.PlayerName);
 
+            if (match.Success)
+            {
+                Server.ExecuteCommand($"kick {bot.PlayerName}");
+            }
+        }
+    }
+
+    private void KickSpecialBot()
+    {
+        var specialBot = BotProfile.Special.Values.ToHashSet();
+
+        foreach (var bot in Utilities.GetPlayers().Where(player => player.IsBot))
+        {
+            if (specialBot.Contains(bot.PlayerName))
+            {
+                Server.ExecuteCommand($"kick {bot.PlayerName}");
+            }
+        }
+    }
+
+    private void KickBoss()
+    {
+        var boss = BotProfile.Boss.Values.ToHashSet();
+
+        foreach (var bot in Utilities.GetPlayers().Where(player => player.IsBot))
+        {
+            if (boss.Contains(bot.PlayerName))
+            {
+                Server.ExecuteCommand($"kick {bot.PlayerName}");
+            }
+        }
+    }
+
+    private static void FixQuota(int roundCount)
+    {
+        Server.NextFrameAsync(() =>
+        {
             if (roundCount == Main.Instance.Config.MidBossRound - 1 || roundCount == Main.Instance.Config.FinalBossRound - 1)
                 Server.ExecuteCommand("bot_quota 1");
             else if (roundCount == Main.Instance.Config.FinalBossRound)
