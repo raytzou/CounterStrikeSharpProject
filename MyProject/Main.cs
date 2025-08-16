@@ -300,6 +300,10 @@ public class Main(
             RemoveProtectionFromAllPlayers();
             ActivateAllWeaponStatuses();
             StartWeaponCheckTimer();
+            if (_roundCount == Config.MidBossRound || _roundCount == Config.FinalBossRound)
+            {
+                RemoveBomb();
+            }
         }
 
         _bot.RoundStartBehavior();
@@ -381,6 +385,28 @@ public class Main(
                 {
                     foreach (var cacheWeapon in pair.Value.Weapons)
                         Server.PrintToChatAll(cacheWeapon);
+                }
+            }
+        }
+
+        void RemoveBomb()
+        {
+            var findBomb = false;
+            foreach (var player in Utilities.GetPlayers())
+            {
+                foreach (var weapon in player.PlayerPawn.Value!.WeaponServices!.MyWeapons)
+                {
+                    if (weapon.Value!.DesignerName == Utility.GetCsItemEnumValue(CsItem.C4))
+                    {
+                        findBomb = true;
+                        break;
+                    }
+                }
+
+                if (findBomb)
+                {
+                    player.RemoveItemByDesignerName(Utility.GetCsItemEnumValue(CsItem.C4));
+                    break;
                 }
             }
         }
