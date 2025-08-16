@@ -307,7 +307,7 @@ public class Command(
         client.PlayerPawn.Value.TakesDamage = !takeDamage;
     }
 
-    public void OnReviveCommand(CCSPlayerController client, CommandInfo command, Position position, Dictionary<string, WeaponStatus> weaponStatus)
+    public void OnReviveCommand(CCSPlayerController client, CommandInfo command, Position position, WeaponStatus weaponStatus)
     {
         var reviveCost = Main.Instance?.Config?.CostScoreToRevive;
 
@@ -459,7 +459,7 @@ public class Command(
         menu.Display(client);
     }
 
-    private static void ReviveCallBack(ref float time, CCSPlayerController client, Position position, Timer? timer, Dictionary<string, WeaponStatus> weaponStatus)
+    private static void ReviveCallBack(ref float time, CCSPlayerController client, Position position, Timer? timer, WeaponStatus weaponStatus)
     {
         time++;
 
@@ -476,22 +476,22 @@ public class Command(
                 client.Pawn.Value!.Teleport(position.Origin, position.Rotation, position.Velocity);
                 client.RemoveWeapons();
 
-                if (weaponStatus[client.PlayerName].Weapons.Count == 0)
+                if (weaponStatus.Weapons.Count == 0)
                 {
-                    weaponStatus[client.PlayerName].Weapons.Add(Utility.GetCsItemEnumValue(CsItem.Knife));
+                    weaponStatus.Weapons.Add(Utility.GetCsItemEnumValue(CsItem.Knife));
                     if (client.Team == CsTeam.Terrorist)
                     {
                         //var defaultTSecondaryWeapon = ConVar.Find("mp_t_default_secondary")!.StringValue; // StringValue won't work with value length that over specific bits I guess
-                        weaponStatus[client.PlayerName].Weapons.Add(Utility.GetCsItemEnumValue(CsItem.Glock));
+                        weaponStatus.Weapons.Add(Utility.GetCsItemEnumValue(CsItem.Glock));
                     }
                     else if (client.Team == CsTeam.CounterTerrorist)
                     {
                         //var defaultCTSecondaryWeapon = ConVar.Find("mp_ct_default_secondary")!.StringValue;
-                        weaponStatus[client.PlayerName].Weapons.Add(Utility.GetCsItemEnumValue(CsItem.USP));
+                        weaponStatus.Weapons.Add(Utility.GetCsItemEnumValue(CsItem.USP));
                     }
                 }
 
-                foreach (var weapon in weaponStatus[client.PlayerName].Weapons)
+                foreach (var weapon in weaponStatus.Weapons)
                 {
                     if (AppSettings.LogWeaponTracking)
                         client.PrintToChat($"try to give: {weapon}");

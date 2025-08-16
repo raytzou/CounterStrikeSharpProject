@@ -515,7 +515,7 @@ public class Main(
     [ConsoleCommand("css_revive", "revive command")]
     public void OnReviveCommand(CCSPlayerController client, CommandInfo command)
     {
-        _command.OnReviveCommand(client, command, _position[client.PlayerName], _weaponStatus);
+        _command.OnReviveCommand(client, command, _position[client.PlayerName], _weaponStatus[client.PlayerName]);
     }
 
     [ConsoleCommand("css_models", "models command")]
