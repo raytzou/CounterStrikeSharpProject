@@ -2,7 +2,7 @@
 {
     public class WeaponStatus
     {
-        public bool IsActive { get; set; }
+        public bool IsTracking { get; set; }
 
         public List<string> Weapons { get; set; } = [];
     }

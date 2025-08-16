@@ -246,7 +246,7 @@ public class Main(
 
         if (!player.IsBot)
         {
-            _weaponStatus[player.PlayerName].IsActive = true;
+            _weaponStatus[player.PlayerName].IsTracking = true;
             SetClientModel(player);
         }
 
@@ -284,7 +284,7 @@ public class Main(
                 playerPosition.Origin = origin;
                 playerPosition.Rotation = rotation;
                 playerPosition.Velocity = velocity;
-                _weaponStatus[player.PlayerName].IsActive = false;
+                _weaponStatus[player.PlayerName].IsTracking = false;
             }
         }
 
@@ -342,7 +342,7 @@ public class Main(
         {
             foreach (var pair in _weaponStatus)
             {
-                pair.Value.IsActive = true;
+                pair.Value.IsTracking = true;
             }
         }
 
@@ -355,7 +355,7 @@ public class Main(
 
                 foreach (var pair in _weaponStatus)
                 {
-                    if (!pair.Value.IsActive)
+                    if (!pair.Value.IsTracking)
                         continue;
 
                     if (AppSettings.LogWeaponTracking)
