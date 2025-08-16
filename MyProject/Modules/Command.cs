@@ -10,11 +10,11 @@ using Microsoft.Extensions.Logging;
 using MyProject.Classes;
 using MyProject.Domains;
 using MyProject.Models;
-using MyProject.Plugins.Interfaces;
+using MyProject.Modules.Interfaces;
 using MyProject.Services.Interfaces;
 using Timer = CounterStrikeSharp.API.Modules.Timers.Timer;
 
-namespace MyProject.Plugins;
+namespace MyProject.Modules;
 
 public class Command(
     ILogger<Command> logger,

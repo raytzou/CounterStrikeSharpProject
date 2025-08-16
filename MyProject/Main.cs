@@ -10,7 +10,7 @@ using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
 using MyProject.Classes;
 using MyProject.Models;
-using MyProject.Plugins.Interfaces;
+using MyProject.Modules.Interfaces;
 using MyProject.Services.Interfaces;
 
 namespace MyProject;
@@ -46,11 +46,11 @@ public class Main(
     private int _looseStreak = 0;
     private bool _isRoundEnd = false;
 
-    // plugins
+    // module services
     private readonly ICommand _command = commmand;
     private readonly IBot _bot = bot;
 
-    // properties
+    // singleton members
     public static Main Instance { get; private set; } = null!; // To Do: remove singleton one day
     public required MainConfig Config { get; set; }
     public int GetPlayerSlot(string playerName) => _players.TryGetValue(playerName, out int slot) ? slot : throw new Exception("Player not found");

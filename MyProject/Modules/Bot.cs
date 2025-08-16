@@ -4,10 +4,10 @@ using CounterStrikeSharp.API.Modules.Entities.Constants;
 using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
 using MyProject.Classes;
-using MyProject.Plugins.Interfaces;
+using MyProject.Modules.Interfaces;
 using System.Text.RegularExpressions;
 
-namespace MyProject.Plugins;
+namespace MyProject.Modules;
 
 public class Bot(ILogger<Bot> logger) : IBot
 {

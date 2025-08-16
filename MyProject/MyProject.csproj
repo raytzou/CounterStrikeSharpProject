@@ -18,8 +18,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Plugins\Bot.cs" />
-    <None Include="Plugins\Command.cs" />
+    <None Include="Modules\Bot.cs" />
+    <None Include="Modules\Command.cs" />
   </ItemGroup>
 
   <ItemGroup>

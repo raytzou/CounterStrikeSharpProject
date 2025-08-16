@@ -2,7 +2,7 @@
 using CounterStrikeSharp.API.Modules.Commands;
 using MyProject.Models;
 
-namespace MyProject.Plugins.Interfaces
+namespace MyProject.Modules.Interfaces
 {
     public interface ICommand
     {
