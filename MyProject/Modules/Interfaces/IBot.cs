@@ -19,5 +19,7 @@ namespace MyProject.Modules.Interfaces
         void RoundEndBehavior(int winStreak, int looseStreak);
 
         Task RespawnBotAsync(CCSPlayerController bot);
+
+        bool IsBoss(CCSPlayerController player);
     }
 }

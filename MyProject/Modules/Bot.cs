@@ -22,6 +22,15 @@ public class Bot(ILogger<Bot> logger) : IBot
     public int RespawnTimes => _respawnTimes;
     public int MaxRespawnTimes => _maxRespawnTimes;
 
+    public bool IsBoss(CCSPlayerController player)
+    {
+        if (!player.IsBot) return false;
+
+        var boss = BotProfile.Boss.Select(s => s.Value).ToHashSet();
+
+        return boss.Contains(player.PlayerName);
+    }
+
     public void MapStartBehavior()
     {
         Server.ExecuteCommand("sv_cheats 1");
