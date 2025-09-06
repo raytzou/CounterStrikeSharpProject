@@ -72,6 +72,17 @@ public class Bot(ILogger<Bot> logger) : IBot
         else
         {
             _respawnTimes = 0;
+
+            if (Main.Instance.RoundCount == Main.Instance.Config.MidBossRound)
+            {
+                var midBoss = Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(BotProfile.Boss[0]));
+                midBoss!.PlayerPawn.Value!.Health = 2500;
+            }
+            else if (Main.Instance.RoundCount == Main.Instance.Config.FinalBossRound)
+            {
+                var finalBoss = Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(BotProfile.Boss[1]));
+                finalBoss!.PlayerPawn.Value!.Health = 5000;
+            }
         }
 
         async Task SetSpecialBotWeapon(string botName, CsItem item)
