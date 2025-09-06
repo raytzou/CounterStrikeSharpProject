@@ -50,7 +50,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         if (Main.Instance.RoundCount != Main.Instance.Config.MidBossRound && Main.Instance.RoundCount != Main.Instance.Config.FinalBossRound)
         {
             SetSpecialBotAttribute();
-            SetSpecialBotModel();
+            await SetSpecialBotModel();
 
             _respawnTimes = _maxRespawnTimes;
 
@@ -101,9 +101,9 @@ public class Bot(ILogger<Bot> logger) : IBot
             }
         }
 
-        void SetSpecialBotModel()
+        async Task SetSpecialBotModel()
         {
-            Server.NextFrameAsync(() =>
+            await Server.NextFrameAsync(() =>
             {
                 var eagleEye = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[0]));
                 var mimic = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[1]));
@@ -218,31 +218,28 @@ public class Bot(ILogger<Bot> logger) : IBot
 
     private void FillNormalBot(int level)
     {
-        Server.NextFrameAsync(() =>
+        var botTeam = GetBotTeam(Server.MapName);
+        if (botTeam == CsTeam.None)
+            return;
+
+        var difficulty = level switch
         {
-            var botTeam = GetBotTeam(Server.MapName);
-            if (botTeam == CsTeam.None)
-                return;
+            0 => BotProfile.Difficulty.easy,
+            1 or 2 => BotProfile.Difficulty.normal,
+            3 or 4 => BotProfile.Difficulty.hard,
+            5 or 6 or 7 => BotProfile.Difficulty.expert,
+            _ => BotProfile.Difficulty.easy,
+        };
 
-            var difficulty = level switch
-            {
-                0 => BotProfile.Difficulty.easy,
-                1 or 2 => BotProfile.Difficulty.normal,
-                3 or 4 => BotProfile.Difficulty.hard,
-                5 or 6 or 7 => BotProfile.Difficulty.expert,
-                _ => BotProfile.Difficulty.easy,
-            };
+        for (int i = 1; i <= Main.Instance.Config.BotQuota - BotProfile.Special.Count; i++)
+        {
+            string botName = $"\"[{BotProfile.Grade[level]}]{BotProfile.NameGroup.Keys.ToList()[level]}#{i:D2}\"";
+            var team = (botTeam == CsTeam.CounterTerrorist) ? "ct" : "t";
+            Server.NextFrame(() => Server.ExecuteCommand($"bot_add_{team} {difficulty} {botName}"));
 
-            for (int i = 1; i <= Main.Instance.Config.BotQuota - BotProfile.Special.Count; i++)
-            {
-                string botName = $"\"[{BotProfile.Grade[level]}]{BotProfile.NameGroup.Keys.ToList()[level]}#{i:D2}\"";
-                var team = (botTeam == CsTeam.CounterTerrorist) ? "ct" : "t";
-                Server.ExecuteCommand($"bot_add_{team} {difficulty} {botName}");
-
-                if (AppSettings.LogBotAdd)
-                    _logger.LogInformation("FillNormalBot() bot_add_{team} {difficulty} {botName}", team, difficulty, botName);
-            }
-        });
+            if (AppSettings.LogBotAdd)
+                _logger.LogInformation("FillNormalBot() bot_add_{team} {difficulty} {botName}", team, difficulty, botName);
+        }
     }
 
     private int GetDifficultyLevel(int winStreak, int looseStreak)
@@ -275,7 +272,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (!midBossSpawn)
             {
                 KickBoss();
-                Server.NextFrameAsync(() => Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Boss[0]}"));
+                Server.NextFrame(() => Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Boss[0]}"));
             }
             if (AppSettings.LogBotAdd)
             {
@@ -306,7 +303,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (!specialBotSpawn)
             {
                 KickSpecialBot();
-                Server.NextFrameAsync(() =>
+                Server.NextFrame(() =>
                 {
                     Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[0]}");
                     Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[1]}");
@@ -374,7 +371,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
     private static void FixQuota(int roundCount)
     {
-        Server.NextFrameAsync(() =>
+        Server.NextFrame(() =>
         {
             if (roundCount == Main.Instance.Config.MidBossRound - 1 || roundCount == Main.Instance.Config.FinalBossRound - 1)
                 Server.ExecuteCommand("bot_quota 1");
