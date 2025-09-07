@@ -15,7 +15,6 @@ public class Bot(ILogger<Bot> logger) : IBot
     private int _level = 2;
     private int _respawnTimes = 0;
     private int _maxRespawnTimes = 20;
-    private double _bossActiveAbilityChance = 30;
 
     private static readonly Regex NormalBotNameRegex = new(@"^\[(?<Grade>[^\]]+)\](?<Group>[^#]+)#(?<Num>\d{1,2})$");
 
@@ -221,7 +220,7 @@ public class Bot(ILogger<Bot> logger) : IBot
     {
         var activeAbilityChance = GetChance();
 
-        if (activeAbilityChance <= _bossActiveAbilityChance)
+        if (activeAbilityChance <= Main.Instance.Config.BossActiveAbilityChance)
         {
             var random = new Random();
             var abilityChoice = random.Next(1, 7); // 1-4 for four different abilities

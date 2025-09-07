@@ -13,5 +13,6 @@ namespace MyProject.Classes
         public int FinalBossRound = 8;
         public string EagleEyeModel = "[???]Nano Girl";
         public string RushModel = "[Resident Evil 2]Hunk";
+        public double BossActiveAbilityChance = 30;
     }
 }
