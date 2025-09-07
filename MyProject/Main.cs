@@ -76,6 +76,7 @@ public class Main(
         RegisterEventHandler<EventWarmupEnd>(WarmupEndHandler);
         RegisterEventHandler<EventRoundStart>(RoundStartHandler);
         RegisterEventHandler<EventRoundEnd>(RoundEndHandler);
+        RegisterEventHandler<EventPlayerHurt>(PlayerHurtHandler);
     }
 
     public void OnConfigParsed(MainConfig config)
@@ -471,6 +472,16 @@ public class Main(
             _weaponStatus.Remove(player.PlayerName);
         if (_players.ContainsKey(player.PlayerName))
             _players.Remove(player.PlayerName);
+
+        return HookResult.Continue;
+    }
+
+    private HookResult PlayerHurtHandler(EventPlayerHurt @event, GameEventInfo info)
+    {
+        var player = @event.Userid;
+
+        if (_bot.IsBoss(player!))
+            _bot.BossBehavior(player!);
 
         return HookResult.Continue;
     }

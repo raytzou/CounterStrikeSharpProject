@@ -15,6 +15,7 @@ public class Bot(ILogger<Bot> logger) : IBot
     private int _level = 2;
     private int _respawnTimes = 0;
     private int _maxRespawnTimes = 20;
+    private double _bossActiveAbilityChance = 30;
 
     private static readonly Regex NormalBotNameRegex = new(@"^\[(?<Grade>[^\]]+)\](?<Group>[^#]+)#(?<Num>\d{1,2})$");
 
@@ -214,6 +215,75 @@ public class Bot(ILogger<Bot> logger) : IBot
             });
         }
         _respawnTimes--;
+    }
+
+    public void BossBehavior(CCSPlayerController player)
+    {
+        var activeAbilityChance = GetChance();
+
+        if (activeAbilityChance <= _bossActiveAbilityChance)
+        {
+            var random = new Random();
+            var abilityChoice = random.Next(1, 7); // 1-4 for four different abilities
+
+            switch (abilityChoice)
+            {
+                case 1:
+                    FireTorture();
+                    break;
+                case 2:
+                    Freeze();
+                    break;
+                case 3:
+                    Flashbang();
+                    break;
+                case 4:
+                    Explosion();
+                    break;
+                case 5:
+                    ToxicSmoke();
+                    break;
+                case 6:
+                    Cursed();
+                    break;
+            }
+        }
+
+        double GetChance()
+        {
+            var random = new Random();
+            return random.NextDouble() * 100; // Returns a value between 0-100
+        }
+
+        void FireTorture()
+        {
+            throw new NotImplementedException();
+        }
+
+        void Freeze()
+        {
+            throw new NotImplementedException();
+        }
+
+        void Flashbang()
+        {
+            throw new NotImplementedException();
+        }
+
+        void Explosion()
+        {
+            throw new NotImplementedException();
+        }
+
+        void ToxicSmoke()
+        {
+            throw new NotImplementedException();
+        }
+
+        void Cursed()
+        {
+            throw new NotImplementedException();
+        }
     }
 
     private CsTeam GetBotTeam(string mapName)

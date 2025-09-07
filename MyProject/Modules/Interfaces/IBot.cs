@@ -21,5 +21,7 @@ namespace MyProject.Modules.Interfaces
         Task RespawnBotAsync(CCSPlayerController bot);
 
         bool IsBoss(CCSPlayerController player);
+
+        void BossBehavior(CCSPlayerController bot);
     }
 }
