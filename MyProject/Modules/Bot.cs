@@ -256,7 +256,80 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void FireTorture()
         {
-            throw new NotImplementedException();
+            var humanPlayers = Utilities.GetPlayers()
+                .Where(player => !player.IsBot &&
+                    player.IsValid &&
+                    player.PlayerPawn.Value != null &&
+                    player.Pawn.Value!.LifeState == (byte)LifeState_t.LIFE_ALIVE)
+                .ToList();
+
+            if (humanPlayers.Count == 0)
+                return;
+
+            Server.NextFrame(() =>
+            {
+                foreach (var player in humanPlayers)
+                {
+                    if (!player.IsValid || player.PlayerPawn.Value == null) // check player is valid at next frame
+                        continue;
+
+                    Utility.DrawBeaconOnPlayer(player, System.Drawing.Color.Red, 5.0f, 5.0f);
+                }
+            });
+
+            Utility.AddTimer(3.0f, () =>
+            {
+                var validPlayers = Utilities.GetPlayers()
+                    .Where(player => !player.IsBot &&
+                        player.IsValid &&
+                        player.PlayerPawn.Value != null &&
+                        player.Pawn.Value!.LifeState == (byte)LifeState_t.LIFE_ALIVE)
+                    .ToList();
+
+                foreach (var player in validPlayers)
+                {
+                    if (!player.IsValid || player.PlayerPawn.Value == null)
+                        continue;
+
+                    CreateMolotovAtPlayerCenter(player);
+                }
+            });
+
+            void CreateMolotovAtPlayerCenter(CCSPlayerController player)
+            {
+                var molotovProjectile = Utilities.CreateEntityByName<CMolotovProjectile>("molotov_projectile");
+                if (molotovProjectile == null)
+                    return;
+
+                var playerPosition = player.PlayerPawn.Value!.AbsOrigin!;
+                var centerPosition = new Vector(
+                    playerPosition.X,
+                    playerPosition.Y,
+                    playerPosition.Z + 40.0f
+                );
+
+                molotovProjectile.Teleport(centerPosition);
+                molotovProjectile.DispatchSpawn();
+                molotovProjectile.IsIncGrenade = false;
+                molotovProjectile.Elasticity = 0f;
+
+                Utility.AddTimer(0.05f, () =>
+                {
+                    if (molotovProjectile != null && molotovProjectile.IsValid)
+                    {
+                        molotovProjectile.AcceptInput("InitializeSpawnFromWorld");
+                        molotovProjectile.AcceptInput("FireUser1", player, player);
+
+                        Utility.AddTimer(7.0f, () =>
+                        {
+                            if (molotovProjectile != null && molotovProjectile.IsValid)
+                            {
+                                molotovProjectile.Remove();
+                            }
+                        });
+                    }
+                });
+            }
         }
 
         void Freeze()
