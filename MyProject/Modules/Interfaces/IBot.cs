@@ -22,6 +22,6 @@ namespace MyProject.Modules.Interfaces
 
         bool IsBoss(CCSPlayerController player);
 
-        void BossBehavior(CCSPlayerController bot);
+        void BossBehavior(CCSPlayerController boss);
     }
 }

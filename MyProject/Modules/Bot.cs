@@ -216,7 +216,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         _respawnTimes--;
     }
 
-    public void BossBehavior(CCSPlayerController player)
+    public void BossBehavior(CCSPlayerController boss)
     {
         var activeAbilityChance = GetChance();
 
