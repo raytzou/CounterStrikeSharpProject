@@ -318,7 +318,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                     if (molotovProjectile != null && molotovProjectile.IsValid)
                     {
                         molotovProjectile.AcceptInput("InitializeSpawnFromWorld");
-                        molotovProjectile.AcceptInput("FireUser1", player, player);
+                        molotovProjectile.AcceptInput("FireUser1", boss, boss);
 
                         Utility.AddTimer(7.0f, () =>
                         {
