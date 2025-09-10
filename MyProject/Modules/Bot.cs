@@ -256,6 +256,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void FireTorture()
         {
+            Utility.PrintToAllCenter("The Boss ignites all players!");
             var humanPlayers = Utility.GetAliveHumanPlayers();
             if (humanPlayers.Count == 0)
                 return;
@@ -328,7 +329,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void Freeze()
         {
-            Utility.PrintToAllCenter("Boss freezes all players!");
+            Utility.PrintToAllCenter("The Boss locks the battlefield in ice!");
             var humanPlayers = Utility.GetAliveHumanPlayers();
 
             if (humanPlayers.Count == 0) return;
