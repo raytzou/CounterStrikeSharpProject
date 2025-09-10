@@ -351,5 +351,27 @@ namespace MyProject.Classes
             }
             #endregion
         }
+
+        public static bool IsPlayerValidAndAlive(CCSPlayerController player) =>
+            player.IsValid &&
+            !player.IsBot &&
+            player.PlayerPawn.Value != null &&
+            player.PlayerPawn.Value.LifeState == (byte)LifeState_t.LIFE_ALIVE;
+
+        public static List<CCSPlayerController> GetAliveHumanPlayers() =>
+            Utilities.GetPlayers()
+                .Where(player => Utility.IsPlayerValidAndAlive(player))
+                .ToList();
+
+        public static void PrintToAllCenter(string message)
+        {
+            foreach (var player in Utilities.GetPlayers().Where(p =>
+                p.IsValid &&
+                !p.IsBot &&
+                p.PlayerPawn.Value is not null))
+            {
+                player.PrintToCenter(message);
+            }
+        }
     }
 }

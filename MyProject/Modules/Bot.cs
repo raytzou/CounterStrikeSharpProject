@@ -256,13 +256,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void FireTorture()
         {
-            var humanPlayers = Utilities.GetPlayers()
-                .Where(player => !player.IsBot &&
-                    player.IsValid &&
-                    player.PlayerPawn.Value != null &&
-                    player.Pawn.Value!.LifeState == (byte)LifeState_t.LIFE_ALIVE)
-                .ToList();
-
+            var humanPlayers = Utility.GetAliveHumanPlayers();
             if (humanPlayers.Count == 0)
                 return;
 
@@ -334,7 +328,79 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void Freeze()
         {
-            throw new NotImplementedException();
+            Utility.PrintToAllCenter("Boss freezes all players!");
+            var humanPlayers = Utility.GetAliveHumanPlayers();
+
+            if (humanPlayers.Count == 0) return;
+
+            var frozenPlayers = new List<CCSPlayerController>();
+
+            Server.NextFrame(() =>
+            {
+                foreach (var player in humanPlayers)
+                {
+                    if (!Utility.IsPlayerValidAndAlive(player)) continue;
+
+                    player.PlayerPawn.Value!.MoveType = MoveType_t.MOVETYPE_NONE;
+                    BlueScreenOverlay(player, 3f);
+                    frozenPlayers.Add(player);
+                }
+            });
+
+            Utility.AddTimer(2f, () =>
+            {
+                Server.NextFrame(() =>
+                {
+                    foreach (var player in frozenPlayers)
+                    {
+                        if (!Utility.IsPlayerValidAndAlive(player)) continue;
+
+                        player.PlayerPawn.Value!.MoveType = MoveType_t.MOVETYPE_WALK;
+                    }
+                });
+            });
+
+            void BlueScreenOverlay(CCSPlayerController player, float timeInterval)
+            {
+                var pawn = player.PlayerPawn.Value!;
+
+                ApplyBlueOverlay();
+
+                void ApplyBlueOverlay(int attempt = 0)
+                {
+                    if (pawn == null || !pawn.IsValid) return;
+                    if (pawn.LifeState != (byte)LifeState_t.LIFE_ALIVE) return;
+
+                    var currentTime = Server.CurrentTime;
+                    var future = currentTime + MathF.Max(0.1f, timeInterval);
+
+                    pawn.HealthShotBoostExpirationTime = 0.0f;
+                    Utilities.SetStateChanged(pawn, "CCSPlayerPawn", "m_flHealthShotBoostExpirationTime"); // Dirty Flag
+
+                    Utility.AddTimer(0.01f, () =>
+                    {
+                        if (pawn == null || !pawn.IsValid) return;
+                        pawn.HealthShotBoostExpirationTime = future;
+                        Utilities.SetStateChanged(pawn, "CCSPlayerPawn", "m_flHealthShotBoostExpirationTime");
+                    });
+
+                    if (attempt < 3)
+                    {
+                        Utility.AddTimer(0.15f, () =>
+                        {
+                            if (pawn == null || !pawn.IsValid) return;
+
+                            var t = pawn.HealthShotBoostExpirationTime;
+                            var stillPast = t <= Server.CurrentTime + 0.05f;
+
+                            if (stillPast)
+                            {
+                                ApplyBlueOverlay(attempt + 1);
+                            }
+                        });
+                    }
+                }
+            }
         }
 
         void Flashbang()
