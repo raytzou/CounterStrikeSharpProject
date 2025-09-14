@@ -406,7 +406,61 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void Flashbang()
         {
-            throw new NotImplementedException();
+            Utility.PrintToAllCenter("The Boss blinds the battlefield!");
+            var humanPlayers = Utility.GetAliveHumanPlayers();
+            
+            if (humanPlayers.Count == 0) return;
+
+            Server.NextFrame(() =>
+            {
+                foreach (var player in humanPlayers)
+                {
+                    if (!Utility.IsPlayerValidAndAlive(player)) continue;
+
+                    CreateFlashbangInFrontOfPlayer(player);
+                }
+            });
+
+            void CreateFlashbangInFrontOfPlayer(CCSPlayerController player)
+            {
+                var flashbangProjectile = Utilities.CreateEntityByName<CFlashbangProjectile>("flashbang_projectile");
+                if (flashbangProjectile == null)
+                    return;
+
+                var playerPosition = player.PlayerPawn.Value!.AbsOrigin!;
+                var playerAngles = player.PlayerPawn.Value!.AbsRotation!;
+                
+                // Calculate position in front of player (about 50 units forward)
+                var forwardDistance = 50.0f;
+                var frontPosition = new Vector(
+                    playerPosition.X + (float)(Math.Cos(playerAngles.Y * Math.PI / 180) * forwardDistance),
+                    playerPosition.Y + (float)(Math.Sin(playerAngles.Y * Math.PI / 180) * forwardDistance),
+                    playerPosition.Z + 30.0f // Slightly above ground level
+                );
+
+                flashbangProjectile.Teleport(frontPosition);
+                flashbangProjectile.DispatchSpawn();
+                flashbangProjectile.Elasticity = 0f;
+
+                // Immediately detonate the flashbang
+                Utility.AddTimer(0.05f, () =>
+                {
+                    if (flashbangProjectile != null && flashbangProjectile.IsValid)
+                    {
+                        flashbangProjectile.AcceptInput("InitializeSpawnFromWorld");
+                        flashbangProjectile.AcceptInput("FireUser1", boss, boss);
+
+                        // Clean up after flash effect
+                        Utility.AddTimer(5.0f, () =>
+                        {
+                            if (flashbangProjectile != null && flashbangProjectile.IsValid)
+                            {
+                                flashbangProjectile.Remove();
+                            }
+                        });
+                    }
+                });
+            }
         }
 
         void Explosion()
