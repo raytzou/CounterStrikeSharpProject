@@ -465,7 +465,74 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void Explosion()
         {
-            throw new NotImplementedException();
+            Utility.PrintToAllCenter("The Boss prepares explosive devastation!");
+            var humanPlayers = Utility.GetAliveHumanPlayers();
+            if (humanPlayers.Count == 0)
+                return;
+
+            Server.NextFrame(() =>
+            {
+                foreach (var player in humanPlayers)
+                {
+                    if (!player.IsValid || player.PlayerPawn.Value == null) // check player is valid at next frame
+                        continue;
+
+                    Utility.DrawBeaconOnPlayer(player, System.Drawing.Color.Orange, 5.0f, 5.0f);
+                }
+            });
+
+            Utility.AddTimer(3.0f, () =>
+            {
+                var validPlayers = Utilities.GetPlayers()
+                    .Where(player => !player.IsBot &&
+                        player.IsValid &&
+                        player.PlayerPawn.Value != null &&
+                        player.Pawn.Value!.LifeState == (byte)LifeState_t.LIFE_ALIVE)
+                    .ToList();
+
+                foreach (var player in validPlayers)
+                {
+                    if (!player.IsValid || player.PlayerPawn.Value == null)
+                        continue;
+
+                    CreateGrenadeAtPlayerCenter(player);
+                }
+            });
+
+            void CreateGrenadeAtPlayerCenter(CCSPlayerController player)
+            {
+                var grenadeProjectile = Utilities.CreateEntityByName<CHEGrenadeProjectile>("hegrenade_projectile");
+                if (grenadeProjectile == null)
+                    return;
+
+                var playerPosition = player.PlayerPawn.Value!.AbsOrigin!;
+                var centerPosition = new Vector(
+                    playerPosition.X,
+                    playerPosition.Y,
+                    playerPosition.Z + 40.0f
+                );
+
+                grenadeProjectile.Teleport(centerPosition);
+                grenadeProjectile.DispatchSpawn();
+                grenadeProjectile.Elasticity = 0f;
+
+                Utility.AddTimer(0.05f, () =>
+                {
+                    if (grenadeProjectile != null && grenadeProjectile.IsValid)
+                    {
+                        grenadeProjectile.AcceptInput("InitializeSpawnFromWorld");
+                        grenadeProjectile.AcceptInput("FireUser1", boss, boss);
+
+                        Utility.AddTimer(3.0f, () =>
+                        {
+                            if (grenadeProjectile != null && grenadeProjectile.IsValid)
+                            {
+                                grenadeProjectile.Remove();
+                            }
+                        });
+                    }
+                });
+            }
         }
 
         void ToxicSmoke()
