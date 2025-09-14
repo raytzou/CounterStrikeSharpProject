@@ -261,6 +261,8 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (humanPlayers.Count == 0)
                 return;
 
+            var markedPositions = new List<Vector>();
+
             Server.NextFrame(() =>
             {
                 foreach (var player in humanPlayers)
@@ -268,39 +270,36 @@ public class Bot(ILogger<Bot> logger) : IBot
                     if (!player.IsValid || player.PlayerPawn.Value == null) // check player is valid at next frame
                         continue;
 
+                    var playerPosition = player.PlayerPawn.Value!.AbsOrigin!;
+                    var markedPosition = new Vector(
+                        playerPosition.X,
+                        playerPosition.Y,
+                        playerPosition.Z
+                    );
+                    markedPositions.Add(markedPosition);
+
                     Utility.DrawBeaconOnPlayer(player, System.Drawing.Color.Red, 5.0f, 5.0f);
                 }
             });
 
             Utility.AddTimer(3.0f, () =>
             {
-                var validPlayers = Utilities.GetPlayers()
-                    .Where(player => !player.IsBot &&
-                        player.IsValid &&
-                        player.PlayerPawn.Value != null &&
-                        player.Pawn.Value!.LifeState == (byte)LifeState_t.LIFE_ALIVE)
-                    .ToList();
-
-                foreach (var player in validPlayers)
+                foreach (var position in markedPositions)
                 {
-                    if (!player.IsValid || player.PlayerPawn.Value == null)
-                        continue;
-
-                    CreateMolotovAtPlayerCenter(player);
+                    CreateMolotovAtPosition(position);
                 }
             });
 
-            void CreateMolotovAtPlayerCenter(CCSPlayerController player)
+            void CreateMolotovAtPosition(Vector position)
             {
                 var molotovProjectile = Utilities.CreateEntityByName<CMolotovProjectile>("molotov_projectile");
                 if (molotovProjectile == null)
                     return;
 
-                var playerPosition = player.PlayerPawn.Value!.AbsOrigin!;
                 var centerPosition = new Vector(
-                    playerPosition.X,
-                    playerPosition.Y,
-                    playerPosition.Z + 40.0f
+                    position.X,
+                    position.Y,
+                    position.Z + 40.0f
                 );
 
                 molotovProjectile.Teleport(centerPosition);
@@ -470,6 +469,8 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (humanPlayers.Count == 0)
                 return;
 
+            var markedPositions = new List<Vector>();
+
             Server.NextFrame(() =>
             {
                 foreach (var player in humanPlayers)
@@ -477,39 +478,36 @@ public class Bot(ILogger<Bot> logger) : IBot
                     if (!player.IsValid || player.PlayerPawn.Value == null) // check player is valid at next frame
                         continue;
 
+                    var playerPosition = player.PlayerPawn.Value!.AbsOrigin!;
+                    var markedPosition = new Vector(
+                        playerPosition.X,
+                        playerPosition.Y,
+                        playerPosition.Z
+                    );
+                    markedPositions.Add(markedPosition);
+
                     Utility.DrawBeaconOnPlayer(player, System.Drawing.Color.Orange, 5.0f, 5.0f);
                 }
             });
 
             Utility.AddTimer(3.0f, () =>
             {
-                var validPlayers = Utilities.GetPlayers()
-                    .Where(player => !player.IsBot &&
-                        player.IsValid &&
-                        player.PlayerPawn.Value != null &&
-                        player.Pawn.Value!.LifeState == (byte)LifeState_t.LIFE_ALIVE)
-                    .ToList();
-
-                foreach (var player in validPlayers)
+                foreach (var position in markedPositions)
                 {
-                    if (!player.IsValid || player.PlayerPawn.Value == null)
-                        continue;
-
-                    CreateGrenadeAtPlayerCenter(player);
+                    CreateGrenadeAtPosition(position);
                 }
             });
 
-            void CreateGrenadeAtPlayerCenter(CCSPlayerController player)
+            void CreateGrenadeAtPosition(Vector position)
             {
                 var grenadeProjectile = Utilities.CreateEntityByName<CHEGrenadeProjectile>("hegrenade_projectile");
                 if (grenadeProjectile == null)
                     return;
 
-                var playerPosition = player.PlayerPawn.Value!.AbsOrigin!;
                 var centerPosition = new Vector(
-                    playerPosition.X,
-                    playerPosition.Y,
-                    playerPosition.Z + 40.0f
+                    position.X,
+                    position.Y,
+                    position.Z + 40.0f
                 );
 
                 grenadeProjectile.Teleport(centerPosition);
