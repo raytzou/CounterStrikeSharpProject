@@ -264,37 +264,12 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             void CreateMolotovAtPosition(Vector position)
             {
-                var molotovProjectile = Utilities.CreateEntityByName<CMolotovProjectile>("molotov_projectile");
-                if (molotovProjectile == null)
-                    return;
-
-                var centerPosition = new Vector(
-                    position.X,
-                    position.Y,
-                    position.Z + 40.0f
+                CreateProjectileAtPosition<CMolotovProjectile>(
+                    position,
+                    "molotov_projectile",
+                    molotov => molotov.IsIncGrenade = false,
+                    7.0f
                 );
-
-                molotovProjectile.Teleport(centerPosition);
-                molotovProjectile.DispatchSpawn();
-                molotovProjectile.IsIncGrenade = false;
-                molotovProjectile.Elasticity = 0f;
-
-                Utility.AddTimer(0.05f, () =>
-                {
-                    if (molotovProjectile != null && molotovProjectile.IsValid)
-                    {
-                        molotovProjectile.AcceptInput("InitializeSpawnFromWorld");
-                        molotovProjectile.AcceptInput("FireUser1", boss, boss);
-
-                        Utility.AddTimer(7.0f, () =>
-                        {
-                            if (molotovProjectile != null && molotovProjectile.IsValid)
-                            {
-                                molotovProjectile.Remove();
-                            }
-                        });
-                    }
-                });
             }
         }
 
@@ -444,36 +419,11 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             void CreateGrenadeAtPosition(Vector position)
             {
-                var grenadeProjectile = Utilities.CreateEntityByName<CHEGrenadeProjectile>("hegrenade_projectile");
-                if (grenadeProjectile == null)
-                    return;
-
-                var centerPosition = new Vector(
-                    position.X,
-                    position.Y,
-                    position.Z + 40.0f
+                CreateProjectileAtPosition<CHEGrenadeProjectile>(
+                    position,
+                    "hegrenade_projectile",
+                    cleanupTime: 3.0f
                 );
-
-                grenadeProjectile.Teleport(centerPosition);
-                grenadeProjectile.DispatchSpawn();
-                grenadeProjectile.Elasticity = 0f;
-
-                Utility.AddTimer(0.05f, () =>
-                {
-                    if (grenadeProjectile != null && grenadeProjectile.IsValid)
-                    {
-                        grenadeProjectile.AcceptInput("InitializeSpawnFromWorld");
-                        grenadeProjectile.AcceptInput("FireUser1", boss, boss);
-
-                        Utility.AddTimer(3.0f, () =>
-                        {
-                            if (grenadeProjectile != null && grenadeProjectile.IsValid)
-                            {
-                                grenadeProjectile.Remove();
-                            }
-                        });
-                    }
-                });
             }
         }
 
@@ -520,6 +470,43 @@ public class Bot(ILogger<Bot> logger) : IBot
                 foreach (var position in markedPositions)
                 {
                     createProjectileAction(position);
+                }
+            });
+        }
+
+        void CreateProjectileAtPosition<T>(Vector position, string entityName, Action<T>? customSetup = null, float cleanupTime = 3.0f) where T : CBaseEntity
+        {
+            var projectile = Utilities.CreateEntityByName<T>(entityName);
+            if (projectile == null)
+                return;
+
+            var centerPosition = new Vector(
+                position.X,
+                position.Y,
+                position.Z + 40.0f
+            );
+
+            projectile.Teleport(centerPosition);
+            projectile.DispatchSpawn();
+            projectile.Elasticity = 0f;
+
+            // Apply custom setup for specific projectile types
+            customSetup?.Invoke(projectile);
+
+            Utility.AddTimer(0.05f, () =>
+            {
+                if (projectile != null && projectile.IsValid)
+                {
+                    projectile.AcceptInput("InitializeSpawnFromWorld");
+                    projectile.AcceptInput("FireUser1", boss, boss);
+
+                    Utility.AddTimer(cleanupTime, () =>
+                    {
+                        if (projectile != null && projectile.IsValid)
+                        {
+                            projectile.Remove();
+                        }
+                    });
                 }
             });
         }
