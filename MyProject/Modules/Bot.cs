@@ -256,39 +256,11 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void FireTorture()
         {
-            Utility.PrintToAllCenter("The Boss ignites all players!");
-            var humanPlayers = Utility.GetAliveHumanPlayers();
-            if (humanPlayers.Count == 0)
-                return;
-
-            var markedPositions = new List<Vector>();
-
-            Server.NextFrame(() =>
-            {
-                foreach (var player in humanPlayers)
-                {
-                    if (!player.IsValid || player.PlayerPawn.Value == null) // check player is valid at next frame
-                        continue;
-
-                    var playerPosition = player.PlayerPawn.Value!.AbsOrigin!;
-                    var markedPosition = new Vector(
-                        playerPosition.X,
-                        playerPosition.Y,
-                        playerPosition.Z
-                    );
-                    markedPositions.Add(markedPosition);
-
-                    Utility.DrawBeaconOnPlayer(player, System.Drawing.Color.Red, 5.0f, 5.0f);
-                }
-            });
-
-            Utility.AddTimer(3.0f, () =>
-            {
-                foreach (var position in markedPositions)
-                {
-                    CreateMolotovAtPosition(position);
-                }
-            });
+            CreateTimedProjectileAttack(
+                "The Boss ignites all players!",
+                System.Drawing.Color.Red,
+                CreateMolotovAtPosition
+            );
 
             void CreateMolotovAtPosition(Vector position)
             {
@@ -464,39 +436,11 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void Explosion()
         {
-            Utility.PrintToAllCenter("The Boss prepares explosive devastation!");
-            var humanPlayers = Utility.GetAliveHumanPlayers();
-            if (humanPlayers.Count == 0)
-                return;
-
-            var markedPositions = new List<Vector>();
-
-            Server.NextFrame(() =>
-            {
-                foreach (var player in humanPlayers)
-                {
-                    if (!player.IsValid || player.PlayerPawn.Value == null) // check player is valid at next frame
-                        continue;
-
-                    var playerPosition = player.PlayerPawn.Value!.AbsOrigin!;
-                    var markedPosition = new Vector(
-                        playerPosition.X,
-                        playerPosition.Y,
-                        playerPosition.Z
-                    );
-                    markedPositions.Add(markedPosition);
-
-                    Utility.DrawBeaconOnPlayer(player, System.Drawing.Color.Orange, 5.0f, 5.0f);
-                }
-            });
-
-            Utility.AddTimer(3.0f, () =>
-            {
-                foreach (var position in markedPositions)
-                {
-                    CreateGrenadeAtPosition(position);
-                }
-            });
+            CreateTimedProjectileAttack(
+                "The Boss prepares explosive devastation!",
+                System.Drawing.Color.Orange,
+                CreateGrenadeAtPosition
+            );
 
             void CreateGrenadeAtPosition(Vector position)
             {
@@ -541,6 +485,43 @@ public class Bot(ILogger<Bot> logger) : IBot
         void Cursed()
         {
             throw new NotImplementedException();
+        }
+
+        void CreateTimedProjectileAttack(string message, System.Drawing.Color beaconColor, Action<Vector> createProjectileAction)
+        {
+            Utility.PrintToAllCenter(message);
+            var humanPlayers = Utility.GetAliveHumanPlayers();
+            if (humanPlayers.Count == 0)
+                return;
+
+            var markedPositions = new List<Vector>();
+
+            Server.NextFrame(() =>
+            {
+                foreach (var player in humanPlayers)
+                {
+                    if (!player.IsValid || player.PlayerPawn.Value == null) // check player is valid at next frame
+                        continue;
+
+                    var playerPosition = player.PlayerPawn.Value!.AbsOrigin!;
+                    var markedPosition = new Vector(
+                        playerPosition.X,
+                        playerPosition.Y,
+                        playerPosition.Z
+                    );
+                    markedPositions.Add(markedPosition);
+
+                    Utility.DrawBeaconOnPlayer(player, beaconColor, 5.0f, 5.0f);
+                }
+            });
+
+            Utility.AddTimer(3.0f, () =>
+            {
+                foreach (var position in markedPositions)
+                {
+                    createProjectileAction(position);
+                }
+            });
         }
     }
 
