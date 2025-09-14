@@ -461,7 +461,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                     );
                     markedPositions.Add(markedPosition);
 
-                    Utility.DrawBeaconOnPlayer(player, beaconColor, 5.0f, 5.0f);
+                    Utility.DrawBeaconOnPlayer(player, beaconColor, 100.0f, 6.0f, 2.0f);
                 }
             });
 

@@ -196,9 +196,10 @@ namespace MyProject.Classes
         /// </summary>
         /// <param name="player">The player to draw the beacon on</param>
         /// <param name="beamColor">Color of the beacon beams</param>
+        /// <param name="beamRadius">Maximum radius of the beacon circle</param>
         /// <param name="beamLifeTime">How long each beam should last</param>
         /// <param name="beamWidth">Width of the beacon beams</param>
-        public static void DrawBeaconOnPlayer(CCSPlayerController player, Color beamColor, float beamLifeTime = 2f, float beamWidth = 2f)
+        public static void DrawBeaconOnPlayer(CCSPlayerController player, Color beamColor, float beamRadius, float beamLifeTime = 2f, float beamWidth = 2f)
         {
             // Parameter validation
             if (player?.PlayerPawn?.Value == null || !player.IsValid)
@@ -207,7 +208,7 @@ namespace MyProject.Classes
             if (player.Pawn.Value!.LifeState != (byte)LifeState_t.LIFE_ALIVE)
                 return;
 
-            if (beamLifeTime <= 0 || beamWidth <= 0)
+            if (beamLifeTime <= 0 || beamWidth <= 0 || beamRadius <= 0)
                 return;
 
             var centerPosition = new Vector(
@@ -221,6 +222,10 @@ namespace MyProject.Classes
             float angleStep = (float)(2.0 * Math.PI) / lineCount;
             float currentRadius = 20.0f;
             float beaconTimerSeconds = 0.0f;
+            bool hasReachedTargetRadius = false;
+
+            // Calculate animation duration based on radius growth
+            const float radiusIncrement = 10.0f;
 
             // Create initial beacon circle
             for (int i = 0; i < lineCount; i++)
@@ -241,9 +246,6 @@ namespace MyProject.Classes
             // Animation timer with proper cleanup
             var animationTimer = AddTimer(0.1f, () =>
             {
-                const float maxBeaconTime = 0.9f;
-                const float radiusIncrement = 10.0f;
-
                 // Check if player is still valid
                 if (!player.IsValid || player.Pawn.Value?.LifeState != (byte)LifeState_t.LIFE_ALIVE)
                 {
@@ -251,28 +253,57 @@ namespace MyProject.Classes
                     return;
                 }
 
-                if (beaconTimerSeconds >= maxBeaconTime)
+                // Check if total time exceeded beamLifeTime
+                if (beaconTimerSeconds >= beamLifeTime - 0.1f)
                 {
                     CleanupBeams();
                     return;
                 }
 
-                // Update beam positions
-                for (int i = 0; i < Math.Min(beamEntities.Count, lineCount); i++)
+                // Only update positions if we haven't reached target radius yet
+                if (!hasReachedTargetRadius && currentRadius < beamRadius)
                 {
-                    if (beamEntities[i] == null || !beamEntities[i].IsValid)
-                        continue;
+                    // Update beam positions
+                    for (int i = 0; i < Math.Min(beamEntities.Count, lineCount); i++)
+                    {
+                        if (beamEntities[i] == null || !beamEntities[i].IsValid)
+                            continue;
 
-                    float startAngle = i * angleStep;
-                    float endAngle = ((i + 1) % lineCount) * angleStep;
+                        float startAngle = i * angleStep;
+                        float endAngle = ((i + 1) % lineCount) * angleStep;
 
-                    Vector startPosition = GetAngleOnCircle(startAngle, currentRadius, centerPosition);
-                    Vector endPosition = GetAngleOnCircle(endAngle, currentRadius, centerPosition);
+                        Vector startPosition = GetAngleOnCircle(startAngle, currentRadius, centerPosition);
+                        Vector endPosition = GetAngleOnCircle(endAngle, currentRadius, centerPosition);
 
-                    TeleportLaser(beamEntities[i], startPosition, endPosition);
+                        TeleportLaser(beamEntities[i], startPosition, endPosition);
+                    }
+
+                    currentRadius += radiusIncrement;
+
+                    // Check if we've reached or exceeded the target radius
+                    if (currentRadius >= beamRadius)
+                    {
+                        hasReachedTargetRadius = true;
+                        // Set final position to exact target radius
+                        currentRadius = beamRadius;
+
+                        // Final position update
+                        for (int i = 0; i < Math.Min(beamEntities.Count, lineCount); i++)
+                        {
+                            if (beamEntities[i] == null || !beamEntities[i].IsValid)
+                                continue;
+
+                            float startAngle = i * angleStep;
+                            float endAngle = ((i + 1) % lineCount) * angleStep;
+
+                            Vector startPosition = GetAngleOnCircle(startAngle, currentRadius, centerPosition);
+                            Vector endPosition = GetAngleOnCircle(endAngle, currentRadius, centerPosition);
+
+                            TeleportLaser(beamEntities[i], startPosition, endPosition);
+                        }
+                    }
                 }
 
-                currentRadius += radiusIncrement;
                 beaconTimerSeconds += 0.1f;
 
                 void CleanupBeams()
