@@ -8,7 +8,7 @@
       "executablePath": "E:\\GameServer\\cs2\\game\\bin\\win64\\cs2.exe",
       "commandLineArgs": "-dedicated +map de_dust2 +game_mode 0 +game_type 0",
       "workingDirectory": "E:\\GameServer\\cs2\\game\\bin\\win64",
-      "nativeDebugging": true
+      "nativeDebugging": false
     }
   }
 }
