@@ -14,4 +14,4 @@
 **/[Ll]og/
 **/[Ll]ogs/
 **/.vs
-code text.txt
+/MyProject/MyProject.csproj.user
