@@ -202,12 +202,18 @@ public class Bot(ILogger<Bot> logger) : IBot
         {
             await Server.NextFrameAsync(() =>
             {
+                if (!bot.IsValid || bot.PlayerPawn.Value == null || !bot.PlayerPawn.Value.IsValid)
+                    return;
+
                 bot.RemoveWeapons();
                 bot.PlayerPawn.Value!.WeaponServices!.PreventWeaponPickup = false;
             });
 
             await Server.NextFrameAsync(() =>
             {
+                if (!bot.IsValid || bot.PlayerPawn.Value == null || !bot.PlayerPawn.Value.IsValid)
+                    return;
+
                 var botTeam = GetBotTeam(Server.MapName);
                 if (botTeam == CsTeam.None) return;
                 bot.GiveNamedItem(botTeam == CsTeam.CounterTerrorist ? CsItem.M4A1 : CsItem.AK47);
