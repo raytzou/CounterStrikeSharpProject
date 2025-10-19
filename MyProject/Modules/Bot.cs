@@ -354,7 +354,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         {
             Utility.PrintToAllCenter("The Boss blinds the battlefield!");
             var humanPlayers = Utility.GetAliveHumanPlayers();
-            
+
             if (humanPlayers.Count == 0) return;
 
             Server.NextFrame(() =>
@@ -375,7 +375,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
                 var playerPosition = player.PlayerPawn.Value!.AbsOrigin!;
                 var playerAngles = player.PlayerPawn.Value!.AbsRotation!;
-                
+
                 // Calculate position in front of player (about 50 units forward)
                 var forwardDistance = 50.0f;
                 var frontPosition = new Vector(
@@ -429,7 +429,138 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void ToxicSmoke()
         {
-            throw new NotImplementedException();
+            CreateTimedProjectileAttack(
+                "The Boss releases toxic clouds!",
+                System.Drawing.Color.Green,
+                CreateToxicSmokeAtPosition,
+                1.0f
+            );
+
+            void CreateToxicSmokeAtPosition(Vector position)
+            {
+                var smokeProjectile = Utilities.CreateEntityByName<CSmokeGrenadeProjectile>("smokegrenade_projectile");
+                if (smokeProjectile == null)
+                    return;
+
+                var centerPosition = new Vector(
+                    position.X,
+                    position.Y,
+                    position.Z + 40.0f
+                );
+
+                smokeProjectile.Teleport(centerPosition);
+                smokeProjectile.DispatchSpawn();
+                smokeProjectile.Elasticity = 0f;
+
+                Utility.AddTimer(15.0f, () =>
+                {
+                    if (smokeProjectile != null && smokeProjectile.IsValid)
+                    {
+                        smokeProjectile.Remove();
+                    }
+                });
+
+                CreateToxicDamageZone(position);
+            }
+
+            void CreateToxicDamageZone(Vector smokePosition)
+            {
+                const float damageRadius = 150.0f;
+                const int damagePerSecond = 5;
+                const float smokeDuration = 15.0f;
+
+                var startTime = Server.CurrentTime;
+
+                var toxicTimer = Utility.AddTimer(1f, () =>
+                {
+                    var currentTime = Server.CurrentTime;
+                    if (currentTime - startTime >= smokeDuration)
+                        return;
+
+                    var humanPlayers = Utility.GetAliveHumanPlayers();
+
+                    foreach (var player in humanPlayers)
+                    {
+                        if (!Utility.IsPlayerValidAndAlive(player))
+                            continue;
+
+                        var playerPosition = player.PlayerPawn.Value!.AbsOrigin!;
+                        var distance = CalculateDistance(playerPosition, smokePosition);
+
+                        if (distance <= damageRadius)
+                        {
+                            var currentHealth = player.PlayerPawn.Value!.Health;
+                            var newHealth = Math.Max(1, currentHealth - damagePerSecond);
+
+                            player.PlayerPawn.Value!.Health = newHealth;
+                            Utilities.SetStateChanged(player.PlayerPawn.Value!, "CBaseEntity", "m_iHealth");
+                            player.PrintToCenter($"<font color='green'>Toxic Smoke: -{damagePerSecond} HP</font>");
+
+                            ApplyPoisonEffect(player);
+                        }
+                    }
+                }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
+
+                Utility.AddTimer(smokeDuration, () =>
+                {
+                    toxicTimer?.Kill();
+                });
+            }
+
+            void ApplyPoisonEffect(CCSPlayerController player)
+            {
+                var pawn = player.PlayerPawn.Value!;
+                if (pawn == null || !pawn.IsValid)
+                    return;
+
+                // TODO: need to change overlay to green effect
+                var currentTime = Server.CurrentTime;
+                var effectDuration = 1.0f;
+
+                ApplyGreenOverlay();
+
+                void ApplyGreenOverlay(int attempt = 0)
+                {
+                    if (pawn == null || !pawn.IsValid) return;
+                    if (pawn.LifeState != (byte)LifeState_t.LIFE_ALIVE) return;
+
+                    var future = currentTime + MathF.Max(0.1f, effectDuration);
+
+                    pawn.HealthShotBoostExpirationTime = 0.0f;
+                    Utilities.SetStateChanged(pawn, "CCSPlayerPawn", "m_flHealthShotBoostExpirationTime");
+
+                    Utility.AddTimer(0.01f, () =>
+                    {
+                        if (pawn == null || !pawn.IsValid) return;
+                        pawn.HealthShotBoostExpirationTime = future;
+                        Utilities.SetStateChanged(pawn, "CCSPlayerPawn", "m_flHealthShotBoostExpirationTime");
+                    });
+
+                    if (attempt < 3)
+                    {
+                        Utility.AddTimer(0.15f, () =>
+                        {
+                            if (pawn == null || !pawn.IsValid) return;
+
+                            var t = pawn.HealthShotBoostExpirationTime;
+                            var stillPast = t <= Server.CurrentTime + 0.05f;
+
+                            if (stillPast)
+                            {
+                                ApplyGreenOverlay(attempt + 1);
+                            }
+                        });
+                    }
+                }
+            }
+
+            float CalculateDistance(Vector pos1, Vector pos2)
+            {
+                var dx = pos1.X - pos2.X;
+                var dy = pos1.Y - pos2.Y;
+                var dz = pos1.Z - pos2.Z;
+                return (float)Math.Sqrt(dx * dx + dy * dy + dz * dz);
+            }
         }
 
         void Cursed()
@@ -437,7 +568,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             throw new NotImplementedException();
         }
 
-        void CreateTimedProjectileAttack(string message, System.Drawing.Color beaconColor, Action<Vector> createProjectileAction)
+        void CreateTimedProjectileAttack(string message, System.Drawing.Color beaconColor, Action<Vector> createProjectileAction, float delayTime = 3.0f)
         {
             Utility.PrintToAllCenter(message);
             var humanPlayers = Utility.GetAliveHumanPlayers();
@@ -461,11 +592,12 @@ public class Bot(ILogger<Bot> logger) : IBot
                     );
                     markedPositions.Add(markedPosition);
 
-                    Utility.DrawBeaconOnPlayer(player, beaconColor, 100.0f, 6.0f, 2.0f);
+                    var beaconDuration = (beaconColor == System.Drawing.Color.Green) ? 15.0f : 6.0f;
+                    Utility.DrawBeaconOnPlayer(player, beaconColor, 100.0f, beaconDuration, 2.0f);
                 }
             });
 
-            Utility.AddTimer(3.0f, () =>
+            Utility.AddTimer(delayTime, () =>
             {
                 foreach (var position in markedPositions)
                 {
