@@ -4,6 +4,7 @@ using CounterStrikeSharp.API.Modules.Entities.Constants;
 using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
 using MyProject.Classes;
+using MyProject.Factories;
 using MyProject.Modules.Interfaces;
 using System.Text.RegularExpressions;
 
@@ -266,7 +267,6 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 CreateProjectileAtPosition<CMolotovProjectile>(
                     position,
-                    "molotov_projectile",
                     molotov => molotov.IsIncGrenade = false,
                     7.0f
                 );
@@ -421,7 +421,6 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 CreateProjectileAtPosition<CHEGrenadeProjectile>(
                     position,
-                    "hegrenade_projectile",
                     cleanupTime: 3.0f
                 );
             }
@@ -606,9 +605,11 @@ public class Bot(ILogger<Bot> logger) : IBot
             });
         }
 
-        void CreateProjectileAtPosition<T>(Vector position, string entityName, Action<T>? customSetup = null, float cleanupTime = 3.0f) where T : CBaseEntity
+        void CreateProjectileAtPosition<T>(Vector position, Action<T>? customSetup = null, float cleanupTime = 3.0f) where T : CBaseCSGrenadeProjectile
         {
-            var projectile = Utilities.CreateEntityByName<T>(entityName);
+            var defaultVelocity = new Vector(0, 0, 0);
+            var defaultAngle = new QAngle(0, 0, 0);
+            var projectile = GrenadeProjectileFactory.Create<T>(position, defaultAngle, defaultVelocity);
             if (projectile == null)
                 return;
 
@@ -629,9 +630,6 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 if (projectile != null && projectile.IsValid)
                 {
-                    projectile.AcceptInput("InitializeSpawnFromWorld");
-                    projectile.AcceptInput("FireUser1", boss, boss);
-
                     Utility.AddTimer(cleanupTime, () =>
                     {
                         if (projectile != null && projectile.IsValid)
