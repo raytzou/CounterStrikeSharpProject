@@ -578,6 +578,13 @@ public class Bot(ILogger<Bot> logger) : IBot
             projectile.OriginalThrower.Raw = attacker.PlayerPawn.Raw;
             projectile.OwnerEntity.Raw = attacker.PlayerPawn.Raw;
 
+            if (projectile is CSmokeGrenadeProjectile smokeProjectile)
+            {
+                smokeProjectile.SmokeColor.X = 0;
+                smokeProjectile.SmokeColor.Y = 255;
+                smokeProjectile.SmokeColor.Z = 0;
+            }
+
             Utility.AddTimer(0.05f, () =>
             {
                 if (projectile != null && projectile.IsValid)
