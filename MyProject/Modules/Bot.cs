@@ -395,12 +395,46 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void ToxicSmoke()
         {
-            CreateTimedProjectileAttack(
-                "The Boss releases toxic clouds!",
-                System.Drawing.Color.Green,
-                CreateToxicSmokeAtPosition,
-                1.0f
-            );
+            Utility.PrintToAllCenter("The Boss releases toxic clouds!");
+            var humanPlayers = Utility.GetAliveHumanPlayers();
+            if (humanPlayers.Count == 0)
+                return;
+
+            var random = new Random();
+            var targetCount = Math.Max(1, humanPlayers.Count / 3);
+            var selectedPlayers = humanPlayers
+                .OrderBy(x => random.Next())
+                .Take(targetCount)
+                .ToList();
+
+            var markedPositions = new List<Vector>();
+
+            Server.NextFrame(() =>
+            {
+                foreach (var player in selectedPlayers)
+                {
+                    if (!player.IsValid || player.PlayerPawn.Value == null)
+                        continue;
+
+                    var playerPosition = player.PlayerPawn.Value!.AbsOrigin!;
+                    var markedPosition = new Vector(
+                        playerPosition.X,
+                        playerPosition.Y,
+                        playerPosition.Z
+                    );
+                    markedPositions.Add(markedPosition);
+
+                    Utility.DrawBeaconOnPlayer(player, System.Drawing.Color.Green, 100.0f, 15.0f, 2.0f);
+                }
+            });
+
+            Utility.AddTimer(1.0f, () =>
+            {
+                foreach (var position in markedPositions)
+                {
+                    CreateToxicSmokeAtPosition(position);
+                }
+            });
 
             void CreateToxicSmokeAtPosition(Vector position)
             {
@@ -463,7 +497,6 @@ public class Bot(ILogger<Bot> logger) : IBot
                 if (pawn == null || !pawn.IsValid)
                     return;
 
-                // TODO: need to change overlay to green effect
                 var currentTime = Server.CurrentTime;
                 var effectDuration = 1.0f;
 
