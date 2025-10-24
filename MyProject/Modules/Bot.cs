@@ -404,27 +404,11 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             void CreateToxicSmokeAtPosition(Vector position)
             {
-                var smokeProjectile = Utilities.CreateEntityByName<CSmokeGrenadeProjectile>("smokegrenade_projectile");
-                if (smokeProjectile == null)
-                    return;
-
-                var centerPosition = new Vector(
-                    position.X,
-                    position.Y,
-                    position.Z + 40.0f
+                CreateProjectileAtPosition<CSmokeGrenadeProjectile>(
+                    position,
+                    boss,
+                    15.0f
                 );
-
-                smokeProjectile.Teleport(centerPosition);
-                smokeProjectile.DispatchSpawn();
-                smokeProjectile.Elasticity = 0f;
-
-                Utility.AddTimer(15.0f, () =>
-                {
-                    if (smokeProjectile != null && smokeProjectile.IsValid)
-                    {
-                        smokeProjectile.Remove();
-                    }
-                });
 
                 CreateToxicDamageZone(position);
             }
