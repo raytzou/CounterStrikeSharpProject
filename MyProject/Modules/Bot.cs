@@ -444,7 +444,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
                             player.PlayerPawn.Value!.Health = newHealth;
                             Utilities.SetStateChanged(player.PlayerPawn.Value!, "CBaseEntity", "m_iHealth");
-                            player.PrintToCenter($"<font color='green'>Toxic Smoke: -{damagePerSecond} HP</font>");
+                            player.PrintToCenter($"Toxic Smoke: -{damagePerSecond} HP");
 
                             ApplyPoisonEffect(player);
                         }
