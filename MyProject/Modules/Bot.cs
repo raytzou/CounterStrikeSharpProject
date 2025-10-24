@@ -273,6 +273,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 CreateProjectileAtPosition<CMolotovProjectile>(
                     position,
+                    boss,
                     7.0f
                 );
             }
@@ -426,6 +427,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 CreateProjectileAtPosition<CHEGrenadeProjectile>(
                     position,
+                    boss,
                     cleanupTime: 3.0f
                 );
             }
@@ -610,7 +612,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             });
         }
 
-        void CreateProjectileAtPosition<T>(Vector position, float cleanupTime = 3.0f) where T : CBaseCSGrenadeProjectile
+        void CreateProjectileAtPosition<T>(Vector position, CCSPlayerController attacker, float cleanupTime = 3.0f) where T : CBaseCSGrenadeProjectile
         {
             var defaultVelocity = new Vector(0, 0, 0);
             var defaultAngle = new QAngle(0, 0, 0);
@@ -627,6 +629,10 @@ public class Bot(ILogger<Bot> logger) : IBot
             projectile.Teleport(centerPosition);
             projectile.DispatchSpawn();
             projectile.Elasticity = 0f;
+            projectile.TeamNum = attacker.TeamNum;
+            projectile.Thrower.Raw = attacker.PlayerPawn.Raw;
+            projectile.OriginalThrower.Raw = attacker.PlayerPawn.Raw;
+            projectile.OwnerEntity.Raw = attacker.OwnerEntity.Raw;
 
             Utility.AddTimer(0.05f, () =>
             {
