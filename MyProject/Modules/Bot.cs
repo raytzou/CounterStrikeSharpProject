@@ -273,7 +273,6 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 CreateProjectileAtPosition<CMolotovProjectile>(
                     position,
-                    molotov => molotov.IsIncGrenade = false,
                     7.0f
                 );
             }
@@ -611,7 +610,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             });
         }
 
-        void CreateProjectileAtPosition<T>(Vector position, Action<T>? customSetup = null, float cleanupTime = 3.0f) where T : CBaseCSGrenadeProjectile
+        void CreateProjectileAtPosition<T>(Vector position, float cleanupTime = 3.0f) where T : CBaseCSGrenadeProjectile
         {
             var defaultVelocity = new Vector(0, 0, 0);
             var defaultAngle = new QAngle(0, 0, 0);
@@ -628,9 +627,6 @@ public class Bot(ILogger<Bot> logger) : IBot
             projectile.Teleport(centerPosition);
             projectile.DispatchSpawn();
             projectile.Elasticity = 0f;
-
-            // Apply custom setup for specific projectile types
-            customSetup?.Invoke(projectile);
 
             Utility.AddTimer(0.05f, () =>
             {
