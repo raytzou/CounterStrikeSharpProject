@@ -16,6 +16,7 @@ public class Bot(ILogger<Bot> logger) : IBot
     private int _level = 2;
     private int _respawnTimes = 0;
     private int _maxRespawnTimes = 20;
+    private readonly List<CounterStrikeSharp.API.Modules.Timers.Timer> _toxicDamageTimers = new();
 
     private static readonly Regex NormalBotNameRegex = new(@"^\[(?<Grade>[^\]]+)\](?<Group>[^#]+)#(?<Num>\d{1,2})$");
 
@@ -56,6 +57,7 @@ public class Bot(ILogger<Bot> logger) : IBot
     public async Task RoundStartBehavior()
     {
         SetBotMoneyToZero();
+        ClearAllToxicDamageZones();
 
         if (Main.Instance.RoundCount != Main.Instance.Config.MidBossRound && Main.Instance.RoundCount != Main.Instance.Config.FinalBossRound)
         {
@@ -154,6 +156,8 @@ public class Bot(ILogger<Bot> logger) : IBot
 
     public void RoundEndBehavior(int winStreak, int looseStreak)
     {
+        ClearAllToxicDamageZones();
+
         if (Main.Instance.RoundCount > 0)
         {
             SetDefaultWeapon();
@@ -485,9 +489,12 @@ public class Bot(ILogger<Bot> logger) : IBot
                     }
                 }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
 
+                _toxicDamageTimers.Add(toxicTimer);
+
                 Utility.AddTimer(smokeDuration, () =>
                 {
                     toxicTimer?.Kill();
+                    _toxicDamageTimers.Remove(toxicTimer);
                 });
             }
 
@@ -818,5 +825,14 @@ public class Bot(ILogger<Bot> logger) : IBot
             else
                 Server.ExecuteCommand($"bot_quota {Main.Instance.Config.BotQuota}");
         });
+    }
+
+    private void ClearAllToxicDamageZones()
+    {
+        foreach (var timer in _toxicDamageTimers)
+        {
+            timer?.Kill();
+        }
+        _toxicDamageTimers.Clear();
     }
 }
