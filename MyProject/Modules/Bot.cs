@@ -592,7 +592,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             projectile.TeamNum = attacker.TeamNum;
             projectile.Thrower.Raw = attacker.PlayerPawn.Raw;
             projectile.OriginalThrower.Raw = attacker.PlayerPawn.Raw;
-            projectile.OwnerEntity.Raw = attacker.OwnerEntity.Raw;
+            projectile.OwnerEntity.Raw = attacker.PlayerPawn.Raw;
 
             Utility.AddTimer(0.05f, () =>
             {
