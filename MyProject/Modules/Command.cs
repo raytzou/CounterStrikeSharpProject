@@ -459,6 +459,68 @@ public class Command(
         menu.Display(client);
     }
 
+    public void OnSlapCommand(CCSPlayerController client, CommandInfo command)
+    {
+        if (command.ArgCount < 1 || command.ArgCount > 3)
+        {
+            command.ReplyToCommand("[css] Usage: css_slap <target> [damage]");
+            return;
+        }
+
+        var dmgString = string.IsNullOrWhiteSpace(command.GetArg(2)) ? "0" : command.GetArg(2);
+        if (!int.TryParse(dmgString, out var damage) || damage < 0)
+        {
+            command.ReplyToCommand($"[css] {dmgString} is invalid amount.");
+            return;
+        }
+
+        if (command.GetArg(1) == "@all")
+        {
+            foreach (var target in Utilities.GetPlayers())
+            {
+                Utility.SlapPlayer(target, damage, true);
+            }
+            Server.PrintToChatAll($"Admin slapped all players");
+            _logger.LogInformation("[css] {admin} slapped all players at {DT}", client?.PlayerName is null ? "console" : client.PlayerName, DateTime.Now);
+            return;
+        }
+        else if (command.GetArg(1) == "@ct")
+        {
+            foreach (var target in Utilities.GetPlayers().Where(p => p.Team == CsTeam.CounterTerrorist))
+            {
+                Utility.SlapPlayer(target, damage, true);
+            }
+            Server.PrintToChatAll($"Admin slapped all CT players");
+            _logger.LogInformation("[css] {admin} slapped all CT players at {DT}", client?.PlayerName is null ? "console" : client.PlayerName, DateTime.Now);
+            return;
+        }
+        else if (command.GetArg(1) == "@t")
+        {
+            foreach (var target in Utilities.GetPlayers().Where(p => p.Team == CsTeam.Terrorist))
+            {
+                Utility.SlapPlayer(target, damage, true);
+            }
+            Server.PrintToChatAll($"Admin slapped all T players");
+            _logger.LogInformation("[css] {admin} slapped all T players at {DT}", client?.PlayerName is null ? "console" : client.PlayerName, DateTime.Now);
+            return;
+        }
+
+        var targetName = Main.Instance.GetTargetNameByKeyword(command.GetArg(1));
+
+        if (string.IsNullOrEmpty(targetName))
+        {
+            command.ReplyToCommand("[css] Target not found.");
+            return;
+        }
+
+        var player = Utilities.GetPlayers().First(target => target.PlayerName == targetName);
+
+        Utility.SlapPlayer(player, damage, true);
+        command.ReplyToCommand($"[css] You slapped {targetName} {damage} hp.");
+        _logger.LogInformation("[css] {admin} slapped {targetName} {damage} at {DT}", client?.PlayerName is null ? "console" : client.PlayerName, targetName, damage, DateTime.Now);
+        Server.PrintToChatAll($"Admin slapped {targetName} {damage} hp");
+    }
+
     private static void ReviveCallBack(ref float time, CCSPlayerController client, Position position, Timer? timer, WeaponStatus weaponStatus)
     {
         time++;

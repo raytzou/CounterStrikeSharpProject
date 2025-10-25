@@ -351,5 +351,116 @@ namespace MyProject.Classes
             }
             #endregion
         }
+
+        /// <summary>
+        /// Slaps a player with damage, random knockback and sound effects
+        /// </summary>
+        /// <param name="player">Target player controller</param>
+        /// <param name="damage">Damage to deal, default is 0</param>
+        /// <param name="playSound">Whether to play sound effects, default is true</param>
+        public static void SlapPlayer(CCSPlayerController player, int damage = 0, bool playSound = true)
+        {
+            // Validate player
+            if (player?.PlayerPawn?.Value == null || !player.IsValid)
+            {
+                throw new ArgumentException("Player is invalid");
+            }
+
+            if (!player.PawnIsAlive)
+            {
+                throw new ArgumentException("Player is not in game or is dead");
+            }
+
+            var playerPawn = player.PlayerPawn.Value;
+            bool shouldKill = false;
+
+            // Handle health reduction
+            if (damage > 0)
+            {
+                var currentHealth = playerPawn.Health;
+
+                if (currentHealth - damage <= 0)
+                {
+                    playerPawn.Health = 1;
+                    shouldKill = true;
+                }
+                else
+                {
+                    playerPawn.Health = currentHealth - damage;
+                }
+
+                // Sync health changes
+                Utilities.SetStateChanged(playerPawn, "CBaseEntity", "m_iHealth");
+            }
+
+            // Apply random knockback (simulate slap effect)
+            if (playerPawn.AbsVelocity != null)
+            {
+                var currentVelocity = playerPawn.AbsVelocity;
+                var random = new Random();
+
+                // Calculate random velocity increment (simulating original code's random calculation)
+                var randomX = (random.Next(180) + 50) * (random.Next(2) == 1 ? -1 : 1);
+                var randomY = (random.Next(180) + 50) * (random.Next(2) == 1 ? -1 : 1);
+                var randomZ = random.Next(200) + 100;
+
+                // Apply new velocity
+                var newVelocity = new Vector(
+                    currentVelocity.X + randomX,
+                    currentVelocity.Y + randomY,
+                    currentVelocity.Z + randomZ
+                );
+
+                playerPawn.Teleport(null, null, newVelocity);
+            }
+
+            // Play slap sound effect
+            if (playSound && playerPawn.AbsOrigin != null)
+            {
+                PlaySlapSound(player, playerPawn.AbsOrigin);
+            }
+
+            // Record original score (avoid suicide affecting score)
+            var originalScore = player.Score;
+
+            // Force kill player if health reaches zero
+            if (shouldKill)
+            {
+                playerPawn.CommitSuicide(false, true);
+
+                // Restore original score
+                AddTimer(0.1f, () =>
+                {
+                    if (player.IsValid)
+                    {
+                        player.Score = originalScore;
+                        Utilities.SetStateChanged(player, "CCSPlayerController", "m_pInGameMoneyServices");
+                    }
+                });
+            }
+        }
+
+        /// <summary>
+        /// Private helper method to play slap sound effects
+        /// </summary>
+        /// <param name="player">Target player</param>
+        /// <param name="position">Sound playback position</param>
+        private static void PlaySlapSound(CCSPlayerController player, Vector position)
+        {
+            var slapSounds = new[]
+            {
+                "Player.DamageHelmet",
+                "Player.DamageKevlar",
+                "Flesh.BulletImpact"
+            };
+
+            var random = new Random();
+            var selectedSound = slapSounds[random.Next(slapSounds.Length)];
+
+            if (player?.PlayerPawn?.Value != null)
+            {
+                player.PlayerPawn.Value.EmitSound(selectedSound);
+            }
+        }
     }
 }
