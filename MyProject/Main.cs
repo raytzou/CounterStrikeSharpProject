@@ -560,6 +560,12 @@ public class Main(
     {
         _command.OnModelsCommand(client, command, this);
     }
+
+    [ConsoleCommand("css_slap", "slap command")]
+    public void OnSlapCommand(CCSPlayerController client, CommandInfo command)
+    {
+        _command.OnSlapCommand(client, command);
+    }
     #endregion commands
 
     private void InitializeFileds()

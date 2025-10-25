@@ -241,57 +241,15 @@ public class Command(
 
     public void OnSlayCommand(CCSPlayerController client, CommandInfo command)
     {
-        if (command.ArgCount < 2)
-        {
-            command.ReplyToCommand("[css] Usage: css_slay <target>");
-            return;
-        }
-
-        if (command.GetArg(1) == "@all")
-        {
-            foreach (var target in Utilities.GetPlayers())
-            {
-                target.CommitSuicide(true, true);
-            }
-            Server.PrintToChatAll($"Admin slew all players");
-            _logger.LogInformation("[css] {admin} slew all players at {DT}", client?.PlayerName is null ? "console" : client.PlayerName, DateTime.Now);
-            return;
-        }
-        else if (command.GetArg(1) == "@ct")
-        {
-            foreach (var target in Utilities.GetPlayers().Where(p => p.Team == CsTeam.CounterTerrorist))
-            {
-                target.CommitSuicide(true, true);
-            }
-            Server.PrintToChatAll($"Admin slew all CT players");
-            _logger.LogInformation("[css] {admin} slew all CT players at {DT}", client?.PlayerName is null ? "console" : client.PlayerName, DateTime.Now);
-            return;
-        }
-        else if (command.GetArg(1) == "@t")
-        {
-            foreach (var target in Utilities.GetPlayers().Where(p => p.Team == CsTeam.Terrorist))
-            {
-                target.CommitSuicide(true, true);
-            }
-            Server.PrintToChatAll($"Admin slew all T players");
-            _logger.LogInformation("[css] {admin} slew all T players at {DT}", client?.PlayerName is null ? "console" : client.PlayerName, DateTime.Now);
-            return;
-        }
-
-        var targetName = Main.Instance.GetTargetNameByKeyword(command.GetArg(1));
-
-        if (string.IsNullOrEmpty(targetName))
-        {
-            command.ReplyToCommand("[css] Target not found.");
-            return;
-        }
-
-        var player = Utilities.GetPlayers().First(target => target.PlayerName == targetName);
-
-        player.CommitSuicide(true, true);
-        command.ReplyToCommand($"[css] You slay {targetName}");
-        _logger.LogInformation("[css] {admin} slew {targetName} at {DT}", client?.PlayerName is null ? "console" : client.PlayerName, targetName, DateTime.Now);
-        Server.PrintToChatAll($"Admin slew {targetName}");
+        ExecutePlayerCommand(
+            client, 
+            command, 
+            minArgCount: 2,
+            usageMessage: "[css] Usage: css_slay <target>",
+            commandName: "slay",
+            pastTenseVerb: "slew",
+            playerAction: player => player.CommitSuicide(true, true)
+        );
     }
 
     public void OnGodCommand(CCSPlayerController client, CommandInfo command)
@@ -457,6 +415,129 @@ public class Command(
         }
 
         menu.Display(client);
+    }
+
+    public void OnSlapCommand(CCSPlayerController client, CommandInfo command)
+    {
+        // Validate slap-specific damage parameter
+        if (command.ArgCount >= 2 && !string.IsNullOrWhiteSpace(command.GetArg(2)))
+        {
+            var dmgString = command.GetArg(2);
+            if (!int.TryParse(dmgString, out var damage) || damage < 0)
+            {
+                command.ReplyToCommand($"[css] {dmgString} is invalid amount.");
+                return;
+            }
+        }
+
+        ExecutePlayerCommand(
+            client,
+            command,
+            minArgCount: 1,
+            maxArgCount: 3,
+            usageMessage: "[css] Usage: css_slap <target> [damage]",
+            commandName: "slap",
+            pastTenseVerb: "slapped",
+            playerAction: player =>
+            {
+                var dmgString = string.IsNullOrWhiteSpace(command.GetArg(2)) ? "0" : command.GetArg(2);
+                int.TryParse(dmgString, out var damage);
+                Utility.SlapPlayer(player, damage, true);
+            },
+            customSingleMessage: targetName =>
+            {
+                var dmgString = command.ArgCount >= 2 ? command.GetArg(2) : "0";
+                int.TryParse(dmgString, out var damage);
+                return $"[css] You slapped {targetName} {damage} hp.";
+            },
+            customBroadcastMessage: targetName =>
+            {
+                var dmgString = command.ArgCount >= 2 ? command.GetArg(2) : "0";
+                int.TryParse(dmgString, out var damage);
+                return string.IsNullOrEmpty(targetName) 
+                    ? "Admin slapped all players"
+                    : $"Admin slapped {targetName} {damage} hp";
+            }
+        );
+    }
+
+    private void ExecutePlayerCommand(
+        CCSPlayerController client,
+        CommandInfo command,
+        int minArgCount,
+        string usageMessage,
+        string commandName,
+        string pastTenseVerb,
+        Action<CCSPlayerController> playerAction,
+        int maxArgCount = int.MaxValue,
+        Func<string, string>? customSingleMessage = null,
+        Func<string, string>? customBroadcastMessage = null)
+    {
+        // Validate argument count
+        if (command.ArgCount < minArgCount || command.ArgCount > maxArgCount)
+        {
+            command.ReplyToCommand(usageMessage);
+            return;
+        }
+
+        var target = command.GetArg(1);
+        var adminName = client?.PlayerName ?? "console";
+
+        // Handle team/group targets
+        if (target == "@all")
+        {
+            foreach (var player in Utilities.GetPlayers())
+            {
+                playerAction(player);
+            }
+            
+            var message = customBroadcastMessage?.Invoke("") ?? $"Admin {pastTenseVerb} all players";
+            Server.PrintToChatAll(message);
+            _logger.LogInformation("[css] {admin} {pastTense} all players at {DT}", adminName, pastTenseVerb, DateTime.Now);
+            return;
+        }
+        else if (target == "@ct")
+        {
+            foreach (var player in Utilities.GetPlayers().Where(p => p.Team == CsTeam.CounterTerrorist))
+            {
+                playerAction(player);
+            }
+            
+            Server.PrintToChatAll($"Admin {pastTenseVerb} all CT players");
+            _logger.LogInformation("[css] {admin} {pastTense} all CT players at {DT}", adminName, pastTenseVerb, DateTime.Now);
+            return;
+        }
+        else if (target == "@t")
+        {
+            foreach (var player in Utilities.GetPlayers().Where(p => p.Team == CsTeam.Terrorist))
+            {
+                playerAction(player);
+            }
+            
+            Server.PrintToChatAll($"Admin {pastTenseVerb} all T players");
+            _logger.LogInformation("[css] {admin} {pastTense} all T players at {DT}", adminName, pastTenseVerb, DateTime.Now);
+            return;
+        }
+
+        // Handle individual player target
+        var targetName = Main.Instance.GetTargetNameByKeyword(target);
+
+        if (string.IsNullOrEmpty(targetName))
+        {
+            command.ReplyToCommand("[css] Target not found.");
+            return;
+        }
+
+        var targetPlayer = Utilities.GetPlayers().First(p => p.PlayerName == targetName);
+        playerAction(targetPlayer);
+
+        // Send messages
+        var replyMessage = customSingleMessage?.Invoke(targetName) ?? $"[css] You {commandName} {targetName}";
+        var broadcastMessage = customBroadcastMessage?.Invoke(targetName) ?? $"Admin {pastTenseVerb} {targetName}";
+
+        command.ReplyToCommand(replyMessage);
+        _logger.LogInformation("[css] {admin} {pastTense} {targetName} at {DT}", adminName, pastTenseVerb, targetName, DateTime.Now);
+        Server.PrintToChatAll(broadcastMessage);
     }
 
     private static void ReviveCallBack(ref float time, CCSPlayerController client, Position position, Timer? timer, WeaponStatus weaponStatus)
