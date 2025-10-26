@@ -14,5 +14,7 @@ namespace MyProject.Classes
         public string EagleEyeModel = "[???]Nano Girl";
         public string RushModel = "[Resident Evil 2]Hunk";
         public double BossActiveAbilityChance = 30;
+        public int MidBossHealth = 5000;
+        public int FinalBossHealth = 10000;
     }
 }

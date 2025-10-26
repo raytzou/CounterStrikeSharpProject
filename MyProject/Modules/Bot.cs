@@ -88,12 +88,12 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (Main.Instance.RoundCount == Main.Instance.Config.MidBossRound)
             {
                 var midBoss = Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(BotProfile.Boss[0]));
-                midBoss!.PlayerPawn.Value!.Health = 2500;
+                midBoss!.PlayerPawn.Value!.Health = Main.Instance.Config.MidBossHealth;
             }
             else if (Main.Instance.RoundCount == Main.Instance.Config.FinalBossRound)
             {
                 var finalBoss = Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(BotProfile.Boss[1]));
-                finalBoss!.PlayerPawn.Value!.Health = 5000;
+                finalBoss!.PlayerPawn.Value!.Health = Main.Instance.Config.FinalBossHealth;
             }
         }
 
@@ -556,7 +556,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         void Cursed()
         {
             var bossHealth = boss.PlayerPawn.Value!.Health;
-            var maxHealth = IsBoss(boss) && boss.PlayerName.Contains(BotProfile.Boss[0]) ? 2500 : 5000; // Mid or Final BOSS
+            var maxHealth = IsBoss(boss) && boss.PlayerName.Contains(BotProfile.Boss[0]) ? Main.Instance.Config.MidBossHealth : Main.Instance.Config.FinalBossHealth;
             var oneThirdHealth = maxHealth / 3;
 
             if (bossHealth > oneThirdHealth)
@@ -564,7 +564,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             Utility.PrintToAllCenter("The Boss casts a deadly curse upon all!");
             var humanPlayers = Utility.GetAliveHumanPlayers();
-            
+
             if (humanPlayers.Count == 0)
                 return;
 
@@ -578,7 +578,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 foreach (var player in humanPlayers)
                 {
                     if (!Utility.IsPlayerValidAndAlive(player)) continue;
-                    
+
                     // Use purple beacon to mark cursed players
                     Utility.DrawBeaconOnPlayer(player, System.Drawing.Color.Purple, 100.0f, curseDuration, 1.0f);
                 }
@@ -601,9 +601,9 @@ public class Bot(ILogger<Bot> logger) : IBot
                     try
                     {
                         Utility.SlapPlayer(player, curseDamage, true);
-                        
+
                         player.PrintToCenter($"Cursed: -{curseDamage} HP");
-                        
+
                         ApplyCurseEffect(player);
                     }
                     catch (ArgumentException)
