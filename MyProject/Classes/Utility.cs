@@ -448,7 +448,7 @@ namespace MyProject.Classes
             // Play slap sound effect
             if (playSound && playerPawn.AbsOrigin != null)
             {
-                PlaySlapSound(player, playerPawn.AbsOrigin);
+                PlaySlapSound();
             }
 
             // Record original score (avoid suicide affecting score)
@@ -469,28 +469,23 @@ namespace MyProject.Classes
                     }
                 });
             }
-        }
 
-        /// <summary>
-        /// Private helper method to play slap sound effects
-        /// </summary>
-        /// <param name="player">Target player</param>
-        /// <param name="position">Sound playback position</param>
-        private static void PlaySlapSound(CCSPlayerController player, Vector position)
-        {
-            var slapSounds = new[]
+            void PlaySlapSound()
             {
-                "Player.DamageHelmet",
-                "Player.DamageKevlar",
-                "Flesh.BulletImpact"
-            };
+                var slapSounds = new[]
+                {
+                    "Player.DamageHelmet",
+                    "Player.DamageKevlar",
+                    "Flesh.BulletImpact"
+                };
 
-            var random = new Random();
-            var selectedSound = slapSounds[random.Next(slapSounds.Length)];
+                var random = new Random();
+                var selectedSound = slapSounds[random.Next(slapSounds.Length)];
 
-            if (player?.PlayerPawn?.Value != null)
-            {
-                player.PlayerPawn.Value.EmitSound(selectedSound);
+                if (player?.PlayerPawn?.Value != null)
+                {
+                    player.PlayerPawn.Value.EmitSound(selectedSound);
+                }
             }
         }
 
