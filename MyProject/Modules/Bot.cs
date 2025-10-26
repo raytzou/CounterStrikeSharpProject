@@ -555,7 +555,119 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void Cursed()
         {
-            throw new NotImplementedException();
+            var bossHealth = boss.PlayerPawn.Value!.Health;
+            var maxHealth = IsBoss(boss) && boss.PlayerName.Contains(BotProfile.Boss[0]) ? 2500 : 5000; // Mid or Final BOSS
+            var oneThirdHealth = maxHealth / 3;
+
+            if (bossHealth > oneThirdHealth)
+                return;
+
+            Utility.PrintToAllCenter("The Boss casts a deadly curse upon all!");
+            var humanPlayers = Utility.GetAliveHumanPlayers();
+            
+            if (humanPlayers.Count == 0)
+                return;
+
+            const int curseDamage = 2;
+            const float curseDuration = 10.0f;
+            var startTime = Server.CurrentTime;
+
+            // Add purple beacon effect to all players to indicate curse
+            Server.NextFrame(() =>
+            {
+                foreach (var player in humanPlayers)
+                {
+                    if (!Utility.IsPlayerValidAndAlive(player)) continue;
+                    
+                    // Use purple beacon to mark cursed players
+                    Utility.DrawBeaconOnPlayer(player, System.Drawing.Color.Purple, 100.0f, curseDuration, 1.0f);
+                }
+            });
+
+            // Create curse damage timer
+            var cursedTimer = Utility.AddTimer(1f, () =>
+            {
+                var currentTime = Server.CurrentTime;
+                if (currentTime - startTime >= curseDuration)
+                    return;
+
+                var alivePlayers = Utility.GetAliveHumanPlayers();
+
+                foreach (var player in alivePlayers)
+                {
+                    if (!Utility.IsPlayerValidAndAlive(player))
+                        continue;
+
+                    try
+                    {
+                        Utility.SlapPlayer(player, curseDamage, true);
+                        
+                        player.PrintToCenter($"Cursed: -{curseDamage} HP");
+                        
+                        ApplyCurseEffect(player);
+                    }
+                    catch (ArgumentException)
+                    {
+                        // Player is dead or invalid, ignore error
+                        continue;
+                    }
+                }
+            }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
+
+            _toxicDamageTimers.Add(cursedTimer);
+
+            Utility.AddTimer(curseDuration, () =>
+            {
+                cursedTimer?.Kill();
+                _toxicDamageTimers.Remove(cursedTimer);
+                Utility.PrintToAllCenter("The curse has been lifted...");
+            });
+
+            void ApplyCurseEffect(CCSPlayerController player)
+            {
+                var pawn = player.PlayerPawn.Value!;
+                if (pawn == null || !pawn.IsValid)
+                    return;
+
+                var currentTime = Server.CurrentTime;
+                var effectDuration = 1.0f;
+
+                ApplyPurpleOverlay();
+
+                void ApplyPurpleOverlay(int attempt = 0)
+                {
+                    if (pawn == null || !pawn.IsValid) return;
+                    if (pawn.LifeState != (byte)LifeState_t.LIFE_ALIVE) return;
+
+                    var future = currentTime + MathF.Max(0.1f, effectDuration);
+
+                    pawn.HealthShotBoostExpirationTime = 0.0f;
+                    Utilities.SetStateChanged(pawn, "CCSPlayerPawn", "m_flHealthShotBoostExpirationTime");
+
+                    Utility.AddTimer(0.01f, () =>
+                    {
+                        if (pawn == null || !pawn.IsValid) return;
+                        pawn.HealthShotBoostExpirationTime = future;
+                        Utilities.SetStateChanged(pawn, "CCSPlayerPawn", "m_flHealthShotBoostExpirationTime");
+                    });
+
+                    if (attempt < 3)
+                    {
+                        Utility.AddTimer(0.15f, () =>
+                        {
+                            if (pawn == null || !pawn.IsValid) return;
+
+                            var t = pawn.HealthShotBoostExpirationTime;
+                            var stillPast = t <= Server.CurrentTime + 0.05f;
+
+                            if (stillPast)
+                            {
+                                ApplyPurpleOverlay(attempt + 1);
+                            }
+                        });
+                    }
+                }
+            }
         }
 
         void CreateTimedProjectileAttack(string message, System.Drawing.Color beaconColor, Action<Vector> createProjectileAction, float delayTime = 3.0f)
