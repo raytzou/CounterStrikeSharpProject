@@ -299,7 +299,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                     if (!Utility.IsPlayerValidAndAlive(player)) continue;
 
                     player.PlayerPawn.Value!.MoveType = MoveType_t.MOVETYPE_NONE;
-                    BlueScreenOverlay(player, 3f);
+                    ApplyScreenOverlay(player.PlayerPawn.Value, 3f);
                     frozenPlayers.Add(player);
                 }
             });
@@ -316,48 +316,6 @@ public class Bot(ILogger<Bot> logger) : IBot
                     }
                 });
             });
-
-            void BlueScreenOverlay(CCSPlayerController player, float timeInterval)
-            {
-                var pawn = player.PlayerPawn.Value!;
-
-                ApplyBlueOverlay();
-
-                void ApplyBlueOverlay(int attempt = 0)
-                {
-                    if (pawn == null || !pawn.IsValid) return;
-                    if (pawn.LifeState != (byte)LifeState_t.LIFE_ALIVE) return;
-
-                    var currentTime = Server.CurrentTime;
-                    var future = currentTime + MathF.Max(0.1f, timeInterval);
-
-                    pawn.HealthShotBoostExpirationTime = 0.0f;
-                    Utilities.SetStateChanged(pawn, "CCSPlayerPawn", "m_flHealthShotBoostExpirationTime"); // Dirty Flag
-
-                    Utility.AddTimer(0.01f, () =>
-                    {
-                        if (pawn == null || !pawn.IsValid) return;
-                        pawn.HealthShotBoostExpirationTime = future;
-                        Utilities.SetStateChanged(pawn, "CCSPlayerPawn", "m_flHealthShotBoostExpirationTime");
-                    });
-
-                    if (attempt < 3)
-                    {
-                        Utility.AddTimer(0.15f, () =>
-                        {
-                            if (pawn == null || !pawn.IsValid) return;
-
-                            var t = pawn.HealthShotBoostExpirationTime;
-                            var stillPast = t <= Server.CurrentTime + 0.05f;
-
-                            if (stillPast)
-                            {
-                                ApplyBlueOverlay(attempt + 1);
-                            }
-                        });
-                    }
-                }
-            }
         }
 
         void Flashbang()
@@ -484,7 +442,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                             Utilities.SetStateChanged(player.PlayerPawn.Value!, "CBaseEntity", "m_iHealth");
                             player.PrintToCenter($"Toxic Smoke: -{damagePerSecond} HP");
 
-                            ApplyPoisonEffect(player);
+                            ApplyScreenOverlay(player.PlayerPawn.Value, 1f);
                         }
                     }
                 }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
@@ -496,52 +454,6 @@ public class Bot(ILogger<Bot> logger) : IBot
                     toxicTimer?.Kill();
                     _toxicDamageTimers.Remove(toxicTimer);
                 });
-            }
-
-            void ApplyPoisonEffect(CCSPlayerController player)
-            {
-                var pawn = player.PlayerPawn.Value!;
-                if (pawn == null || !pawn.IsValid)
-                    return;
-
-                var currentTime = Server.CurrentTime;
-                var effectDuration = 1.0f;
-
-                ApplyGreenOverlay();
-
-                void ApplyGreenOverlay(int attempt = 0)
-                {
-                    if (pawn == null || !pawn.IsValid) return;
-                    if (pawn.LifeState != (byte)LifeState_t.LIFE_ALIVE) return;
-
-                    var future = currentTime + MathF.Max(0.1f, effectDuration);
-
-                    pawn.HealthShotBoostExpirationTime = 0.0f;
-                    Utilities.SetStateChanged(pawn, "CCSPlayerPawn", "m_flHealthShotBoostExpirationTime");
-
-                    Utility.AddTimer(0.01f, () =>
-                    {
-                        if (pawn == null || !pawn.IsValid) return;
-                        pawn.HealthShotBoostExpirationTime = future;
-                        Utilities.SetStateChanged(pawn, "CCSPlayerPawn", "m_flHealthShotBoostExpirationTime");
-                    });
-
-                    if (attempt < 3)
-                    {
-                        Utility.AddTimer(0.15f, () =>
-                        {
-                            if (pawn == null || !pawn.IsValid) return;
-
-                            var t = pawn.HealthShotBoostExpirationTime;
-                            var stillPast = t <= Server.CurrentTime + 0.05f;
-
-                            if (stillPast)
-                            {
-                                ApplyGreenOverlay(attempt + 1);
-                            }
-                        });
-                    }
-                }
             }
 
             float CalculateDistance(Vector pos1, Vector pos2)
@@ -604,7 +516,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
                         player.PrintToCenter($"Cursed: -{curseDamage} HP");
 
-                        ApplyCurseEffect(player);
+                        ApplyScreenOverlay(player.PlayerPawn.Value, 1f);
                     }
                     catch (ArgumentException)
                     {
@@ -622,52 +534,6 @@ public class Bot(ILogger<Bot> logger) : IBot
                 _toxicDamageTimers.Remove(cursedTimer);
                 Utility.PrintToAllCenter("The curse has been lifted...");
             });
-
-            void ApplyCurseEffect(CCSPlayerController player)
-            {
-                var pawn = player.PlayerPawn.Value!;
-                if (pawn == null || !pawn.IsValid)
-                    return;
-
-                var currentTime = Server.CurrentTime;
-                var effectDuration = 1.0f;
-
-                ApplyPurpleOverlay();
-
-                void ApplyPurpleOverlay(int attempt = 0)
-                {
-                    if (pawn == null || !pawn.IsValid) return;
-                    if (pawn.LifeState != (byte)LifeState_t.LIFE_ALIVE) return;
-
-                    var future = currentTime + MathF.Max(0.1f, effectDuration);
-
-                    pawn.HealthShotBoostExpirationTime = 0.0f;
-                    Utilities.SetStateChanged(pawn, "CCSPlayerPawn", "m_flHealthShotBoostExpirationTime");
-
-                    Utility.AddTimer(0.01f, () =>
-                    {
-                        if (pawn == null || !pawn.IsValid) return;
-                        pawn.HealthShotBoostExpirationTime = future;
-                        Utilities.SetStateChanged(pawn, "CCSPlayerPawn", "m_flHealthShotBoostExpirationTime");
-                    });
-
-                    if (attempt < 3)
-                    {
-                        Utility.AddTimer(0.15f, () =>
-                        {
-                            if (pawn == null || !pawn.IsValid) return;
-
-                            var t = pawn.HealthShotBoostExpirationTime;
-                            var stillPast = t <= Server.CurrentTime + 0.05f;
-
-                            if (stillPast)
-                            {
-                                ApplyPurpleOverlay(attempt + 1);
-                            }
-                        });
-                    }
-                }
-            }
         }
 
         void CreateTimedProjectileAttack(string message, System.Drawing.Color beaconColor, Action<Vector> createProjectileAction, float delayTime = 3.0f)
@@ -946,5 +812,45 @@ public class Bot(ILogger<Bot> logger) : IBot
             timer?.Kill();
         }
         _toxicDamageTimers.Clear();
+    }
+
+    private static void ApplyScreenOverlay(CCSPlayerPawn pawn, float timeInterval)
+    {
+        ApplyOverlay();
+
+        void ApplyOverlay(int attempt = 0)
+        {
+            if (pawn == null || !pawn.IsValid) return;
+            if (pawn.LifeState != (byte)LifeState_t.LIFE_ALIVE) return;
+
+            var currentTime = Server.CurrentTime;
+            var future = currentTime + MathF.Max(0.1f, timeInterval);
+
+            pawn.HealthShotBoostExpirationTime = 0.0f;
+            Utilities.SetStateChanged(pawn, "CCSPlayerPawn", "m_flHealthShotBoostExpirationTime");
+
+            Utility.AddTimer(0.01f, () =>
+            {
+                if (pawn == null || !pawn.IsValid) return;
+                pawn.HealthShotBoostExpirationTime = future;
+                Utilities.SetStateChanged(pawn, "CCSPlayerPawn", "m_flHealthShotBoostExpirationTime");
+            });
+
+            if (attempt < 3)
+            {
+                Utility.AddTimer(0.15f, () =>
+                {
+                    if (pawn == null || !pawn.IsValid) return;
+
+                    var t = pawn.HealthShotBoostExpirationTime;
+                    var stillPast = t <= Server.CurrentTime + 0.05f;
+
+                    if (stillPast)
+                    {
+                        ApplyOverlay(attempt + 1);
+                    }
+                });
+            }
+        }
     }
 }
