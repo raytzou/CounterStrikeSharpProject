@@ -516,7 +516,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
                         player.PrintToCenter($"Cursed: -{curseDamage} HP");
 
-                        ApplyScreenOverlay(player.PlayerPawn.Value, 1f);
+                        ApplyScreenOverlay(player.PlayerPawn.Value!, 1f);
                     }
                     catch (ArgumentException)
                     {
