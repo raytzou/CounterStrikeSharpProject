@@ -451,8 +451,8 @@ public class Bot(ILogger<Bot> logger) : IBot
 
                 Utility.AddTimer(smokeDuration, () =>
                 {
-                    toxicTimer?.Kill();
                     _damageTimers.Remove(toxicTimer);
+                    toxicTimer?.Kill();
                 });
             }
 
@@ -530,8 +530,8 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             Utility.AddTimer(curseDuration, () =>
             {
-                cursedTimer?.Kill();
                 _damageTimers.Remove(cursedTimer);
+                cursedTimer?.Kill();
                 Utility.PrintToAllCenter("The curse has been lifted...");
             });
         }
