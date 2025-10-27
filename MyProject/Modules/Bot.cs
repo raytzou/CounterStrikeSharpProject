@@ -16,7 +16,7 @@ public class Bot(ILogger<Bot> logger) : IBot
     private int _level = 2;
     private int _respawnTimes = 0;
     private int _maxRespawnTimes = 20;
-    private readonly List<CounterStrikeSharp.API.Modules.Timers.Timer> _toxicDamageTimers = new();
+    private readonly List<CounterStrikeSharp.API.Modules.Timers.Timer> _damageTimers = new();
 
     private static readonly Regex NormalBotNameRegex = new(@"^\[(?<Grade>[^\]]+)\](?<Group>[^#]+)#(?<Num>\d{1,2})$");
 
@@ -57,7 +57,7 @@ public class Bot(ILogger<Bot> logger) : IBot
     public async Task RoundStartBehavior()
     {
         SetBotMoneyToZero();
-        ClearAllToxicDamageZones();
+        ClearDamageTimer();
 
         if (Main.Instance.RoundCount != Main.Instance.Config.MidBossRound && Main.Instance.RoundCount != Main.Instance.Config.FinalBossRound)
         {
@@ -156,7 +156,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
     public void RoundEndBehavior(int winStreak, int looseStreak)
     {
-        ClearAllToxicDamageZones();
+        ClearDamageTimer();
 
         if (Main.Instance.RoundCount > 0)
         {
@@ -447,12 +447,12 @@ public class Bot(ILogger<Bot> logger) : IBot
                     }
                 }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
 
-                _toxicDamageTimers.Add(toxicTimer);
+                _damageTimers.Add(toxicTimer);
 
                 Utility.AddTimer(smokeDuration, () =>
                 {
                     toxicTimer?.Kill();
-                    _toxicDamageTimers.Remove(toxicTimer);
+                    _damageTimers.Remove(toxicTimer);
                 });
             }
 
@@ -526,12 +526,12 @@ public class Bot(ILogger<Bot> logger) : IBot
                 }
             }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
 
-            _toxicDamageTimers.Add(cursedTimer);
+            _damageTimers.Add(cursedTimer);
 
             Utility.AddTimer(curseDuration, () =>
             {
                 cursedTimer?.Kill();
-                _toxicDamageTimers.Remove(cursedTimer);
+                _damageTimers.Remove(cursedTimer);
                 Utility.PrintToAllCenter("The curse has been lifted...");
             });
         }
@@ -805,13 +805,13 @@ public class Bot(ILogger<Bot> logger) : IBot
         });
     }
 
-    private void ClearAllToxicDamageZones()
+    private void ClearDamageTimer()
     {
-        foreach (var timer in _toxicDamageTimers)
+        foreach (var timer in _damageTimers)
         {
             timer?.Kill();
         }
-        _toxicDamageTimers.Clear();
+        _damageTimers.Clear();
     }
 
     private static void ApplyScreenOverlay(CCSPlayerPawn pawn, float timeInterval)
