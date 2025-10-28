@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using MyProject.Classes;
 using MyProject.Factories;
 using MyProject.Modules.Interfaces;
+using System.Drawing;
 using System.Text.RegularExpressions;
 
 namespace MyProject.Modules;
@@ -516,7 +517,8 @@ public class Bot(ILogger<Bot> logger) : IBot
 
                         player.PrintToCenter($"Cursed: -{curseDamage} HP");
 
-                        ApplyScreenOverlay(player.PlayerPawn.Value!, 1f);
+                        var color = Color.FromArgb(102, 193, 45, 45);
+                        Utility.ColorScreen(player, color, 0.3f, 0.2f);
                     }
                     catch (ArgumentException)
                     {
