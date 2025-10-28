@@ -485,7 +485,6 @@ namespace MyProject.Classes
             {
                 var slapSounds = new[]
                 {
-                    "Player.DamageHelmet",
                     "Player.DamageKevlar",
                     "Flesh.BulletImpact"
                 };
