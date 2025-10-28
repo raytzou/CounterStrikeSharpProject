@@ -2,6 +2,7 @@
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Entities.Constants;
 using CounterStrikeSharp.API.Modules.Timers;
+using CounterStrikeSharp.API.Modules.UserMessages;
 using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
 using MyProject.Models;
@@ -95,6 +96,16 @@ namespace MyProject.Classes
                         _workshopSkins[modelName].MeshGroupIndex = null;
                 }
             }
+        }
+
+        [Flags]
+        public enum FadeFlags
+        {
+            None = 0,
+            FadeIn = 0x0001,
+            FadeOut = 0x0002,
+            FadeStayOut = 0x0008,
+            Purge = 0x0010
         }
 
         /// <summary>
@@ -487,6 +498,34 @@ namespace MyProject.Classes
                     player.PlayerPawn.Value.EmitSound(selectedSound);
                 }
             }
+        }
+
+        /// <summary>
+        /// Applies a screen fade effect to a player's viewport with customizable color, timing, and transition behavior.
+        /// This method creates visual overlay effects such as damage indicators, death screens, or environmental effects
+        /// by sending a fade user message to the client.
+        /// </summary>
+        /// <param name="player">The target player to apply the screen fade effect to</param>
+        /// <param name="color">The RGBA color of the fade effect overlay</param>
+        /// <param name="hold">Duration in seconds to maintain the fade effect at full intensity (default: 0.1s)</param>
+        /// <param name="fade">Duration in seconds for the fade transition animation (default: 0.2s)</param>
+        /// <param name="flags">Fade behavior flags controlling transition type (FadeIn, FadeOut, FadeStayOut)</param>
+        /// <param name="withPurge">Whether to clear any existing fade effects before applying the new one (default: true)</param>
+        public static void ColorScreen(CCSPlayerController player, Color color, float hold = 0.1f, float fade = 0.2f, FadeFlags flags = FadeFlags.FadeIn, bool withPurge = true)
+        {
+            // User message ID 106 represents the "Fade" message type in Counter-Strike 2's network protocol
+            var fadeMsg = UserMessage.FromId(106);
+
+            fadeMsg.SetInt("duration", Convert.ToInt32(fade * 512));
+            fadeMsg.SetInt("hold_time", Convert.ToInt32(hold * 512));
+
+            var flag = (int)flags;
+            if (withPurge)
+                flag |= (int)FadeFlags.Purge;
+
+            fadeMsg.SetInt("flags", flag);
+            fadeMsg.SetInt("color", color.R | color.G << 8 | color.B << 16 | color.A << 24);
+            fadeMsg.Send(player);
         }
 
         public static bool IsPlayerValidAndAlive(CCSPlayerController player) =>
