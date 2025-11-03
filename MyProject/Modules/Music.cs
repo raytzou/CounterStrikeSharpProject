@@ -13,7 +13,9 @@ namespace MyProject.Modules
         {
             "warmup.01",
             "warmup.02",
-            "warmup.03"
+            "warmup.03",
+            "warmup.04",
+            "warmup.05"
         };
 
         public Music(ILogger<Music> logger)
