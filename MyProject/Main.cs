@@ -20,7 +20,8 @@ public class Main(
     IPlayerService playerService,
     IPlayerManagementService playerManagementService,
     ICommand commmand,
-    IBot bot
+    IBot bot,
+    IMusic music
     ) : BasePlugin, IPluginConfig<MainConfig>
 {
     #region plugin info
@@ -49,6 +50,7 @@ public class Main(
     // module services
     private readonly ICommand _command = commmand;
     private readonly IBot _bot = bot;
+    private readonly IMusic _music = music;
 
     // singleton members
     public static Main Instance { get; private set; } = null!; // To Do: remove singleton one day
@@ -230,6 +232,17 @@ public class Main(
             _playerService.UpdateDefaultSkin(player.SteamID, defaultSkin);
             _skinUpdated[player.Slot] = true;
         });
+
+        if (_roundCount == 0)
+        {
+            AddTimer(1f, () =>
+            {
+                if (player.IsValid && !player.IsBot)
+                {
+                    _music.PlayWarmupMusic(player);
+                }
+            });
+        }
         return HookResult.Continue;
     }
 
