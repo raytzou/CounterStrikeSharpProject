@@ -544,9 +544,7 @@ namespace MyProject.Classes
         public static void PrintToAllCenter(string message)
         {
             foreach (var player in Utilities.GetPlayers().Where(p =>
-                p.IsValid &&
-                !p.IsBot &&
-                p.PlayerPawn.Value is not null))
+                IsHumanPlayerValid(p)))
             {
                 player.PrintToCenter(message);
             }
