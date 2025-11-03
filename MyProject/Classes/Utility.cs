@@ -527,11 +527,14 @@ namespace MyProject.Classes
             fadeMsg.Send(player);
         }
 
-        public static bool IsHumanPlayerValidAndAlive(CCSPlayerController player) =>
+        public static bool IsHumanPlayerValid(CCSPlayerController player) =>
             player.IsValid &&
             !player.IsBot &&
-            player.PlayerPawn.Value != null &&
-            player.PlayerPawn.Value.LifeState == (byte)LifeState_t.LIFE_ALIVE;
+            player.PlayerPawn.Value != null;
+
+        public static bool IsHumanPlayerValidAndAlive(CCSPlayerController player) =>
+            IsHumanPlayerValid(player) &&
+            player.PlayerPawn.Value!.LifeState == (byte)LifeState_t.LIFE_ALIVE;
 
         public static List<CCSPlayerController> GetAliveHumanPlayers() =>
             Utilities.GetPlayers()
