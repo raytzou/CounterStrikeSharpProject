@@ -297,7 +297,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 foreach (var player in humanPlayers)
                 {
-                    if (!Utility.IsPlayerValidAndAlive(player)) continue;
+                    if (!Utility.IsHumanPlayerValidAndAlive(player)) continue;
 
                     player.PlayerPawn.Value!.MoveType = MoveType_t.MOVETYPE_NONE;
                     ApplyScreenOverlay(player.PlayerPawn.Value, 3f);
@@ -311,7 +311,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 {
                     foreach (var player in frozenPlayers)
                     {
-                        if (!Utility.IsPlayerValidAndAlive(player)) continue;
+                        if (!Utility.IsHumanPlayerValidAndAlive(player)) continue;
 
                         player.PlayerPawn.Value!.MoveType = MoveType_t.MOVETYPE_WALK;
                     }
@@ -428,7 +428,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
                     foreach (var player in humanPlayers)
                     {
-                        if (!Utility.IsPlayerValidAndAlive(player))
+                        if (!Utility.IsHumanPlayerValidAndAlive(player))
                             continue;
 
                         var playerPosition = player.PlayerPawn.Value!.AbsOrigin!;
@@ -490,7 +490,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 foreach (var player in humanPlayers)
                 {
-                    if (!Utility.IsPlayerValidAndAlive(player)) continue;
+                    if (!Utility.IsHumanPlayerValidAndAlive(player)) continue;
 
                     // Use purple beacon to mark cursed players
                     Utility.DrawBeaconOnPlayer(player, System.Drawing.Color.Purple, 100.0f, curseDuration, 1.0f);
@@ -508,7 +508,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
                 foreach (var player in alivePlayers)
                 {
-                    if (!Utility.IsPlayerValidAndAlive(player))
+                    if (!Utility.IsHumanPlayerValidAndAlive(player))
                         continue;
 
                     try

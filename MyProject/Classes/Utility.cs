@@ -527,7 +527,7 @@ namespace MyProject.Classes
             fadeMsg.Send(player);
         }
 
-        public static bool IsPlayerValidAndAlive(CCSPlayerController player) =>
+        public static bool IsHumanPlayerValidAndAlive(CCSPlayerController player) =>
             player.IsValid &&
             !player.IsBot &&
             player.PlayerPawn.Value != null &&
@@ -535,7 +535,7 @@ namespace MyProject.Classes
 
         public static List<CCSPlayerController> GetAliveHumanPlayers() =>
             Utilities.GetPlayers()
-                .Where(player => Utility.IsPlayerValidAndAlive(player))
+                .Where(player => Utility.IsHumanPlayerValidAndAlive(player))
                 .ToList();
 
         public static void PrintToAllCenter(string message)
