@@ -46,12 +46,22 @@ namespace MyProject.Modules
         private void PlaySound(CCSPlayerController player, string[] sounds)
         {
             var selectedSound = sounds[_random.Next(sounds.Length)];
-            var recipient = new RecipientFilter
-            {
-                player
-            };
+            EmitSoundToPlayer(player, selectedSound);
+        }
 
-            player.EmitSound(selectedSound, recipient);
+        private void PlaySound(CCSPlayerController player, string[] sounds, int selectedIndex)
+        {
+            if (selectedIndex < 0 || selectedIndex >= sounds.Length)
+                throw new ArgumentOutOfRangeException(nameof(selectedIndex));
+
+            var selectedSound = sounds[selectedIndex];
+            EmitSoundToPlayer(player, selectedSound);
+        }
+
+        private void EmitSoundToPlayer(CCSPlayerController player, string soundName)
+        {
+            var recipient = new RecipientFilter { player };
+            player.EmitSound(soundName, recipient);
         }
     }
 }
