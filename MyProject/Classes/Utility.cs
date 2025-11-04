@@ -541,6 +541,11 @@ namespace MyProject.Classes
                 .Where(player => Utility.IsHumanPlayerValidAndAlive(player))
                 .ToList();
 
+        public static List<CCSPlayerController> GetHumanPlayers() =>
+            Utilities.GetPlayers()
+                .Where(player => IsHumanPlayerValid(player))
+                .ToList();
+
         public static void PrintToAllCenter(string message)
         {
             foreach (var player in Utilities.GetPlayers().Where(p =>
