@@ -1,6 +1,7 @@
 ﻿using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
+using MyProject.Classes;
 using MyProject.Modules.Interfaces;
 
 namespace MyProject.Modules
@@ -16,6 +17,20 @@ namespace MyProject.Modules
             "warmup.03",
             "warmup.04",
             "warmup.05"
+        };
+        private static readonly string[] _round = new string[]
+        {
+            "round.01",
+            "round.02",
+            "round.03",
+            "round.04",
+            "round.05",
+            "round.06",
+            "round.07",
+            "round.09",
+            "round.10",
+            "round.11",
+            "round.12"
         };
 
         public Music(ILogger<Music> logger)
@@ -35,7 +50,13 @@ namespace MyProject.Modules
 
         public void PlayRoundMusic()
         {
-            throw new NotImplementedException();
+            var humans = Utility.GetHumanPlayers();
+            var selectedIndex = _random.Next(_round.Length);
+
+            foreach (var player in humans)
+            {
+                PlaySound(player, _round, selectedIndex);
+            }
         }
 
         public void PlayWarmupMusic(CCSPlayerController player)

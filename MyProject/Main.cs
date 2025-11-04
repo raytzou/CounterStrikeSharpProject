@@ -314,6 +314,7 @@ public class Main(
             RemoveProtectionFromAllPlayers();
             ActivateAllWeaponStatuses();
             StartWeaponCheckTimer();
+            _music.PlayRoundMusic();
             if (_roundCount == Config.MidBossRound || _roundCount == Config.FinalBossRound)
             {
                 RemoveBomb();

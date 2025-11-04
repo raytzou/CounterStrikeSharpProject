@@ -10,6 +10,9 @@ namespace MyProject.Modules.Interfaces
         /// <param name="player">Player Controller</param>
         void PlayWarmupMusic(CCSPlayerController player);
 
+        /// <summary>
+        /// Plays synchronized round music to all human players when a new round starts
+        /// </summary>
         void PlayRoundMusic();
 
         void PlayRoundEndMusic();
