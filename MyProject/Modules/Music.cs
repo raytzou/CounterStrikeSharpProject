@@ -18,20 +18,22 @@ namespace MyProject.Modules
             "warmup.04",
             "warmup.05"
         };
-        private static readonly string[] _round = new string[]
+        private static readonly List<(string SoundEvent, string DisplayName)> _round = new()
         {
-            "round.01",
-            "round.02",
-            "round.03",
-            "round.04",
-            "round.05",
-            "round.06",
-            "round.07",
-            "round.09",
-            "round.10",
-            "round.11",
-            "round.12"
+            ("round.01", "龍が如く0 OST - Fiercest Warrior ver 0"),
+            ("round.02", "龍が如く6 命の詩 OST - Fiercest Warrior ver.6"),
+            ("round.03", "Metal Slug 2 - Assault Theme"),
+            ("round.04", "Cyberpunk 2077 OST - The Rebel Path"),
+            ("round.05", "龍が如く0 OST - Pledge of Demon 怨魔の契り"),
+            ("round.06", "龍が如く0 OST - 閻魔の誓い"),
+            ("round.07", "龍が如く0 OST - Receive You ~Tech Trance Arrange~"), // skip 8 cuz the file is broken and removed
+            ("round.09", "Devil May Cry 3 - Divine Hate"),
+            ("round.10", "Devil May Cry 4 - Shall Never Surrender"),
+            ("round.11", "Devil May Cry 5 - Bury the Light"),
+            ("round.12", "Devil May Cry 5 - Devil Trigger"),
         };
+
+        private int? _currentPlayingIndex;
 
         public Music(ILogger<Music> logger)
         {
@@ -51,17 +53,26 @@ namespace MyProject.Modules
         public void PlayRoundMusic()
         {
             var humans = Utility.GetHumanPlayers();
-            var selectedIndex = _random.Next(_round.Length);
+            var selectedIndex = _random.Next(_round.Count);
+            var soundEvents = _round.Select(r => r.SoundEvent).ToArray();
+
+            _currentPlayingIndex = selectedIndex;
 
             foreach (var player in humans)
             {
-                PlaySound(player, _round, selectedIndex);
+                PlaySound(player, soundEvents, selectedIndex);
             }
         }
 
         public void PlayWarmupMusic(CCSPlayerController player)
         {
             PlaySound(player, _warmup);
+        }
+
+        public string? GetCurrentRoundMusicName()
+        {
+            if (_currentPlayingIndex is null) return null;
+            return _round[_currentPlayingIndex.Value].DisplayName;
         }
 
         private void PlaySound(CCSPlayerController player, string[] sounds)

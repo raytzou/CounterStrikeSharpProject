@@ -18,5 +18,11 @@ namespace MyProject.Modules.Interfaces
         void PlayRoundEndMusic();
 
         void PlayEndGameMusic();
+
+        /// <summary>
+        /// Gets the display name of the current round music track
+        /// </summary>
+        /// <returns>The current round music name, or null if no round music has been played yet</returns>
+        string? GetCurrentRoundMusicName();
     }
 }
