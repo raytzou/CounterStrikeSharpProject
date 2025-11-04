@@ -374,6 +374,7 @@ public class Command(
     {
         var menu = new ScreenMenu("Select Models", thePlugin);
         var playerCache = _playerService.GetPlayerCache(client.SteamID);
+        const int displayMenuInterval = 10; // second? TODO: need to check the unit
 
         if (playerCache is null)
         {
@@ -414,7 +415,7 @@ public class Command(
             });
         }
 
-        menu.Display(client);
+        menu.Display(client, displayMenuInterval);
     }
 
     public void OnSlapCommand(CCSPlayerController client, CommandInfo command)
