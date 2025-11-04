@@ -23,12 +23,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="CS2MenuManager">
-      <HintPath>..\..\shared\CS2MenuManager\CS2MenuManager.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
 	<None Update="appsettings.json">
 		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	</None>
