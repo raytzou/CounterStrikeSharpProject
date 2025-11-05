@@ -58,6 +58,7 @@ public class Main(
     public int GetPlayerSlot(string playerName) => _players.TryGetValue(playerName, out int slot) ? slot : throw new Exception("Player not found");
     public int RoundCount => _roundCount;
     public int PlayerCount => Utilities.GetPlayers().Count(p => !p.IsBot);
+    public bool IsRoundEnd => _isRoundEnd;
 
     public override void Load(bool hotreload)
     {
@@ -279,7 +280,21 @@ public class Main(
                 _randomSpawn = true;
             }
             if (_specialAndBoss.Contains(player.PlayerName)) return HookResult.Continue;
-            Server.NextFrameAsync(() => _bot.RespawnBotAsync(player));
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await _bot.RespawnBotAsync(player);
+                }
+                catch (InvalidOperationException ex) when (ex.Message.Contains("Entity is not valid"))
+                {
+                    _logger.LogWarning("Failed to respawn bot {PlayerName}: Entity is not valid, probably the bot has been kicked after round end.", player.PlayerName);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error respawning bot {PlayerName}", player.PlayerName);
+                }
+            });
         }
         else if (_position.TryGetValue(player.PlayerName, out Position? playerPosition))
         {
