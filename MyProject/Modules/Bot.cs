@@ -200,32 +200,54 @@ public class Bot(ILogger<Bot> logger) : IBot
     {
         if (_respawnTimes <= 0)
             return;
+        if (!bot.IsValid || bot.PlayerPawn.Value is null)
+            return;
 
-        await Server.NextFrameAsync(bot.Respawn);
-
-        if (Main.Instance.RoundCount > 1)
+        try
         {
             await Server.NextFrameAsync(() =>
             {
+                // check again if the round has ended
+                if (Main.Instance.IsRoundEnd)
+                    return;
+
+                // double-check to ensure the entity is still valid during execution
                 if (!bot.IsValid || bot.PlayerPawn.Value == null || !bot.PlayerPawn.Value.IsValid)
                     return;
 
-                bot.RemoveWeapons();
-                bot.PlayerPawn.Value!.WeaponServices!.PreventWeaponPickup = false;
+                bot.Respawn();
             });
 
-            await Server.NextFrameAsync(() =>
+            if (Main.Instance.RoundCount > 1)
             {
-                if (!bot.IsValid || bot.PlayerPawn.Value == null || !bot.PlayerPawn.Value.IsValid)
-                    return;
+                await Server.NextFrameAsync(() =>
+                {
+                    if (!bot.IsValid || bot.PlayerPawn.Value == null || !bot.PlayerPawn.Value.IsValid)
+                        return;
 
-                var botTeam = GetBotTeam(Server.MapName);
-                if (botTeam == CsTeam.None) return;
-                bot.GiveNamedItem(botTeam == CsTeam.CounterTerrorist ? CsItem.M4A1 : CsItem.AK47);
-                bot.PlayerPawn.Value!.WeaponServices!.PreventWeaponPickup = true;
-            });
+                    bot.RemoveWeapons();
+                    bot.PlayerPawn.Value!.WeaponServices!.PreventWeaponPickup = false;
+                });
+
+                await Server.NextFrameAsync(() =>
+                {
+                    if (!bot.IsValid || bot.PlayerPawn.Value == null || !bot.PlayerPawn.Value.IsValid)
+                        return;
+
+                    var botTeam = GetBotTeam(Server.MapName);
+                    if (botTeam == CsTeam.None) return;
+                    bot.GiveNamedItem(botTeam == CsTeam.CounterTerrorist ? CsItem.M4A1 : CsItem.AK47);
+                    bot.PlayerPawn.Value!.WeaponServices!.PreventWeaponPickup = true;
+                });
+            }
+
+            _respawnTimes--;
         }
-        _respawnTimes--;
+        catch (InvalidOperationException ex) when (ex.Message.Contains("Entity is not valid"))
+        {
+            // skip when entity is invalid, not counted as failure
+            return;
+        }
     }
 
     public void BossBehavior(CCSPlayerController boss)

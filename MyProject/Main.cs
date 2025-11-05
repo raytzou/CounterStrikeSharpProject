@@ -40,12 +40,14 @@ public class Main(
     private readonly Dictionary<string, Position> _position = [];
     private readonly Dictionary<string, WeaponStatus> _weaponStatus = [];
     private readonly bool[] _skinUpdated = new bool[64];
+    private static readonly HashSet<string> _specialAndBoss = BotProfile.Special.Select(s => s.Value).Concat(BotProfile.Boss.Select(s => s.Value)).ToHashSet();
     private CounterStrikeSharp.API.Modules.Timers.Timer? _weaponCheckTimer = null;
     private int _roundCount = 0;
     private bool _warmup = true;
     private int _winStreak = 0;
     private int _looseStreak = 0;
     private bool _isRoundEnd = false;
+    private bool _randomSpawn = false;
 
     // module services
     private readonly ICommand _command = commmand;
@@ -58,6 +60,7 @@ public class Main(
     public int GetPlayerSlot(string playerName) => _players.TryGetValue(playerName, out int slot) ? slot : throw new Exception("Player not found");
     public int RoundCount => _roundCount;
     public int PlayerCount => Utilities.GetPlayers().Count(p => !p.IsBot);
+    public bool IsRoundEnd => _isRoundEnd;
 
     public override void Load(bool hotreload)
     {
@@ -280,26 +283,42 @@ public class Main(
             !player.IsValid)
             return HookResult.Continue;
 
-        if (!_warmup && !_isRoundEnd)
+        if (_warmup || _isRoundEnd) return HookResult.Continue;
+
+        if (player.IsBot && player.Team != GetHumanTeam())
         {
-            if (player.IsBot && player.Team != GetHumanTeam())
+            if (!_randomSpawn)
             {
                 Server.ExecuteCommand("mp_randomspawn 1");
-                var specialAndBoss = BotProfile.Special.Select(s => s.Value).Concat(BotProfile.Boss.Select(s => s.Value)).ToHashSet();
-                if (specialAndBoss.Contains(player.PlayerName)) return HookResult.Continue;
-                Server.NextFrameAsync(() => _bot.RespawnBotAsync(player));
+                _randomSpawn = true;
             }
-            else if (_position.TryGetValue(player.PlayerName, out Position? playerPosition))
+            if (_specialAndBoss.Contains(player.PlayerName)) return HookResult.Continue;
+            _ = Task.Run(async () =>
             {
-                var origin = new Vector(player.PlayerPawn.Value!.AbsOrigin?.X ?? 0f, player.PlayerPawn.Value!.AbsOrigin?.Y ?? 0f, player.PlayerPawn.Value!.AbsOrigin?.Z ?? 0f);
-                var rotation = new QAngle(player.PlayerPawn.Value!.AbsRotation?.X ?? 0f, player.PlayerPawn.Value!.AbsRotation?.Y ?? 0f, player.PlayerPawn.Value!.AbsRotation?.Z ?? 0f);
-                var velocity = new Vector(player.PlayerPawn.Value!.AbsVelocity?.X ?? 0f, player.PlayerPawn.Value!.AbsVelocity?.Y ?? 0f, player.PlayerPawn.Value!.AbsVelocity?.Z ?? 0f);
+                try
+                {
+                    await _bot.RespawnBotAsync(player);
+                }
+                catch (InvalidOperationException ex) when (ex.Message.Contains("Entity is not valid"))
+                {
+                    _logger.LogWarning("Failed to respawn bot {PlayerName}: Entity is not valid, probably the bot has been kicked after round end.", player.PlayerName);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error respawning bot {PlayerName}", player.PlayerName);
+                }
+            });
+        }
+        else if (_position.TryGetValue(player.PlayerName, out Position? playerPosition))
+        {
+            var origin = new Vector(player.PlayerPawn.Value!.AbsOrigin?.X ?? 0f, player.PlayerPawn.Value!.AbsOrigin?.Y ?? 0f, player.PlayerPawn.Value!.AbsOrigin?.Z ?? 0f);
+            var rotation = new QAngle(player.PlayerPawn.Value!.AbsRotation?.X ?? 0f, player.PlayerPawn.Value!.AbsRotation?.Y ?? 0f, player.PlayerPawn.Value!.AbsRotation?.Z ?? 0f);
+            var velocity = new Vector(player.PlayerPawn.Value!.AbsVelocity?.X ?? 0f, player.PlayerPawn.Value!.AbsVelocity?.Y ?? 0f, player.PlayerPawn.Value!.AbsVelocity?.Z ?? 0f);
 
-                playerPosition.Origin = origin;
-                playerPosition.Rotation = rotation;
-                playerPosition.Velocity = velocity;
-                _weaponStatus[player.PlayerName].IsTracking = false;
-            }
+            playerPosition.Origin = origin;
+            playerPosition.Rotation = rotation;
+            playerPosition.Velocity = velocity;
+            _weaponStatus[player.PlayerName].IsTracking = false;
         }
 
         return HookResult.Continue;
@@ -466,6 +485,7 @@ public class Main(
         {
             _bot.RoundEndBehavior(_winStreak, _looseStreak);
             Server.ExecuteCommand("mp_randomspawn 0");
+            _randomSpawn = false;
             _weaponCheckTimer?.Kill();
             _roundCount++;
         }
@@ -612,6 +632,7 @@ public class Main(
         _players.Clear();
         _position.Clear();
         _weaponStatus.Clear();
+        _randomSpawn = false;
     }
 
     private static void RemovePlayerProtection(CCSPlayerController? player)
