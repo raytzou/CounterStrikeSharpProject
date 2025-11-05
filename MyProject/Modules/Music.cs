@@ -39,6 +39,8 @@ namespace MyProject.Modules
 
         private int? _currentPlayingIndex;
 
+        public string? CurrentRoundMusicName => _currentPlayingIndex is null ? null : _round[_currentPlayingIndex.Value].DisplayName;
+
         public Music(ILogger<Music> logger)
         {
             _logger = logger;
@@ -76,12 +78,6 @@ namespace MyProject.Modules
         public void PlayWarmupMusic(CCSPlayerController player)
         {
             PlaySound(player, _warmup);
-        }
-
-        public string? GetCurrentRoundMusicName()
-        {
-            if (_currentPlayingIndex is null) return null;
-            return _round[_currentPlayingIndex.Value].DisplayName;
         }
 
         private void PlaySound(CCSPlayerController player, string[] sounds)

@@ -5,6 +5,11 @@ namespace MyProject.Modules.Interfaces
     public interface IMusic
     {
         /// <summary>
+        /// The current round music name, or null if no round music has been played yet
+        /// </summary>
+        string? CurrentRoundMusicName { get; }
+
+        /// <summary>
         /// Plays warmup music for a player
         /// </summary>
         /// <param name="player">Player Controller</param>
@@ -21,11 +26,5 @@ namespace MyProject.Modules.Interfaces
         /// Plays end game music for all players
         /// </summary>
         void PlayEndGameMusic();
-
-        /// <summary>
-        /// Gets the display name of the current round music track
-        /// </summary>
-        /// <returns>The current round music name, or null if no round music has been played yet</returns>
-        string? GetCurrentRoundMusicName();
     }
 }

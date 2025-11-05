@@ -323,7 +323,7 @@ public class Main(
                     _music.PlayRoundMusic();
                     Server.NextFrame(() =>
                     {
-                        var roundMusicName = _music.GetCurrentRoundMusicName();
+                        var roundMusicName = _music.CurrentRoundMusicName;
                         if (!string.IsNullOrEmpty(roundMusicName))
                         {
                             Server.PrintToChatAll($"Now is playing: {roundMusicName}");
