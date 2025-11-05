@@ -17,6 +17,9 @@ namespace MyProject.Modules.Interfaces
 
         void PlayRoundEndMusic();
 
+        /// <summary>
+        /// Plays end game music for all players
+        /// </summary>
         void PlayEndGameMusic();
 
         /// <summary>

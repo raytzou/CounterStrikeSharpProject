@@ -344,6 +344,10 @@ public class Main(
         {
             // End Game
             Server.ExecuteCommand("mp_maxrounds 1");
+            AddTimer(1f, () =>
+            {
+                _music.PlayEndGameMusic();
+            });
         }
 
         foreach (var client in Utilities.GetPlayers())

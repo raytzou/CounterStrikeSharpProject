@@ -32,6 +32,10 @@ namespace MyProject.Modules
             ("round.11", "Devil May Cry 5 - Bury the Light"),
             ("round.12", "Devil May Cry 5 - Devil Trigger"),
         };
+        private static readonly string[] _endGame = new string[]
+        {
+            "end.01"
+        };
 
         private int? _currentPlayingIndex;
 
@@ -42,7 +46,12 @@ namespace MyProject.Modules
 
         public void PlayEndGameMusic()
         {
-            throw new NotImplementedException();
+            var humans = Utility.GetHumanPlayers();
+
+            foreach (var player in humans)
+            {
+                PlaySound(player, _endGame);
+            }
         }
 
         public void PlayRoundEndMusic()
