@@ -84,7 +84,7 @@ namespace MyProject.Services
             _playerCache[player.SteamId] = player;
         }
 
-        public void SaveCachesToDB(IEnumerable<Player> caches)
+        public void SaveCacheToDB(IEnumerable<Player> caches)
         {
             _dbContext.Players.UpdateRange(caches);
             _dbContext.SaveChanges();
