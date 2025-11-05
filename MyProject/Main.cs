@@ -45,6 +45,7 @@ public class Main(
     private int _winStreak = 0;
     private int _looseStreak = 0;
     private bool _isRoundEnd = false;
+    private bool _randomSpawn = false;
 
     // module services
     private readonly ICommand _command = commmand;
@@ -271,7 +272,11 @@ public class Main(
         {
             if (player.IsBot && player.Team != GetHumanTeam())
             {
-                Server.ExecuteCommand("mp_randomspawn 1");
+                if (!_randomSpawn)
+                {
+                    Server.ExecuteCommand("mp_randomspawn 1");
+                    _randomSpawn = true;
+                }
                 var specialAndBoss = BotProfile.Special.Select(s => s.Value).Concat(BotProfile.Boss.Select(s => s.Value)).ToHashSet();
                 if (specialAndBoss.Contains(player.PlayerName)) return HookResult.Continue;
                 Server.NextFrameAsync(() => _bot.RespawnBotAsync(player));
@@ -577,6 +582,7 @@ public class Main(
         _players.Clear();
         _position.Clear();
         _weaponStatus.Clear();
+        _randomSpawn = false;
     }
 
     private static void RemovePlayerProtection(CCSPlayerController? player)
