@@ -224,7 +224,7 @@ public class Main(
     private HookResult PlayerJoinTeamHandler(EventPlayerTeam @event, GameEventInfo info)
     {
         var player = @event.Userid;
-        if (!Utility.IsHumanPlayerValid(player) || _skinUpdated[player.Slot])
+        if (!Utility.IsHumanPlayerValid(player) || _skinUpdated[player!.Slot])
             return HookResult.Continue;
         Server.NextFrameAsync(() =>
         {

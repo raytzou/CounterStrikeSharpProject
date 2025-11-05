@@ -527,7 +527,8 @@ namespace MyProject.Classes
             fadeMsg.Send(player);
         }
 
-        public static bool IsHumanPlayerValid(CCSPlayerController player) =>
+        public static bool IsHumanPlayerValid(CCSPlayerController? player) =>
+            player != null &&
             player.IsValid &&
             !player.IsBot &&
             player.PlayerPawn.Value != null;
