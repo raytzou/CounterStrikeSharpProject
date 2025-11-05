@@ -8,7 +8,6 @@ namespace MyProject.Modules
 {
     public class Music : IMusic
     {
-        private readonly ILogger _logger;
         private static readonly Random _random = new Random(); // avoid repeated instantiation
         private static readonly string[] _warmup = new string[]
         {
@@ -40,11 +39,6 @@ namespace MyProject.Modules
         private int? _currentPlayingIndex;
 
         public string? CurrentRoundMusicName => _currentPlayingIndex is null ? null : _round[_currentPlayingIndex.Value].DisplayName;
-
-        public Music(ILogger<Music> logger)
-        {
-            _logger = logger;
-        }
 
         public void PlayEndGameMusic()
         {
