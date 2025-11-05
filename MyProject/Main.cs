@@ -39,7 +39,6 @@ public class Main(
     private readonly Dictionary<string, Position> _position = [];
     private readonly Dictionary<string, WeaponStatus> _weaponStatus = [];
     private readonly bool[] _skinUpdated = new bool[64];
-    private static readonly HashSet<string> _specialAndBoss = BotProfile.Special.Select(s => s.Value).Concat(BotProfile.Boss.Select(s => s.Value)).ToHashSet();
     private CounterStrikeSharp.API.Modules.Timers.Timer? _weaponCheckTimer = null;
     private int _roundCount = 0;
     private bool _warmup = true;
@@ -279,7 +278,7 @@ public class Main(
                 Server.ExecuteCommand("mp_randomspawn 1");
                 _randomSpawn = true;
             }
-            if (_specialAndBoss.Contains(player.PlayerName)) return HookResult.Continue;
+            if (_bot.SpecialAndBoss.Contains(player.PlayerName)) return HookResult.Continue;
             _ = Task.Run(async () =>
             {
                 try

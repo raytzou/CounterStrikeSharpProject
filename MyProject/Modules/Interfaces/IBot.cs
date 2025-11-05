@@ -10,6 +10,13 @@ namespace MyProject.Modules.Interfaces
 
         int RespawnTimes { get; }
 
+        IReadOnlySet<string> SpecialAndBoss { get; }
+
+        IReadOnlySet<string> SpecialBots { get; }
+
+        IReadOnlySet<string> Bosses { get; }
+
+
         void MapStartBehavior();
 
         void WarmupEndBehavior();

@@ -20,10 +20,16 @@ public class Bot(ILogger<Bot> logger) : IBot
     private readonly List<CounterStrikeSharp.API.Modules.Timers.Timer> _damageTimers = new();
 
     private static readonly Regex NormalBotNameRegex = new(@"^\[(?<Grade>[^\]]+)\](?<Group>[^#]+)#(?<Num>\d{1,2})$");
+    private static readonly HashSet<string> _specialBots = BotProfile.Special.Values.ToHashSet();
+    private static readonly HashSet<string> _bosses = BotProfile.Boss.Values.ToHashSet();
+    private static readonly HashSet<string> _specialAndBoss = _specialBots.Concat(_bosses).ToHashSet();
 
     public int CurrentLevel => _level + 1;
     public int RespawnTimes => _respawnTimes;
     public int MaxRespawnTimes => _maxRespawnTimes;
+    public IReadOnlySet<string> SpecialAndBoss => _specialAndBoss;
+    public IReadOnlySet<string> SpecialBots => _specialBots;
+    public IReadOnlySet<string> Bosses => _bosses;
 
     public bool IsBoss(CCSPlayerController player)
     {
@@ -792,11 +798,9 @@ public class Bot(ILogger<Bot> logger) : IBot
 
     private static void KickSpecialBot()
     {
-        var specialBot = BotProfile.Special.Values.ToHashSet();
-
         foreach (var bot in Utilities.GetPlayers().Where(player => player.IsBot))
         {
-            if (specialBot.Contains(bot.PlayerName))
+            if (_specialBots.Contains(bot.PlayerName))
             {
                 Server.ExecuteCommand($"kick {bot.PlayerName}");
             }
@@ -805,11 +809,9 @@ public class Bot(ILogger<Bot> logger) : IBot
 
     private static void KickBoss()
     {
-        var boss = BotProfile.Boss.Values.ToHashSet();
-
         foreach (var bot in Utilities.GetPlayers().Where(player => player.IsBot))
         {
-            if (boss.Contains(bot.PlayerName))
+            if (_bosses.Contains(bot.PlayerName))
             {
                 Server.ExecuteCommand($"kick {bot.PlayerName}");
             }
