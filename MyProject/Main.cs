@@ -314,7 +314,24 @@ public class Main(
             RemoveProtectionFromAllPlayers();
             ActivateAllWeaponStatuses();
             StartWeaponCheckTimer();
-            _music.PlayRoundMusic();
+
+            // play round music after freezetime
+            if (int.TryParse(ConVar.Find("mp_freezetime")!.StringValue, out var freezeTime))
+            {
+                AddTimer(freezeTime, () =>
+                {
+                    _music.PlayRoundMusic();
+                    Server.NextFrame(() =>
+                    {
+                        var roundMusicName = _music.GetCurrentRoundMusicName();
+                        if (!string.IsNullOrEmpty(roundMusicName))
+                        {
+                            Server.PrintToChatAll($"Now is playing: {roundMusicName}");
+                        }
+                    });
+                });
+            }
+
             if (_roundCount == Config.MidBossRound || _roundCount == Config.FinalBossRound)
             {
                 RemoveBomb();
