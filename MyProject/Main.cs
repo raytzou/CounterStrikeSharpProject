@@ -498,9 +498,11 @@ public class Main(
     private HookResult PlayerHurtHandler(EventPlayerHurt @event, GameEventInfo info)
     {
         var player = @event.Userid;
+        if (player is null || !player.IsValid) return HookResult.Continue;
 
-        if (_bot.IsBoss(player!))
-            _bot.BossBehavior(player!);
+
+        if (_bot.IsBoss(player))
+            _bot.BossBehavior(player);
 
         return HookResult.Continue;
     }

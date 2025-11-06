@@ -606,6 +606,10 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void CreateProjectileAtPosition<T>(Vector position, CCSPlayerController attacker, float cleanupTime = 3.0f) where T : CBaseCSGrenadeProjectile
         {
+            // Early check: ensure attacker is valid before creating projectile
+            if (attacker == null || !attacker.IsValid || attacker.PlayerPawn.Value == null || !attacker.PlayerPawn.Value.IsValid)
+                return;
+
             var defaultVelocity = new Vector(0, 0, 0);
             var defaultAngle = new QAngle(0, 0, 0);
             var projectile = GrenadeProjectileFactory.Create<T>(position, defaultAngle, defaultVelocity);
@@ -621,10 +625,18 @@ public class Bot(ILogger<Bot> logger) : IBot
             projectile.Teleport(centerPosition);
             projectile.DispatchSpawn();
             projectile.Elasticity = 0f;
-            projectile.TeamNum = attacker.TeamNum;
-            projectile.Thrower.Raw = attacker.PlayerPawn.Raw;
-            projectile.OriginalThrower.Raw = attacker.PlayerPawn.Raw;
-            projectile.OwnerEntity.Raw = attacker.PlayerPawn.Raw;
+
+            // Double-check attacker validity before setting ownership properties
+            // This handles cases where the attacker becomes invalid between the initial check and this point
+            if (attacker.IsValid)
+            {
+                projectile.TeamNum = attacker.TeamNum;
+                projectile.Thrower.Raw = attacker.PlayerPawn.Raw;
+                projectile.OriginalThrower.Raw = attacker.PlayerPawn.Raw;
+                projectile.OwnerEntity.Raw = attacker.PlayerPawn.Raw;
+            }
+            // If attacker becomes invalid, projectile will have no owner
+            // Players can still be damaged, but kills will count as environmental/suicide
 
             if (projectile is CSmokeGrenadeProjectile smokeProjectile)
             {
