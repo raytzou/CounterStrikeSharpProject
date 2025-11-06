@@ -497,12 +497,17 @@ public class Main(
 
     private HookResult PlayerHurtHandler(EventPlayerHurt @event, GameEventInfo info)
     {
-        var player = @event.Userid;
-        if (player is null || !player.IsValid) return HookResult.Continue;
+        var victim = @event.Userid;
+        var attacker = @event.Attacker;
+        if (victim is null || !victim.IsValid || attacker is null || !attacker.IsValid)
+            return HookResult.Continue;
 
+        // Prevent boss from being damaged by their own abilities
+        if (_bot.IsBoss(victim) && _bot.IsBoss(attacker) && victim.Index == attacker.Index)
+            return HookResult.Handled;
 
-        if (_bot.IsBoss(player))
-            _bot.BossBehavior(player);
+        if (_bot.IsBoss(victim))
+            _bot.BossBehavior(victim);
 
         return HookResult.Continue;
     }
