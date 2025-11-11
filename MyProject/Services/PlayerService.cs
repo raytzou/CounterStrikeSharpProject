@@ -34,7 +34,8 @@ namespace MyProject.Services
                     SteamId = playerSteamId,
                     PlayerName = client.PlayerName,
                     IpAddress = client.IpAddress ?? string.Empty,
-                    LastTimeConnect = DateTime.Now
+                    LastTimeConnect = DateTime.Now,
+                    Volume = 50
                 };
                 _dbContext.Players.Add(playerData);
             }

@@ -2,11 +2,14 @@
 using CounterStrikeSharp.API.Modules.Utils;
 using MyProject.Classes;
 using MyProject.Modules.Interfaces;
+using MyProject.Services.Interfaces;
 
 namespace MyProject.Modules
 {
     public class Music : IMusic
     {
+        private readonly IPlayerService _playerService;
+
         private static readonly Random _random = new Random(); // avoid repeated instantiation
         private static readonly string[] _warmup = new string[]
         {
@@ -36,6 +39,11 @@ namespace MyProject.Modules
         };
 
         private int? _currentPlayingIndex;
+
+        public Music(IPlayerService playerService)
+        {
+            _playerService = playerService;
+        }
 
         public string? CurrentRoundMusicName => _currentPlayingIndex is null ? null : _round[_currentPlayingIndex.Value].DisplayName;
 
@@ -91,7 +99,9 @@ namespace MyProject.Modules
         private void EmitSoundToPlayer(CCSPlayerController player, string soundName)
         {
             var recipient = new RecipientFilter { player };
-            player.EmitSound(soundName, recipient);
+            var playerVolume = _playerService.GetPlayerCache(player.SteamID)?.Volume ?? 50;
+
+            player.EmitSound(soundName, recipient, playerVolume / 100);
         }
     }
 }
