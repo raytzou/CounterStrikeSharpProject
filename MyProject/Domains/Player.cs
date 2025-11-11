@@ -17,6 +17,8 @@ namespace MyProject.Domains
         public DateTime LastTimeConnect { get; set; }
         [Column("default_skin_model_path")]
         public string DefaultSkinModelPath { get; set; } = null!;
+        [Column("volume")]
+        public byte Volume { get; set; }
 
         // navigation properties
         public virtual ICollection<PlayerSkin> PlayerSkins { get; set; } = new List<PlayerSkin>();
