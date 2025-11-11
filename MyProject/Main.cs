@@ -620,6 +620,12 @@ public class Main(
     {
         _command.OnSlapCommand(client, command);
     }
+
+    [ConsoleCommand("css_volume", "music volume command")]
+    public void OnVolumeCommand(CCSPlayerController client, CommandInfo command)
+    {
+        _command.OnVolumeCommand(client, command);
+    }
     #endregion commands
 
     private void InitializeFileds()

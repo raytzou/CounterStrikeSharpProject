@@ -242,8 +242,8 @@ public class Command(
     public void OnSlayCommand(CCSPlayerController client, CommandInfo command)
     {
         ExecutePlayerCommand(
-            client, 
-            command, 
+            client,
+            command,
             minArgCount: 2,
             usageMessage: "[css] Usage: css_slay <target>",
             commandName: "slay",
@@ -455,11 +455,43 @@ public class Command(
             {
                 var dmgString = command.ArgCount >= 2 ? command.GetArg(2) : "0";
                 int.TryParse(dmgString, out var damage);
-                return string.IsNullOrEmpty(targetName) 
+                return string.IsNullOrEmpty(targetName)
                     ? "Admin slapped all players"
                     : $"Admin slapped {targetName} {damage} hp";
             }
         );
+    }
+
+    public void OnVolumeCommand(CCSPlayerController client, CommandInfo command)
+    {
+        if (!Utility.IsHumanPlayerValid(client)) return;
+
+        if (command.ArgCount != 2)
+        {
+            command.ReplyToCommand("[css] Usage: css_volume [volume]");
+            return;
+        }
+
+        var volumeString = command.GetArg(2);
+
+        if (string.IsNullOrEmpty(volumeString) || !byte.TryParse(volumeString, out var volume) || volume < 10 || volume > 100)
+        {
+            command.ReplyToCommand("Invalid volume");
+            return;
+        }
+
+        var playerCache = _playerService.GetPlayerCache(client.SteamID);
+
+        if (playerCache is null)
+        {
+            command.ReplyToCommand("Cannot update volume, please reconnect to server!");
+            _logger.LogWarning("Cannot update volume, player cache is not found. SteamID: {steamID}", client.SteamID);
+            return;
+        }
+
+        playerCache.Volume = volume;
+        _playerService.UpdateCache(playerCache);
+        command.ReplyToCommand($"Volume set to {volume}%");
     }
 
     private void ExecutePlayerCommand(
@@ -491,7 +523,7 @@ public class Command(
             {
                 playerAction(player);
             }
-            
+
             var message = customBroadcastMessage?.Invoke("") ?? $"Admin {pastTenseVerb} all players";
             Server.PrintToChatAll(message);
             _logger.LogInformation("[css] {admin} {pastTense} all players at {DT}", adminName, pastTenseVerb, DateTime.Now);
@@ -503,7 +535,7 @@ public class Command(
             {
                 playerAction(player);
             }
-            
+
             Server.PrintToChatAll($"Admin {pastTenseVerb} all CT players");
             _logger.LogInformation("[css] {admin} {pastTense} all CT players at {DT}", adminName, pastTenseVerb, DateTime.Now);
             return;
@@ -514,7 +546,7 @@ public class Command(
             {
                 playerAction(player);
             }
-            
+
             Server.PrintToChatAll($"Admin {pastTenseVerb} all T players");
             _logger.LogInformation("[css] {admin} {pastTense} all T players at {DT}", adminName, pastTenseVerb, DateTime.Now);
             return;
