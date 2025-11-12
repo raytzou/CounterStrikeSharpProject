@@ -226,15 +226,26 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             if (Main.Instance.RoundCount > 1)
             {
+                // prevent pickup = false
+                await Server.NextFrameAsync(() =>
+                {
+                    // double-check pawn
+                    if (!Utility.IsBotValid(bot))
+                        return;
+
+                    bot.PlayerPawn.Value!.WeaponServices!.PreventWeaponPickup = false;
+                });
+
+                // remove bot's weapon
                 await Server.NextFrameAsync(() =>
                 {
                     if (!Utility.IsBotValid(bot))
                         return;
 
                     bot.RemoveWeapons();
-                    bot.PlayerPawn.Value!.WeaponServices!.PreventWeaponPickup = false;
                 });
 
+                // give bot weapon
                 await Server.NextFrameAsync(() =>
                 {
                     if (!Utility.IsBotValid(bot))
@@ -243,6 +254,14 @@ public class Bot(ILogger<Bot> logger) : IBot
                     var botTeam = GetBotTeam(Server.MapName);
                     if (botTeam == CsTeam.None) return;
                     bot.GiveNamedItem(botTeam == CsTeam.CounterTerrorist ? CsItem.M4A1 : CsItem.AK47);
+                });
+
+                // prevent pickup = true
+                await Server.NextFrameAsync(() =>
+                {
+                    if (!Utility.IsBotValid(bot))
+                        return;
+
                     bot.PlayerPawn.Value!.WeaponServices!.PreventWeaponPickup = true;
                 });
             }
