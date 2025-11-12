@@ -206,7 +206,7 @@ public class Bot(ILogger<Bot> logger) : IBot
     {
         if (_respawnTimes <= 0)
             return;
-        if (!bot.IsValid || bot.PlayerPawn.Value is null)
+        if (!Utility.IsBotValid(bot))
             return;
 
         try
@@ -218,7 +218,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                     return;
 
                 // double-check to ensure the entity is still valid during execution
-                if (!bot.IsValid || bot.PlayerPawn.Value == null || !bot.PlayerPawn.Value.IsValid)
+                if (!Utility.IsBotValid(bot))
                     return;
 
                 bot.Respawn();
@@ -228,7 +228,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 await Server.NextFrameAsync(() =>
                 {
-                    if (!bot.IsValid || bot.PlayerPawn.Value == null || !bot.PlayerPawn.Value.IsValid)
+                    if (!Utility.IsBotValid(bot))
                         return;
 
                     bot.RemoveWeapons();
@@ -237,7 +237,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
                 await Server.NextFrameAsync(() =>
                 {
-                    if (!bot.IsValid || bot.PlayerPawn.Value == null || !bot.PlayerPawn.Value.IsValid)
+                    if (!Utility.IsBotValid(bot))
                         return;
 
                     var botTeam = GetBotTeam(Server.MapName);

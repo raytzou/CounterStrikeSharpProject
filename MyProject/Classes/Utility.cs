@@ -538,6 +538,17 @@ namespace MyProject.Classes
                 .Where(player => Utility.IsPlayerValidAndAlive(player))
                 .ToList();
 
+        public static bool IsBotValid(CCSPlayerController? bot) =>
+            bot is not null &&
+            bot.IsValid &&
+            bot.IsBot &&
+            bot.PlayerPawn.Value is not null &&
+            bot.PlayerPawn.Value.IsValid;
+
+        public static bool IsBotValidAndAlive(CCSPlayerController? bot) =>
+            IsBotValid(bot) &&
+            bot!.PlayerPawn.Value!.LifeState == (byte)LifeState_t.LIFE_ALIVE;
+
         public static void PrintToAllCenter(string message)
         {
             foreach (var player in Utilities.GetPlayers().Where(p =>
