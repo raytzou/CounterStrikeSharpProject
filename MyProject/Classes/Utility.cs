@@ -4,7 +4,6 @@ using CounterStrikeSharp.API.Modules.Entities.Constants;
 using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.UserMessages;
 using CounterStrikeSharp.API.Modules.Utils;
-using Microsoft.Extensions.Logging;
 using MyProject.Models;
 using System.Drawing;
 using System.Reflection;
@@ -106,14 +105,6 @@ namespace MyProject.Classes
             FadeOut = 0x0002,
             FadeStayOut = 0x0008,
             Purge = 0x0010
-        }
-
-        /// <summary>
-        /// This is for debugging purposes only. There should be no references to this method.
-        /// </summary>
-        public static void DebugLogger<T>(ILogger<T> logger, string content) where T : class
-        {
-            logger.LogInformation("{content}", content);
         }
 
         /// <summary>
