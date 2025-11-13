@@ -77,7 +77,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 await SetSpecialBotWeapon(BotProfile.Special[0], CsItem.AWP); // "[ELITE]EagleEye"
                 await SetSpecialBotWeapon(BotProfile.Special[1], CsItem.M4A1S); // "[ELITE]mimic"
-                await SetSpecialBotWeapon(BotProfile.Special[2], CsItem.P90); // "[EXPERT]Rush"
+                await SetSpecialBotWeapon(BotProfile.Special[2], CsItem.P90); // "[EXPERT]Rush" 
 
                 await Server.NextFrameAsync(() =>
                 {
@@ -110,16 +110,10 @@ public class Bot(ILogger<Bot> logger) : IBot
             var botActiveWeapon = bot!.PlayerPawn.Value!.WeaponServices?.ActiveWeapon.Value?.DesignerName;
             var itemValue = Utility.GetCsItemEnumValue(item);
 
-            await Server.NextFrameAsync(async () =>
-            {
-                bot.PlayerPawn.Value.WeaponServices!.PreventWeaponPickup = false;
-                if (botActiveWeapon != itemValue)
-                {
-                    if (!string.IsNullOrEmpty(botActiveWeapon))
-                        bot.RemoveWeapons();
-                    await Server.NextFrameAsync(() => bot.GiveNamedItem(itemValue));
-                }
-            });
+            await AllowBotPickupWeapon(bot);
+            await RemoveBotWeapon(bot);
+            await GiveBotWeapon(bot, item);
+            await PreventBotPickupWeapon(bot);
         }
 
         void SetBotMoneyToZero()

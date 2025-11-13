@@ -325,7 +325,17 @@ public class Main(
             }
         }
 
-        _bot.RoundStartBehavior();
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await _bot.RoundStartBehavior();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Bot Round Start Behavior error: {error}", ex.Message);
+            }
+        });
 
         if (_roundCount == ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>())
         {
