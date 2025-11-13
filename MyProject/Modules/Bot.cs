@@ -114,6 +114,23 @@ public class Bot(ILogger<Bot> logger) : IBot
             await RemoveBotWeapon(bot);
             await GiveBotWeapon(bot, item);
             await PreventBotPickupWeapon(bot);
+
+            if (AppSettings.IsDebug)
+            {
+                await Server.NextFrameAsync(() =>
+                {
+                    if (Utility.IsBotValid(bot))
+                    {
+                        var currentWeapon = bot.PlayerPawn.Value!.WeaponServices?.ActiveWeapon.Value?.DesignerName;
+                        var expectedWeapon = Utility.GetCsItemEnumValue(item);
+                        if (currentWeapon != expectedWeapon)
+                        {
+                            _logger.LogWarning("Special bot {BotName} weapon mismatch. Expected: {Expected}, Actual: {Actual}",
+                                bot.PlayerName, expectedWeapon, currentWeapon ?? "None");
+                        }
+                    }
+                });
+            }
         }
 
         void SetBotMoneyToZero()
@@ -224,6 +241,24 @@ public class Bot(ILogger<Bot> logger) : IBot
                 await RemoveBotWeapon(bot);
                 await GiveBotWeapon(bot);
                 await PreventBotPickupWeapon(bot);
+
+                if (AppSettings.IsDebug)
+                {
+                    await Server.NextFrameAsync(() =>
+                    {
+                        if (Utility.IsBotValid(bot))
+                        {
+                            var currentWeapon = bot.PlayerPawn.Value!.WeaponServices?.ActiveWeapon.Value?.DesignerName;
+                            var botTeam = GetBotTeam(Server.MapName);
+                            var expectedWeapon = Utility.GetCsItemEnumValue(botTeam == CsTeam.CounterTerrorist ? CsItem.M4A1 : CsItem.AK47);
+                            if (currentWeapon != expectedWeapon)
+                            {
+                                _logger.LogWarning("Respawn bot {BotName} weapon mismatch. Expected: {Expected}, Actual: {Actual}",
+                                    bot.PlayerName, expectedWeapon, currentWeapon ?? "None");
+                            }
+                        }
+                    });
+                }
             }
 
             _respawnTimes--;
