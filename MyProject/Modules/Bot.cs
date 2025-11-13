@@ -226,44 +226,10 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             if (Main.Instance.RoundCount > 1)
             {
-                // prevent pickup = false
-                await Server.NextFrameAsync(() =>
-                {
-                    // double-check pawn
-                    if (!Utility.IsBotValid(bot))
-                        return;
-
-                    bot.PlayerPawn.Value!.WeaponServices!.PreventWeaponPickup = false;
-                });
-
-                // remove bot's weapon
-                await Server.NextFrameAsync(() =>
-                {
-                    if (!Utility.IsBotValid(bot))
-                        return;
-
-                    bot.RemoveWeapons();
-                });
-
-                // give bot weapon
-                await Server.NextFrameAsync(() =>
-                {
-                    if (!Utility.IsBotValid(bot))
-                        return;
-
-                    var botTeam = GetBotTeam(Server.MapName);
-                    if (botTeam == CsTeam.None) return;
-                    bot.GiveNamedItem(botTeam == CsTeam.CounterTerrorist ? CsItem.M4A1 : CsItem.AK47);
-                });
-
-                // prevent pickup = true
-                await Server.NextFrameAsync(() =>
-                {
-                    if (!Utility.IsBotValid(bot))
-                        return;
-
-                    bot.PlayerPawn.Value!.WeaponServices!.PreventWeaponPickup = true;
-                });
+                await AllowBotPickupWeapon(bot);
+                await RemoveBotWeapon(bot);
+                await GiveBotWeapon(bot);
+                await PreventBotPickupWeapon(bot);
             }
 
             _respawnTimes--;
@@ -909,5 +875,59 @@ public class Bot(ILogger<Bot> logger) : IBot
                 });
             }
         }
+    }
+
+    private async Task AllowBotPickupWeapon(CCSPlayerController bot)
+    {
+        // prevent pickup = false
+        await Server.NextFrameAsync(() =>
+        {
+            // double-check pawn
+            if (!Utility.IsBotValid(bot))
+                return;
+
+            bot.PlayerPawn.Value!.WeaponServices!.PreventWeaponPickup = false;
+        });
+    }
+
+    private async Task RemoveBotWeapon(CCSPlayerController bot)
+    {
+        // remove bot's weapon
+        await Server.NextFrameAsync(() =>
+        {
+            if (!Utility.IsBotValid(bot))
+                return;
+
+            bot.RemoveWeapons();
+        });
+    }
+
+    private async Task GiveBotWeapon(CCSPlayerController bot, CsItem? weapon = null)
+    {
+        // give bot weapon
+        await Server.NextFrameAsync(() =>
+        {
+            if (!Utility.IsBotValid(bot))
+                return;
+
+            var botTeam = GetBotTeam(Server.MapName);
+            if (botTeam == CsTeam.None) return;
+            if (weapon is null)
+                bot.GiveNamedItem(botTeam == CsTeam.CounterTerrorist ? CsItem.M4A1 : CsItem.AK47);
+            else
+                bot.GiveNamedItem(weapon.Value);
+        });
+    }
+
+    private async Task PreventBotPickupWeapon(CCSPlayerController bot)
+    {
+        // prevent pickup = true
+        await Server.NextFrameAsync(() =>
+        {
+            if (!Utility.IsBotValid(bot))
+                return;
+
+            bot.PlayerPawn.Value!.WeaponServices!.PreventWeaponPickup = true;
+        });
     }
 }
