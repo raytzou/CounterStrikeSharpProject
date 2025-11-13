@@ -63,12 +63,12 @@ public class Bot(ILogger<Bot> logger) : IBot
 
     public async Task RoundStartBehavior()
     {
-        SetBotMoneyToZero();
         ClearDamageTimer();
+        await SetBotMoneyToZero();
 
         if (Main.Instance.RoundCount != Main.Instance.Config.MidBossRound && Main.Instance.RoundCount != Main.Instance.Config.FinalBossRound)
         {
-            SetSpecialBotAttribute();
+            await SetSpecialBotAttribute();
             await SetSpecialBotModel();
 
             _respawnTimes = _maxRespawnTimes;
@@ -79,13 +79,12 @@ public class Bot(ILogger<Bot> logger) : IBot
                 await SetSpecialBotWeapon(BotProfile.Special[1], CsItem.M4A1S); // "[ELITE]mimic"
                 await SetSpecialBotWeapon(BotProfile.Special[2], CsItem.P90); // "[EXPERT]Rush" 
 
-                await Server.NextFrameAsync(() =>
+                foreach (var bot in Utilities.GetPlayers().Where(player => player.IsBot))
                 {
-                    foreach (var bot in Utilities.GetPlayers().Where(player => player.IsBot))
-                    {
-                        bot.PlayerPawn.Value!.WeaponServices!.PreventWeaponPickup = true;
-                    }
-                });
+                    if (!Utility.IsBotValid(bot)) continue;
+
+                    await PreventBotPickupWeapon(bot);
+                }
             }
         }
         else
@@ -133,13 +132,17 @@ public class Bot(ILogger<Bot> logger) : IBot
             }
         }
 
-        void SetBotMoneyToZero()
+        async Task SetBotMoneyToZero()
         {
-            foreach (var client in Utilities.GetPlayers().Where(player => player.IsBot))
+            await Server.NextFrameAsync(() =>
             {
-                client.InGameMoneyServices!.StartAccount = 0;
-                client.InGameMoneyServices.Account = 0;
-            }
+                foreach (var bot in Utilities.GetPlayers().Where(player => player.IsBot))
+                {
+                    if (!Utility.IsBotValid(bot)) continue;
+                    bot.InGameMoneyServices!.StartAccount = 0;
+                    bot.InGameMoneyServices.Account = 0;
+                }
+            });
         }
 
         async Task SetSpecialBotModel()
@@ -158,17 +161,20 @@ public class Bot(ILogger<Bot> logger) : IBot
             });
         }
 
-        void SetSpecialBotAttribute()
+        async Task SetSpecialBotAttribute()
         {
-            var eagleEye = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[0]));
-            var mimic = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[1]));
-            var rush = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[2]));
+            await Server.NextFrameAsync(() =>
+            {
+                var eagleEye = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[0]));
+                var mimic = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[1]));
+                var rush = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[2]));
 
-            eagleEye!.Score = 999;
-            mimic!.Score = 888;
-            rush!.Score = 777;
-            if (Main.Instance.RoundCount > 1)
-                rush!.PlayerPawn.Value!.Health = 250;
+                eagleEye!.Score = 999;
+                mimic!.Score = 888;
+                rush!.Score = 777;
+                if (Main.Instance.RoundCount > 1)
+                    rush!.PlayerPawn.Value!.Health = 250;
+            });
         }
     }
 
