@@ -124,7 +124,17 @@ public class Main(
         _playerService.ClearPlayerCache();
 
         AddMoreSpawnPoint();
-        Server.NextWorldUpdate(() => _bot.MapStartBehavior());
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await _bot.MapStartBehavior();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Map Start Behavior error: {error}", ex.Message);
+            }
+        });
 
         void ResetDefaultWeapon()
         {

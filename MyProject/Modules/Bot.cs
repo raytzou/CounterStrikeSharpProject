@@ -40,13 +40,33 @@ public class Bot(ILogger<Bot> logger) : IBot
         return boss.Contains(player.PlayerName);
     }
 
-    public void MapStartBehavior()
+    public async Task MapStartBehavior()
     {
-        Server.ExecuteCommand("sv_cheats 1");
-        Server.ExecuteCommand("bot_stop 1");
-        Server.ExecuteCommand("bot_kick");
+        await StopBotMoving();
+        await KickBotAsync();
         AddSpecialOrBoss(0);
         _level = 2;
+
+        static async Task StopBotMoving()
+        {
+            await Server.NextWorldUpdateAsync(() =>
+            {
+                Server.ExecuteCommand("sv_cheats 1");
+            });
+
+            await Server.NextWorldUpdateAsync(() =>
+            {
+                Server.ExecuteCommand("bot_stop 1");
+            });
+
+            if (!AppSettings.IsDebug)
+            {
+                await Server.NextWorldUpdateAsync(() =>
+                {
+                    Server.ExecuteCommand("sv_cheats 0");
+                });
+            }
+        }
     }
 
     public void WarmupEndBehavior()
@@ -808,9 +828,13 @@ public class Bot(ILogger<Bot> logger) : IBot
 
     private static async Task KickBotAsync()
     {
-        await Server.NextFrameAsync(() =>
+        await Server.NextWorldUpdateAsync(() =>
         {
             Server.ExecuteCommand("bot_kick");
+        });
+
+        await Server.NextWorldUpdateAsync(() =>
+        {
             Server.ExecuteCommand("bot_quota 0");
         });
     }

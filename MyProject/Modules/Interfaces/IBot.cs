@@ -17,7 +17,7 @@ namespace MyProject.Modules.Interfaces
         IReadOnlySet<string> Bosses { get; }
 
 
-        void MapStartBehavior();
+        Task MapStartBehavior();
 
         void WarmupEndBehavior();
 
