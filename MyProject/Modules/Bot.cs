@@ -51,14 +51,6 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 Server.ExecuteCommand("bot_stop 1");
             });
-
-            if (!AppSettings.IsDebug)
-            {
-                await Server.NextWorldUpdateAsync(() =>
-                {
-                    Server.ExecuteCommand("sv_cheats 0");
-                });
-            }
         }
     }
 
