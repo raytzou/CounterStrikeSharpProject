@@ -31,14 +31,7 @@ public class Bot(ILogger<Bot> logger) : IBot
     public IReadOnlySet<string> SpecialBots => _specialBots;
     public IReadOnlySet<string> Bosses => _bosses;
 
-    public bool IsBoss(CCSPlayerController player)
-    {
-        if (!player.IsBot) return false;
-
-        var boss = BotProfile.Boss.Select(s => s.Value).ToHashSet();
-
-        return boss.Contains(player.PlayerName);
-    }
+    public bool IsBoss(CCSPlayerController player) => _bosses.Contains(player.PlayerName);
 
     public async Task MapStartBehavior()
     {
