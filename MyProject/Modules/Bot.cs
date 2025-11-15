@@ -44,7 +44,7 @@ public class Bot(ILogger<Bot> logger) : IBot
     {
         await StopBotMoving();
         await KickBotAsync();
-        AddSpecialOrBoss(0);
+        await AddSpecialOrBoss(0);
         _level = 2;
 
         static async Task StopBotMoving()
@@ -209,11 +209,11 @@ public class Bot(ILogger<Bot> logger) : IBot
             KickNormalBot();
             if (Main.Instance.RoundCount != Main.Instance.Config.MidBossRound - 1 && Main.Instance.RoundCount != Main.Instance.Config.FinalBossRound - 1 && Main.Instance.RoundCount != Main.Instance.Config.FinalBossRound)
             {
-                KickBoss();
+                KickBossAsync();
                 FillNormalBot(GetDifficultyLevel(winStreak, looseStreak));
             }
             else if (Main.Instance.RoundCount == Main.Instance.Config.MidBossRound - 1 || Main.Instance.RoundCount == Main.Instance.Config.FinalBossRound - 1)
-                KickSpecialBot();
+                KickSpecialBotAsync();
             FixQuota(Main.Instance.RoundCount);
         }
 
@@ -764,7 +764,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    private void AddSpecialOrBoss(int roundCount)
+    private async Task AddSpecialOrBoss(int roundCount)
     {
         var botTeam = GetBotTeam(Server.MapName);
         if (botTeam == CsTeam.None)
@@ -776,8 +776,8 @@ public class Bot(ILogger<Bot> logger) : IBot
             var midBossSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Boss[0]) == 1;
             if (!midBossSpawn)
             {
-                KickBoss();
-                Server.NextFrame(() => Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Boss[0]}"));
+                await KickBossAsync();
+                await Server.NextWorldUpdateAsync(() => Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Boss[0]}"));
             }
             if (AppSettings.LogBotAdd)
             {
@@ -790,8 +790,8 @@ public class Bot(ILogger<Bot> logger) : IBot
             var finalBossSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Boss[1]) == 1;
             if (!finalBossSpawn)
             {
-                KickBoss();
-                Server.NextFrame(() => Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Boss[1]}"));
+                await KickBossAsync();
+                await Server.NextWorldUpdateAsync(() => Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Boss[1]}"));
             }
             if (AppSettings.LogBotAdd)
             {
@@ -807,13 +807,10 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             if (!specialBotSpawn)
             {
-                KickSpecialBot();
-                Server.NextFrame(() =>
-                {
-                    Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[0]}");
-                    Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[1]}");
-                    Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[2]}");
-                });
+                await KickSpecialBotAsync();
+                await Server.NextWorldUpdateAsync(() => Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[0]}"));
+                await Server.NextWorldUpdateAsync(() => Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[1]}"));
+                await Server.NextWorldUpdateAsync(() => Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[2]}"));
             }
 
             if (AppSettings.LogBotAdd)
@@ -852,25 +849,41 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    private static void KickSpecialBot()
+    private static async Task KickSpecialBotAsync()
     {
-        foreach (var bot in Utilities.GetPlayers().Where(player => player.IsBot))
+        var specialBots = Utilities.GetPlayers()
+            .Where(player => player.IsBot && _specialBots.Contains(player.PlayerName))
+            .ToList();
+
+        foreach (var bot in specialBots)
         {
-            if (_specialBots.Contains(bot.PlayerName))
+            await Server.NextWorldUpdateAsync(() =>
             {
-                Server.ExecuteCommand($"kick {bot.PlayerName}");
-            }
+                if (!Utility.IsBotValid(bot)) return;
+                if (_specialBots.Contains(bot.PlayerName))
+                {
+                    Server.ExecuteCommand($"kick {bot.PlayerName}");
+                }
+            });
         }
     }
 
-    private static void KickBoss()
+    private static async Task KickBossAsync()
     {
-        foreach (var bot in Utilities.GetPlayers().Where(player => player.IsBot))
+        var bosses = Utilities.GetPlayers()
+            .Where(player => player.IsBot && _bosses.Contains(player.PlayerName))
+            .ToList();
+
+        foreach (var bot in bosses)
         {
-            if (_bosses.Contains(bot.PlayerName))
+            await Server.NextWorldUpdateAsync(() =>
             {
-                Server.ExecuteCommand($"kick {bot.PlayerName}");
-            }
+                if (!Utility.IsBotValid(bot)) return;
+                if (_bosses.Contains(bot.PlayerName))
+                {
+                    Server.ExecuteCommand($"kick {bot.PlayerName}");
+                }
+            });
         }
     }
 
