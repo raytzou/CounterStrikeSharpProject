@@ -37,7 +37,7 @@ public class Bot(ILogger<Bot> logger) : IBot
     {
         await StopBotMoving();
         await KickBotAsync();
-        await AddSpecialOrBoss(0);
+        await AddSpecialOrBoss();
         _level = 2;
 
         static async Task StopBotMoving()
@@ -203,7 +203,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         if (Main.Instance.RoundCount > 0)
         {
             SetDefaultWeapon();
-            AddSpecialOrBoss(Main.Instance.RoundCount);
+            AddSpecialOrBoss();
             KickNormalBot();
             if (Main.Instance.RoundCount != Main.Instance.Config.MidBossRound - 1 && Main.Instance.RoundCount != Main.Instance.Config.FinalBossRound - 1 && Main.Instance.RoundCount != Main.Instance.Config.FinalBossRound)
             {
@@ -762,14 +762,14 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    private async Task AddSpecialOrBoss(int roundCount)
+    private async Task AddSpecialOrBoss()
     {
         var botTeam = GetBotTeam(Server.MapName);
         if (botTeam == CsTeam.None)
             return;
 
         var team = botTeam == CsTeam.CounterTerrorist ? "ct" : "t";
-        if (roundCount == Main.Instance.Config.MidBossRound - 1)
+        if (Main.Instance.RoundCount == Main.Instance.Config.MidBossRound - 1)
         {
             var midBossSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Boss[0]) == 1;
             if (!midBossSpawn)
@@ -783,7 +783,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 _logger.LogInformation("bot_add_{team} {difficulty} {boss}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Boss[0]);
             }
         }
-        else if (roundCount == Main.Instance.Config.FinalBossRound - 1)
+        else if (Main.Instance.RoundCount == Main.Instance.Config.FinalBossRound - 1)
         {
             var finalBossSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Boss[1]) == 1;
             if (!finalBossSpawn)
