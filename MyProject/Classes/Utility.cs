@@ -23,6 +23,10 @@ namespace MyProject.Classes
         private static List<string> _mapsInPhysicalDirectory;
         private static readonly Dictionary<CsItem, string> _enumValue;
         private static readonly Dictionary<string, SkinInfo> _workshopSkins;
+        private static readonly Dictionary<string, string> _weaponNameMappings = new()
+        {
+            ["weapon_m4a1_silencer"] = "weapon_m4a1",
+        };
 
         static Utility()
         {
@@ -125,6 +129,33 @@ namespace MyProject.Classes
         public static string GetCsItemEnumValue(CsItem item)
         {
             return _enumValue.TryGetValue(item, out var value) ? value : string.Empty;
+        }
+
+        /// <summary>
+        /// Converts CsItem enum to the actual in-game weapon DesignerName.
+        /// Handles cases where the enum value differs from the actual weapon name in game.
+        /// </summary>
+        /// <param name="item">The enum option of <see cref="CsItem">.</param>
+        /// <returns><c>string</c> - The actual weapon DesignerName used in game.</returns>
+        public static string GetActualWeaponName(CsItem item)
+        {
+            var enumValue = GetCsItemEnumValue(item);
+            return _weaponNameMappings.TryGetValue(enumValue, out var actualName) ? actualName : enumValue;
+        }
+
+        /// <summary>
+        /// Checks if the actual weapon name matches the expected CsItem enum.
+        /// Accounts for discrepancies between enum values and actual in-game weapon names.
+        /// </summary>
+        /// <param name="expectedItem">The expected weapon as CsItem enum.</param>
+        /// <param name="actualWeaponName">The actual weapon DesignerName from the game.</param>
+        /// <returns>True if the weapons match, considering name mappings; otherwise, false.</returns>
+        public static bool IsWeaponMatch(CsItem expectedItem, string actualWeaponName)
+        {
+            var expectedName = GetCsItemEnumValue(expectedItem);
+            var actualExpectedName = GetActualWeaponName(expectedItem);
+
+            return actualWeaponName == expectedName || actualWeaponName == actualExpectedName;
         }
 
         /// <summary>

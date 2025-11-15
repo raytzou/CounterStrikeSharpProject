@@ -126,11 +126,10 @@ public class Bot(ILogger<Bot> logger) : IBot
                     if (Utility.IsBotValid(bot))
                     {
                         var currentWeapon = bot.PlayerPawn.Value!.WeaponServices?.ActiveWeapon.Value?.DesignerName;
-                        var expectedWeapon = Utility.GetCsItemEnumValue(item);
-                        if (currentWeapon != expectedWeapon)
+                        if (!Utility.IsWeaponMatch(item, currentWeapon ?? ""))
                         {
                             _logger.LogWarning("Special bot {BotName} weapon mismatch. Expected: {Expected}, Actual: {Actual}",
-                                bot.PlayerName, expectedWeapon, currentWeapon ?? "None");
+                                bot.PlayerName, Utility.GetCsItemEnumValue(item), currentWeapon ?? "None");
                         }
                     }
                 });
