@@ -54,10 +54,26 @@ public class Main(
     // singleton members
     public static Main Instance { get; private set; } = null!; // To Do: remove singleton one day
     public required MainConfig Config { get; set; }
-    public int GetPlayerSlot(string playerName) => _players.TryGetValue(playerName, out int slot) ? slot : throw new Exception("Player not found");
     public int RoundCount => _roundCount;
     public int PlayerCount => Utilities.GetPlayers().Count(p => !p.IsBot);
     public bool IsRoundEnd => _isRoundEnd;
+
+    public int GetPlayerSlot(string playerName)
+    {
+        if (_players.TryGetValue(playerName, out int slot))
+            return slot;
+
+        var player = Utilities.GetPlayers().FirstOrDefault(p => p.PlayerName == playerName);
+        if (player != null && player.IsValid)
+        {
+            _players[playerName] = player.Slot;
+            if (AppSettings.IsDebug)
+                _logger.LogInformation("Late player registration: {playerName} -> slot {slot}", playerName, player.Slot);
+            return player.Slot;
+        }
+
+        throw new Exception($"Player not found: {playerName}");
+    }
 
     public override void Load(bool hotreload)
     {
@@ -335,16 +351,24 @@ public class Main(
             }
         }
 
-        _ = Task.Run(async () =>
+        float roundStartBehaviorDelayTime = 2f;
+
+        if (_roundCount != 0)
+            roundStartBehaviorDelayTime = 0f;
+
+        AddTimer(roundStartBehaviorDelayTime, () =>
         {
-            try
+            _ = Task.Run(async () =>
             {
-                await _bot.RoundStartBehavior();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Bot Round Start Behavior error: {error}", ex.Message);
-            }
+                try
+                {
+                    await _bot.RoundStartBehavior();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError("Bot Round Start Behavior error: {error}", ex.Message);
+                }
+            });
         });
 
         if (_roundCount == ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>())

@@ -154,15 +154,22 @@ public class Bot(ILogger<Bot> logger) : IBot
         {
             await Server.NextFrameAsync(() =>
             {
-                var eagleEye = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[0]));
-                var mimic = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[1]));
-                var rush = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[2]));
-                var random = new Random();
-                var randomSkin = Utility.WorkshopSkins.ElementAt(random.Next(Utility.WorkshopSkins.Count));
+                try
+                {
+                    var eagleEye = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[0]));
+                    var mimic = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[1]));
+                    var rush = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[2]));
+                    var random = new Random();
+                    var randomSkin = Utility.WorkshopSkins.ElementAt(random.Next(Utility.WorkshopSkins.Count));
 
-                Utility.SetClientModel(mimic!, randomSkin.Key);
-                Utility.SetClientModel(eagleEye!, Main.Instance.Config.EagleEyeModel);
-                Utility.SetClientModel(rush!, Main.Instance.Config.RushModel);
+                    Utility.SetClientModel(mimic!, randomSkin.Key);
+                    Utility.SetClientModel(eagleEye!, Main.Instance.Config.EagleEyeModel);
+                    Utility.SetClientModel(rush!, Main.Instance.Config.RushModel);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning("Special bots not ready yet, skipping model setup: {error}", ex.Message);
+                }
             });
         }
 
@@ -170,15 +177,22 @@ public class Bot(ILogger<Bot> logger) : IBot
         {
             await Server.NextFrameAsync(() =>
             {
-                var eagleEye = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[0]));
-                var mimic = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[1]));
-                var rush = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[2]));
+                try
+                {
+                    var eagleEye = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[0]));
+                    var mimic = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[1]));
+                    var rush = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[2]));
 
-                eagleEye!.Score = 999;
-                mimic!.Score = 888;
-                rush!.Score = 777;
-                if (Main.Instance.RoundCount > 1)
-                    rush!.PlayerPawn.Value!.Health = 250;
+                    eagleEye!.Score = 999;
+                    mimic!.Score = 888;
+                    rush!.Score = 777;
+                    if (Main.Instance.RoundCount > 1)
+                        rush!.PlayerPawn.Value!.Health = 250;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning("Special bots not ready yet, skipping attribute setup: {error}", ex.Message);
+                }
             });
         }
     }
