@@ -23,7 +23,7 @@ namespace MyProject.Modules.Interfaces
 
         Task RoundStartBehavior();
 
-        void RoundEndBehavior(int winStreak, int looseStreak);
+        Task RoundEndBehavior(int winStreak, int looseStreak);
 
         Task RespawnBotAsync(CCSPlayerController bot);
 

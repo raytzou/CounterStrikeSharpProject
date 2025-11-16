@@ -196,34 +196,34 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    public void RoundEndBehavior(int winStreak, int looseStreak)
+    public async Task RoundEndBehavior(int winStreak, int looseStreak)
     {
         ClearDamageTimer();
 
         if (Main.Instance.RoundCount > 0)
         {
-            SetDefaultWeapon();
-            AddSpecialOrBoss();
-            KickNormalBot();
+            await SetDefaultWeapon();
+            await AddSpecialOrBoss();
+            await KickNormalBotAsync();
             if (Main.Instance.RoundCount != Main.Instance.Config.MidBossRound - 1 && Main.Instance.RoundCount != Main.Instance.Config.FinalBossRound - 1 && Main.Instance.RoundCount != Main.Instance.Config.FinalBossRound)
             {
-                KickBossAsync();
-                FillNormalBotAsync(GetDifficultyLevel(winStreak, looseStreak));
+                await KickBossAsync();
+                await FillNormalBotAsync(GetDifficultyLevel(winStreak, looseStreak));
             }
             else if (Main.Instance.RoundCount == Main.Instance.Config.MidBossRound - 1 || Main.Instance.RoundCount == Main.Instance.Config.FinalBossRound - 1)
-                KickSpecialBotAsync();
-            FixQuotaAsync(Main.Instance.RoundCount);
+                await KickSpecialBotAsync();
+            await FixQuotaAsync(Main.Instance.RoundCount);
         }
 
-        void SetDefaultWeapon()
+        async Task SetDefaultWeapon()
         {
             var botTeam = GetBotTeam(Server.MapName);
             if (botTeam == CsTeam.None)
                 return;
             var team = (botTeam == CsTeam.CounterTerrorist) ? "ct" : "t";
 
-            Server.ExecuteCommand($"mp_{team}_default_primary {GetDefaultPrimaryWeapon()}");
-            Server.ExecuteCommand($"mp_{team}_default_secondary \"\"");
+            await Server.NextFrameAsync(() => Server.ExecuteCommand($"mp_{team}_default_primary {GetDefaultPrimaryWeapon()}"));
+            await Server.NextFrameAsync(() => Server.ExecuteCommand($"mp_{team}_default_secondary \"\""));
 
             string GetDefaultPrimaryWeapon()
             {
@@ -837,16 +837,19 @@ public class Bot(ILogger<Bot> logger) : IBot
         });
     }
 
-    private static void KickNormalBot()
+    private static async Task KickNormalBotAsync()
     {
         foreach (var bot in Utilities.GetPlayers().Where(p => p.IsBot))
         {
-            var match = NormalBotNameRegex.Match(bot.PlayerName);
-
-            if (match.Success)
+            await Server.NextFrameAsync(() =>
             {
-                Server.ExecuteCommand($"kick {bot.PlayerName}");
-            }
+                var match = NormalBotNameRegex.Match(bot.PlayerName);
+
+                if (match.Success)
+                {
+                    Server.ExecuteCommand($"kick {bot.PlayerName}");
+                }
+            });
         }
     }
 

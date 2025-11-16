@@ -491,7 +491,19 @@ public class Main(
 
         if (!_warmup)
         {
-            _bot.RoundEndBehavior(_winStreak, _looseStreak);
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await _bot.RoundEndBehavior(_winStreak, _looseStreak);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError("Round End Behavior error: {error}", ex.Message);
+                }
+            });
+
+
             Server.ExecuteCommand("mp_randomspawn 0");
             _randomSpawn = false;
             _weaponCheckTimer?.Kill();
