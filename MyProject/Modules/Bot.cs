@@ -40,16 +40,16 @@ public class Bot(ILogger<Bot> logger) : IBot
         await AddSpecialOrBoss();
         _level = 2;
 
+        if (AppSettings.IsDebug)
+        {
+            await Server.NextWorldUpdateAsync(() => Server.ExecuteCommand("sv_cheats 1"));
+        }
+
         static async Task StopBotMoving()
         {
             await Server.NextWorldUpdateAsync(() =>
             {
-                Server.ExecuteCommand("sv_cheats 1");
-            });
-
-            await Server.NextWorldUpdateAsync(() =>
-            {
-                Server.ExecuteCommand("bot_stop 1");
+                Server.ExecuteCommand("css_cvar bot_stop 1");
             });
         }
     }
