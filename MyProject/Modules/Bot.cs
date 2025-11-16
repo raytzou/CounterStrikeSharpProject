@@ -33,11 +33,15 @@ public class Bot(ILogger<Bot> logger) : IBot
 
     public bool IsBoss(CCSPlayerController player) => _bosses.Contains(player.PlayerName);
 
-    public async Task MapStartBehavior()
+    public async Task MapStartBehavior(string mapName)
     {
         await StopBotMoving();
         await KickBotAsync();
-        await AddSpecialOrBoss();
+
+        var botTeam = GetBotTeam(mapName);
+        if (botTeam != CsTeam.None)
+            await AddSpecialOrBoss(botTeam);
+
         _level = 2;
 
         if (AppSettings.IsDebug)
@@ -54,7 +58,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    public async Task WarmupEndBehavior()
+    public async Task WarmupEndBehavior(string mapName)
     {
         if (!AppSettings.IsDebug)
         {
@@ -62,11 +66,13 @@ public class Bot(ILogger<Bot> logger) : IBot
             await Server.NextFrameAsync(() => Server.ExecuteCommand("bot_stop 0"));
         }
 
-        await FillNormalBotAsync(GetDifficultyLevel(0, 0));
+        var botTeam = GetBotTeam(mapName);
+        if (botTeam != CsTeam.None)
+            await FillNormalBotAsync(GetDifficultyLevel(0, 0), botTeam);
         await FixQuotaAsync(0);
     }
 
-    public async Task RoundStartBehavior()
+    public async Task RoundStartBehavior(string mapName)
     {
         ClearDamageTimer();
         await SetBotMoneyToZero();
@@ -116,7 +122,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             await AllowBotPickupWeapon(bot);
             await RemoveBotWeapon(bot);
-            await GiveBotWeapon(bot, item);
+            await GiveBotWeapon(bot, mapName, item);
             await PreventBotPickupWeapon(bot);
 
             if (AppSettings.IsDebug)
@@ -196,19 +202,23 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    public async Task RoundEndBehavior(int winStreak, int looseStreak)
+    public async Task RoundEndBehavior(int winStreak, int looseStreak, string mapName)
     {
         ClearDamageTimer();
+        var botTeam = GetBotTeam(mapName);
 
         if (Main.Instance.RoundCount > 0)
         {
             await SetDefaultWeapon();
-            await AddSpecialOrBoss();
+            if (botTeam != CsTeam.None)
+                await AddSpecialOrBoss(botTeam);
             await KickNormalBotAsync();
             if (Main.Instance.RoundCount != Main.Instance.Config.MidBossRound - 1 && Main.Instance.RoundCount != Main.Instance.Config.FinalBossRound - 1 && Main.Instance.RoundCount != Main.Instance.Config.FinalBossRound)
             {
                 await KickBossAsync();
-                await FillNormalBotAsync(GetDifficultyLevel(winStreak, looseStreak));
+
+                if (botTeam != CsTeam.None)
+                    await FillNormalBotAsync(GetDifficultyLevel(winStreak, looseStreak), botTeam);
             }
             else if (Main.Instance.RoundCount == Main.Instance.Config.MidBossRound - 1 || Main.Instance.RoundCount == Main.Instance.Config.FinalBossRound - 1)
                 await KickSpecialBotAsync();
@@ -217,7 +227,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         async Task SetDefaultWeapon()
         {
-            var botTeam = GetBotTeam(Server.MapName);
+            var botTeam = GetBotTeam(mapName);
             if (botTeam == CsTeam.None)
                 return;
             var team = (botTeam == CsTeam.CounterTerrorist) ? "ct" : "t";
@@ -237,7 +247,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    public async Task RespawnBotAsync(CCSPlayerController bot)
+    public async Task RespawnBotAsync(CCSPlayerController bot, string mapName)
     {
         if (_respawnTimes <= 0)
             return;
@@ -263,7 +273,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 await AllowBotPickupWeapon(bot);
                 await RemoveBotWeapon(bot);
-                await GiveBotWeapon(bot);
+                await GiveBotWeapon(bot, mapName);
                 await PreventBotPickupWeapon(bot);
 
                 if (AppSettings.IsDebug)
@@ -273,7 +283,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                         if (Utility.IsBotValid(bot))
                         {
                             var currentWeapon = bot.PlayerPawn.Value!.WeaponServices?.ActiveWeapon.Value?.DesignerName;
-                            var botTeam = GetBotTeam(Server.MapName);
+                            var botTeam = GetBotTeam(mapName);
                             var expectedWeapon = Utility.GetCsItemEnumValue(botTeam == CsTeam.CounterTerrorist ? CsItem.M4A1 : CsItem.AK47);
                             if (currentWeapon != expectedWeapon)
                             {
@@ -719,12 +729,8 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    private async Task FillNormalBotAsync(int level)
+    private async Task FillNormalBotAsync(int level, CsTeam botTeam)
     {
-        var botTeam = GetBotTeam(Server.MapName);
-        if (botTeam == CsTeam.None)
-            return;
-
         var difficulty = level switch
         {
             0 => BotProfile.Difficulty.easy,
@@ -765,12 +771,8 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    private async Task AddSpecialOrBoss()
+    private async Task AddSpecialOrBoss(CsTeam botTeam)
     {
-        var botTeam = GetBotTeam(Server.MapName);
-        if (botTeam == CsTeam.None)
-            return;
-
         var team = botTeam == CsTeam.CounterTerrorist ? "ct" : "t";
         if (Main.Instance.RoundCount == Main.Instance.Config.MidBossRound - 1)
         {
@@ -978,7 +980,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         });
     }
 
-    private async Task GiveBotWeapon(CCSPlayerController bot, CsItem? weapon = null)
+    private async Task GiveBotWeapon(CCSPlayerController bot, string mapName, CsItem? weapon = null)
     {
         // give bot weapon
         await Server.NextFrameAsync(() =>
@@ -986,7 +988,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (!Utility.IsBotValid(bot))
                 return;
 
-            var botTeam = GetBotTeam(Server.MapName);
+            var botTeam = GetBotTeam(mapName);
             if (botTeam == CsTeam.None) return;
             if (weapon is null)
                 bot.GiveNamedItem(botTeam == CsTeam.CounterTerrorist ? CsItem.M4A1 : CsItem.AK47);

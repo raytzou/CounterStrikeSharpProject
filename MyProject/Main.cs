@@ -144,11 +144,11 @@ public class Main(
         {
             try
             {
-                await _bot.MapStartBehavior();
+                await _bot.MapStartBehavior(mapName);
             }
             catch (Exception ex)
             {
-                _logger.LogError("Map Start Behavior error: {error}", ex.Message);
+                _logger.LogError("Map Start Behavior error: {error}", ex);
             }
         });
 
@@ -305,11 +305,12 @@ public class Main(
                 _randomSpawn = true;
             }
             if (_bot.SpecialAndBoss.Contains(player.PlayerName)) return HookResult.Continue;
+            var mapName = Server.MapName;
             _ = Task.Run(async () =>
             {
                 try
                 {
-                    await _bot.RespawnBotAsync(player);
+                    await _bot.RespawnBotAsync(player, mapName);
                 }
                 catch (InvalidOperationException ex) when (ex.Message.Contains("Entity is not valid"))
                 {
@@ -358,15 +359,17 @@ public class Main(
 
         AddTimer(roundStartBehaviorDelayTime, () =>
         {
+            var mapName = Server.MapName;
+
             _ = Task.Run(async () =>
             {
                 try
                 {
-                    await _bot.RoundStartBehavior();
+                    await _bot.RoundStartBehavior(mapName);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError("Bot Round Start Behavior error: {error}", ex.Message);
+                    _logger.LogError("Bot Round Start Behavior error: {error}", ex);
                 }
             });
         });
@@ -491,15 +494,17 @@ public class Main(
 
         if (!_warmup)
         {
+            var mapName = Server.MapName;
+
             _ = Task.Run(async () =>
             {
                 try
                 {
-                    await _bot.RoundEndBehavior(_winStreak, _looseStreak);
+                    await _bot.RoundEndBehavior(_winStreak, _looseStreak, mapName);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError("Round End Behavior error: {error}", ex.Message);
+                    _logger.LogError("Round End Behavior error: {error}", ex);
                 }
             });
 
@@ -524,16 +529,17 @@ public class Main(
     {
         _roundCount = 1;
         _warmup = false;
+        var mapName = Server.MapName;
 
         _ = Task.Run(async () =>
         {
             try
             {
-                await _bot.WarmupEndBehavior();
+                await _bot.WarmupEndBehavior(mapName);
             }
             catch (Exception ex)
             {
-                _logger.LogError("Warmup End Behavior error: {error}", ex.Message);
+                _logger.LogError("Warmup End Behavior error: {error}", ex);
             }
         });
 
