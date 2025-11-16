@@ -56,10 +56,26 @@ public class Main(
     // singleton members
     public static Main Instance { get; private set; } = null!; // To Do: remove singleton one day
     public required MainConfig Config { get; set; }
-    public int GetPlayerSlot(string playerName) => _players.TryGetValue(playerName, out int slot) ? slot : throw new Exception("Player not found");
     public int RoundCount => _roundCount;
     public int PlayerCount => Utilities.GetPlayers().Count(p => !p.IsBot);
     public bool IsRoundEnd => _isRoundEnd;
+
+    public int GetPlayerSlot(string playerName)
+    {
+        if (_players.TryGetValue(playerName, out int slot))
+            return slot;
+
+        var player = Utilities.GetPlayers().FirstOrDefault(p => p.PlayerName == playerName);
+        if (player != null && player.IsValid)
+        {
+            _players[playerName] = player.Slot;
+            if (AppSettings.IsDebug)
+                _logger.LogInformation("Late player registration: {playerName} -> slot {slot}", playerName, player.Slot);
+            return player.Slot;
+        }
+
+        throw new Exception($"Player not found: {playerName}");
+    }
 
     public override void Load(bool hotreload)
     {
@@ -126,7 +142,17 @@ public class Main(
         _playerService.ClearPlayerCache();
 
         AddMoreSpawnPoint();
-        Server.NextWorldUpdate(() => _bot.MapStartBehavior());
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await _bot.MapStartBehavior(mapName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Map Start Behavior error: {error}", ex);
+            }
+        });
 
         void ResetDefaultWeapon()
         {
@@ -292,11 +318,12 @@ public class Main(
                 _randomSpawn = true;
             }
             if (_bot.SpecialAndBoss.Contains(player.PlayerName)) return HookResult.Continue;
+            var mapName = Server.MapName;
             _ = Task.Run(async () =>
             {
                 try
                 {
-                    await _bot.RespawnBotAsync(player);
+                    await _bot.RespawnBotAsync(player, mapName);
                 }
                 catch (InvalidOperationException ex) when (ex.Message.Contains("Entity is not valid"))
                 {
@@ -356,7 +383,27 @@ public class Main(
             }
         }
 
-        _bot.RoundStartBehavior();
+        float roundStartBehaviorDelayTime = 2f;
+
+        if (_roundCount != 0)
+            roundStartBehaviorDelayTime = 0f;
+
+        AddTimer(roundStartBehaviorDelayTime, () =>
+        {
+            var mapName = Server.MapName;
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await _bot.RoundStartBehavior(mapName);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError("Bot Round Start Behavior error: {error}", ex);
+                }
+            });
+        });
 
         if (_roundCount == ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>())
         {
@@ -482,7 +529,21 @@ public class Main(
 
         if (!_warmup)
         {
-            _bot.RoundEndBehavior(_winStreak, _looseStreak);
+            var mapName = Server.MapName;
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await _bot.RoundEndBehavior(_winStreak, _looseStreak, mapName);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError("Round End Behavior error: {error}", ex);
+                }
+            });
+
+
             Server.ExecuteCommand("mp_randomspawn 0");
             _randomSpawn = false;
             _weaponCheckTimer?.Kill();
@@ -503,7 +564,20 @@ public class Main(
     {
         _roundCount = 1;
         _warmup = false;
-        _bot.WarmupEndBehavior();
+        var mapName = Server.MapName;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await _bot.WarmupEndBehavior(mapName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Warmup End Behavior error: {error}", ex);
+            }
+        });
+
         return HookResult.Continue;
     }
 
@@ -532,10 +606,17 @@ public class Main(
 
     private HookResult PlayerHurtHandler(EventPlayerHurt @event, GameEventInfo info)
     {
-        var player = @event.Userid;
+        var victim = @event.Userid;
+        var attacker = @event.Attacker;
+        if (victim is null || !victim.IsValid || attacker is null || !attacker.IsValid)
+            return HookResult.Continue;
 
-        if (_bot.IsBoss(player!))
-            _bot.BossBehavior(player!);
+        // Prevent boss from being damaged by their own abilities
+        if (_bot.IsBoss(victim) && _bot.IsBoss(attacker) && victim.Index == attacker.Index)
+            return HookResult.Handled;
+
+        if (_bot.IsBoss(victim))
+            _bot.BossBehavior(victim);
 
         return HookResult.Continue;
     }

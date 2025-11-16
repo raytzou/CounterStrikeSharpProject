@@ -17,15 +17,15 @@ namespace MyProject.Modules.Interfaces
         IReadOnlySet<string> Bosses { get; }
 
 
-        void MapStartBehavior();
+        Task MapStartBehavior(string mapName);
 
-        void WarmupEndBehavior();
+        Task WarmupEndBehavior(string mapName);
 
-        Task RoundStartBehavior();
+        Task RoundStartBehavior(string mapName);
 
-        void RoundEndBehavior(int winStreak, int looseStreak);
+        Task RoundEndBehavior(int winStreak, int looseStreak, string mapName);
 
-        Task RespawnBotAsync(CCSPlayerController bot);
+        Task RespawnBotAsync(CCSPlayerController bot, string mapName);
 
         bool IsBoss(CCSPlayerController player);
 

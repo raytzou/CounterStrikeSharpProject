@@ -4,7 +4,6 @@ using CounterStrikeSharp.API.Modules.Entities.Constants;
 using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.UserMessages;
 using CounterStrikeSharp.API.Modules.Utils;
-using Microsoft.Extensions.Logging;
 using MyProject.Models;
 using System.Drawing;
 using System.Reflection;
@@ -24,6 +23,10 @@ namespace MyProject.Classes
         private static List<string> _mapsInPhysicalDirectory;
         private static readonly Dictionary<CsItem, string> _enumValue;
         private static readonly Dictionary<string, SkinInfo> _workshopSkins;
+        private static readonly Dictionary<string, string> _weaponNameMappings = new()
+        {
+            ["weapon_m4a1_silencer"] = "weapon_m4a1",
+        };
 
         static Utility()
         {
@@ -109,14 +112,6 @@ namespace MyProject.Classes
         }
 
         /// <summary>
-        /// This is for debugging purposes only. There should be no references to this method.
-        /// </summary>
-        public static void DebugLogger<T>(ILogger<T> logger, string content) where T : class
-        {
-            logger.LogInformation("{content}", content);
-        }
-
-        /// <summary>
         /// It's the same as AddTimer() in BasicPlugin, but I want to use it elsewhere
         /// </summary>
         public static CounterStrikeSharp.API.Modules.Timers.Timer AddTimer(float interval, Action callback, TimerFlags? flags = null)
@@ -134,6 +129,33 @@ namespace MyProject.Classes
         public static string GetCsItemEnumValue(CsItem item)
         {
             return _enumValue.TryGetValue(item, out var value) ? value : string.Empty;
+        }
+
+        /// <summary>
+        /// Converts CsItem enum to the actual in-game weapon DesignerName.
+        /// Handles cases where the enum value differs from the actual weapon name in game.
+        /// </summary>
+        /// <param name="item">The enum option of <see cref="CsItem">.</param>
+        /// <returns><c>string</c> - The actual weapon DesignerName used in game.</returns>
+        public static string GetActualWeaponName(CsItem item)
+        {
+            var enumValue = GetCsItemEnumValue(item);
+            return _weaponNameMappings.TryGetValue(enumValue, out var actualName) ? actualName : enumValue;
+        }
+
+        /// <summary>
+        /// Checks if the actual weapon name matches the expected CsItem enum.
+        /// Accounts for discrepancies between enum values and actual in-game weapon names.
+        /// </summary>
+        /// <param name="expectedItem">The expected weapon as CsItem enum.</param>
+        /// <param name="actualWeaponName">The actual weapon DesignerName from the game.</param>
+        /// <returns>True if the weapons match, considering name mappings; otherwise, false.</returns>
+        public static bool IsWeaponMatch(CsItem expectedItem, string actualWeaponName)
+        {
+            var expectedName = GetCsItemEnumValue(expectedItem);
+            var actualExpectedName = GetActualWeaponName(expectedItem);
+
+            return actualWeaponName == expectedName || actualWeaponName == actualExpectedName;
         }
 
         /// <summary>
@@ -546,6 +568,17 @@ namespace MyProject.Classes
             Utilities.GetPlayers()
                 .Where(player => IsHumanPlayerValid(player))
                 .ToList();
+
+        public static bool IsBotValid(CCSPlayerController? bot) =>
+            bot is not null &&
+            bot.IsValid &&
+            bot.IsBot &&
+            bot.PlayerPawn.Value is not null &&
+            bot.PlayerPawn.Value.IsValid;
+
+        public static bool IsBotValidAndAlive(CCSPlayerController? bot) =>
+            IsBotValid(bot) &&
+            bot!.PlayerPawn.Value!.LifeState == (byte)LifeState_t.LIFE_ALIVE;
 
         public static void PrintToAllCenter(string message)
         {

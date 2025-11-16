@@ -372,7 +372,7 @@ public class Command(
 
     public void OnModelsCommand(CCSPlayerController client, CommandInfo command, Main thePlugin)
     {
-        var menu = new ScreenMenu("Select Models", thePlugin);
+        var menu = new WasdMenu("Select Models", thePlugin);
         var playerCache = _playerService.GetPlayerCache(client.SteamID);
         const int displayMenuInterval = 10; // second? TODO: need to check the unit
 

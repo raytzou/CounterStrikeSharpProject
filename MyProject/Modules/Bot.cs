@@ -31,44 +31,53 @@ public class Bot(ILogger<Bot> logger) : IBot
     public IReadOnlySet<string> SpecialBots => _specialBots;
     public IReadOnlySet<string> Bosses => _bosses;
 
-    public bool IsBoss(CCSPlayerController player)
+    public bool IsBoss(CCSPlayerController player) => _bosses.Contains(player.PlayerName);
+
+    public async Task MapStartBehavior(string mapName)
     {
-        if (!player.IsBot) return false;
+        await StopBotMoving();
 
-        var boss = BotProfile.Boss.Select(s => s.Value).ToHashSet();
+        var botTeam = GetBotTeam(mapName);
+        if (botTeam != CsTeam.None)
+            await AddSpecialOrBoss(botTeam);
 
-        return boss.Contains(player.PlayerName);
-    }
-
-    public void MapStartBehavior()
-    {
-        Server.ExecuteCommand("sv_cheats 1");
-        Server.ExecuteCommand("bot_stop 1");
-        Server.ExecuteCommand("bot_kick");
-        AddSpecialOrBoss(0);
         _level = 2;
+
+        if (AppSettings.IsDebug)
+        {
+            await Server.NextWorldUpdateAsync(() => Server.ExecuteCommand("sv_cheats 1"));
+        }
+
+        static async Task StopBotMoving()
+        {
+            await Server.NextWorldUpdateAsync(() =>
+            {
+                Server.ExecuteCommand("css_cvar bot_stop 1");
+            });
+        }
     }
 
-    public void WarmupEndBehavior()
+    public async Task WarmupEndBehavior(string mapName)
     {
         if (!AppSettings.IsDebug)
         {
-            Server.ExecuteCommand("sv_cheats 0");
-            Server.ExecuteCommand("bot_stop 0");
+            await Server.NextFrameAsync(() => Server.ExecuteCommand("sv_cheats 0"));
+            await Server.NextFrameAsync(() => Server.ExecuteCommand("bot_stop 0"));
         }
 
-        FillNormalBot(GetDifficultyLevel(0, 0));
-        FixQuota(0);
+        var botTeam = GetBotTeam(mapName);
+        if (botTeam != CsTeam.None)
+            await FillNormalBotAsync(GetDifficultyLevel(0, 0), botTeam);
     }
 
-    public async Task RoundStartBehavior()
+    public async Task RoundStartBehavior(string mapName)
     {
-        SetBotMoneyToZero();
         ClearDamageTimer();
+        await SetBotMoneyToZero();
 
         if (Main.Instance.RoundCount != Main.Instance.Config.MidBossRound && Main.Instance.RoundCount != Main.Instance.Config.FinalBossRound)
         {
-            SetSpecialBotAttribute();
+            await SetSpecialBotAttribute();
             await SetSpecialBotModel();
 
             _respawnTimes = _maxRespawnTimes;
@@ -77,15 +86,14 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 await SetSpecialBotWeapon(BotProfile.Special[0], CsItem.AWP); // "[ELITE]EagleEye"
                 await SetSpecialBotWeapon(BotProfile.Special[1], CsItem.M4A1S); // "[ELITE]mimic"
-                await SetSpecialBotWeapon(BotProfile.Special[2], CsItem.P90); // "[EXPERT]Rush"
+                await SetSpecialBotWeapon(BotProfile.Special[2], CsItem.P90); // "[EXPERT]Rush" 
 
-                await Server.NextFrameAsync(() =>
+                foreach (var bot in Utilities.GetPlayers().Where(player => player.IsBot))
                 {
-                    foreach (var bot in Utilities.GetPlayers().Where(player => player.IsBot))
-                    {
-                        bot.PlayerPawn.Value!.WeaponServices!.PreventWeaponPickup = true;
-                    }
-                });
+                    if (!Utility.IsBotValid(bot)) continue;
+
+                    await PreventBotPickupWeapon(bot);
+                }
             }
         }
         else
@@ -110,85 +118,115 @@ public class Bot(ILogger<Bot> logger) : IBot
             var botActiveWeapon = bot!.PlayerPawn.Value!.WeaponServices?.ActiveWeapon.Value?.DesignerName;
             var itemValue = Utility.GetCsItemEnumValue(item);
 
-            await Server.NextFrameAsync(async () =>
+            await AllowBotPickupWeapon(bot);
+            await RemoveBotWeapon(bot);
+            await GiveBotWeapon(bot, mapName, item);
+            await PreventBotPickupWeapon(bot);
+
+            if (AppSettings.IsDebug)
             {
-                bot.PlayerPawn.Value.WeaponServices!.PreventWeaponPickup = false;
-                if (botActiveWeapon != itemValue)
+                await Server.NextFrameAsync(() =>
                 {
-                    if (!string.IsNullOrEmpty(botActiveWeapon))
-                        bot.RemoveWeapons();
-                    await Server.NextFrameAsync(() => bot.GiveNamedItem(itemValue));
-                }
-            });
+                    if (Utility.IsBotValid(bot))
+                    {
+                        var currentWeapon = bot.PlayerPawn.Value!.WeaponServices?.ActiveWeapon.Value?.DesignerName;
+                        if (!Utility.IsWeaponMatch(item, currentWeapon ?? ""))
+                        {
+                            _logger.LogWarning("Special bot {BotName} weapon mismatch. Expected: {Expected}, Actual: {Actual}",
+                                bot.PlayerName, Utility.GetCsItemEnumValue(item), currentWeapon ?? "None");
+                        }
+                    }
+                });
+            }
         }
 
-        void SetBotMoneyToZero()
+        async Task SetBotMoneyToZero()
         {
-            foreach (var client in Utilities.GetPlayers().Where(player => player.IsBot))
+            await Server.NextFrameAsync(() =>
             {
-                client.InGameMoneyServices!.StartAccount = 0;
-                client.InGameMoneyServices.Account = 0;
-            }
+                foreach (var bot in Utilities.GetPlayers().Where(player => player.IsBot))
+                {
+                    if (!Utility.IsBotValid(bot)) continue;
+                    bot.InGameMoneyServices!.StartAccount = 0;
+                    bot.InGameMoneyServices.Account = 0;
+                }
+            });
         }
 
         async Task SetSpecialBotModel()
         {
             await Server.NextFrameAsync(() =>
             {
-                var eagleEye = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[0]));
-                var mimic = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[1]));
-                var rush = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[2]));
-                var random = new Random();
-                var randomSkin = Utility.WorkshopSkins.ElementAt(random.Next(Utility.WorkshopSkins.Count));
+                try
+                {
+                    var eagleEye = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[0]));
+                    var mimic = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[1]));
+                    var rush = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[2]));
+                    var random = new Random();
+                    var randomSkin = Utility.WorkshopSkins.ElementAt(random.Next(Utility.WorkshopSkins.Count));
 
-                Utility.SetClientModel(mimic!, randomSkin.Key);
-                Utility.SetClientModel(eagleEye!, Main.Instance.Config.EagleEyeModel);
-                Utility.SetClientModel(rush!, Main.Instance.Config.RushModel);
+                    Utility.SetClientModel(mimic!, randomSkin.Key);
+                    Utility.SetClientModel(eagleEye!, Main.Instance.Config.EagleEyeModel);
+                    Utility.SetClientModel(rush!, Main.Instance.Config.RushModel);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning("Special bots not ready yet, skipping model setup: {error}", ex.Message);
+                }
             });
         }
 
-        void SetSpecialBotAttribute()
+        async Task SetSpecialBotAttribute()
         {
-            var eagleEye = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[0]));
-            var mimic = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[1]));
-            var rush = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[2]));
+            await Server.NextFrameAsync(() =>
+            {
+                try
+                {
+                    var eagleEye = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[0]));
+                    var mimic = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[1]));
+                    var rush = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[2]));
 
-            eagleEye!.Score = 999;
-            mimic!.Score = 888;
-            rush!.Score = 777;
-            if (Main.Instance.RoundCount > 1)
-                rush!.PlayerPawn.Value!.Health = 250;
+                    eagleEye!.Score = 999;
+                    mimic!.Score = 888;
+                    rush!.Score = 777;
+                    if (Main.Instance.RoundCount > 1)
+                        rush!.PlayerPawn.Value!.Health = 250;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning("Special bots not ready yet, skipping attribute setup: {error}", ex.Message);
+                }
+            });
         }
     }
 
-    public void RoundEndBehavior(int winStreak, int looseStreak)
+    public async Task RoundEndBehavior(int winStreak, int looseStreak, string mapName)
     {
         ClearDamageTimer();
+        var botTeam = GetBotTeam(mapName);
 
         if (Main.Instance.RoundCount > 0)
         {
-            SetDefaultWeapon();
-            AddSpecialOrBoss(Main.Instance.RoundCount);
-            KickNormalBot();
-            if (Main.Instance.RoundCount != Main.Instance.Config.MidBossRound - 1 && Main.Instance.RoundCount != Main.Instance.Config.FinalBossRound - 1 && Main.Instance.RoundCount != Main.Instance.Config.FinalBossRound)
+            await SetDefaultWeapon();
+            if (botTeam != CsTeam.None)
+                await AddSpecialOrBoss(botTeam);
+            await KickNormalBotAsync();
+            if (Main.Instance.RoundCount != Main.Instance.Config.MidBossRound && Main.Instance.RoundCount < Main.Instance.Config.FinalBossRound)
             {
-                KickBoss();
-                FillNormalBot(GetDifficultyLevel(winStreak, looseStreak));
+                if (botTeam != CsTeam.None)
+                    await FillNormalBotAsync(GetDifficultyLevel(winStreak, looseStreak), botTeam);
             }
-            else if (Main.Instance.RoundCount == Main.Instance.Config.MidBossRound - 1 || Main.Instance.RoundCount == Main.Instance.Config.FinalBossRound - 1)
-                KickSpecialBot();
-            FixQuota(Main.Instance.RoundCount);
         }
 
-        void SetDefaultWeapon()
+        async Task SetDefaultWeapon()
         {
-            var botTeam = GetBotTeam(Server.MapName);
+            var botTeam = GetBotTeam(mapName);
             if (botTeam == CsTeam.None)
                 return;
             var team = (botTeam == CsTeam.CounterTerrorist) ? "ct" : "t";
 
-            Server.ExecuteCommand($"mp_{team}_default_primary {GetDefaultPrimaryWeapon()}");
-            Server.ExecuteCommand($"mp_{team}_default_secondary \"\"");
+            await Server.NextFrameAsync(() => Server.ExecuteCommand($"mp_{team}_default_primary {GetDefaultPrimaryWeapon()}"));
+            await Server.NextFrameAsync(() => Server.ExecuteCommand($"mp_{team}_default_secondary \"\""));
 
             string GetDefaultPrimaryWeapon()
             {
@@ -202,11 +240,11 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    public async Task RespawnBotAsync(CCSPlayerController bot)
+    public async Task RespawnBotAsync(CCSPlayerController bot, string mapName)
     {
         if (_respawnTimes <= 0)
             return;
-        if (!bot.IsValid || bot.PlayerPawn.Value is null)
+        if (!Utility.IsBotValid(bot))
             return;
 
         try
@@ -218,7 +256,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                     return;
 
                 // double-check to ensure the entity is still valid during execution
-                if (!bot.IsValid || bot.PlayerPawn.Value == null || !bot.PlayerPawn.Value.IsValid)
+                if (!Utility.IsBotValid(bot))
                     return;
 
                 bot.Respawn();
@@ -226,25 +264,28 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             if (Main.Instance.RoundCount > 1)
             {
-                await Server.NextFrameAsync(() =>
+                await AllowBotPickupWeapon(bot);
+                await RemoveBotWeapon(bot);
+                await GiveBotWeapon(bot, mapName);
+                await PreventBotPickupWeapon(bot);
+
+                if (AppSettings.IsDebug)
                 {
-                    if (!bot.IsValid || bot.PlayerPawn.Value == null || !bot.PlayerPawn.Value.IsValid)
-                        return;
-
-                    bot.RemoveWeapons();
-                    bot.PlayerPawn.Value!.WeaponServices!.PreventWeaponPickup = false;
-                });
-
-                await Server.NextFrameAsync(() =>
-                {
-                    if (!bot.IsValid || bot.PlayerPawn.Value == null || !bot.PlayerPawn.Value.IsValid)
-                        return;
-
-                    var botTeam = GetBotTeam(Server.MapName);
-                    if (botTeam == CsTeam.None) return;
-                    bot.GiveNamedItem(botTeam == CsTeam.CounterTerrorist ? CsItem.M4A1 : CsItem.AK47);
-                    bot.PlayerPawn.Value!.WeaponServices!.PreventWeaponPickup = true;
-                });
+                    await Server.NextFrameAsync(() =>
+                    {
+                        if (Utility.IsBotValid(bot))
+                        {
+                            var currentWeapon = bot.PlayerPawn.Value!.WeaponServices?.ActiveWeapon.Value?.DesignerName;
+                            var botTeam = GetBotTeam(mapName);
+                            var expectedWeapon = Utility.GetCsItemEnumValue(botTeam == CsTeam.CounterTerrorist ? CsItem.M4A1 : CsItem.AK47);
+                            if (currentWeapon != expectedWeapon)
+                            {
+                                _logger.LogWarning("Respawn bot {BotName} weapon mismatch. Expected: {Expected}, Actual: {Actual}",
+                                    bot.PlayerName, expectedWeapon, currentWeapon ?? "None");
+                            }
+                        }
+                    });
+                }
             }
 
             _respawnTimes--;
@@ -606,6 +647,10 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void CreateProjectileAtPosition<T>(Vector position, CCSPlayerController attacker, float cleanupTime = 3.0f) where T : CBaseCSGrenadeProjectile
         {
+            // Early check: ensure attacker is valid before creating projectile
+            if (attacker == null || !attacker.IsValid || attacker.PlayerPawn.Value == null || !attacker.PlayerPawn.Value.IsValid)
+                return;
+
             var defaultVelocity = new Vector(0, 0, 0);
             var defaultAngle = new QAngle(0, 0, 0);
             var projectile = GrenadeProjectileFactory.Create<T>(position, defaultAngle, defaultVelocity);
@@ -621,10 +666,18 @@ public class Bot(ILogger<Bot> logger) : IBot
             projectile.Teleport(centerPosition);
             projectile.DispatchSpawn();
             projectile.Elasticity = 0f;
-            projectile.TeamNum = attacker.TeamNum;
-            projectile.Thrower.Raw = attacker.PlayerPawn.Raw;
-            projectile.OriginalThrower.Raw = attacker.PlayerPawn.Raw;
-            projectile.OwnerEntity.Raw = attacker.PlayerPawn.Raw;
+
+            // Double-check attacker validity before setting ownership properties
+            // This handles cases where the attacker becomes invalid between the initial check and this point
+            if (attacker.IsValid)
+            {
+                projectile.TeamNum = attacker.TeamNum;
+                projectile.Thrower.Raw = attacker.PlayerPawn.Raw;
+                projectile.OriginalThrower.Raw = attacker.PlayerPawn.Raw;
+                projectile.OwnerEntity.Raw = attacker.PlayerPawn.Raw;
+            }
+            // If attacker becomes invalid, projectile will have no owner
+            // Players can still be damaged, but kills will count as environmental/suicide
 
             if (projectile is CSmokeGrenadeProjectile smokeProjectile)
             {
@@ -669,12 +722,8 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    private void FillNormalBot(int level)
+    private async Task FillNormalBotAsync(int level, CsTeam botTeam)
     {
-        var botTeam = GetBotTeam(Server.MapName);
-        if (botTeam == CsTeam.None)
-            return;
-
         var difficulty = level switch
         {
             0 => BotProfile.Difficulty.easy,
@@ -684,15 +733,20 @@ public class Bot(ILogger<Bot> logger) : IBot
             _ => BotProfile.Difficulty.easy,
         };
 
-        for (int i = 1; i <= Main.Instance.Config.BotQuota - BotProfile.Special.Count; i++)
+        await Server.NextFrameAsync(() =>
         {
-            string botName = $"\"[{BotProfile.Grade[level]}]{BotProfile.NameGroup.Keys.ToList()[level]}#{i:D2}\"";
-            var team = (botTeam == CsTeam.CounterTerrorist) ? "ct" : "t";
-            Server.NextFrame(() => Server.ExecuteCommand($"bot_add_{team} {difficulty} {botName}"));
+            for (int i = 1; i <= Main.Instance.Config.BotQuota - BotProfile.Special.Count; i++)
+            {
+                string botName = $"\"[{BotProfile.Grade[level]}]{BotProfile.NameGroup.Keys.ToList()[level]}#{i:D2}\"";
+                var team = (botTeam == CsTeam.CounterTerrorist) ? "ct" : "t";
+                Server.ExecuteCommand($"bot_add_{team} {difficulty} {botName}");
 
-            if (AppSettings.LogBotAdd)
-                _logger.LogInformation("FillNormalBot() bot_add_{team} {difficulty} {botName}", team, difficulty, botName);
-        }
+                if (AppSettings.LogBotAdd)
+                    _logger.LogInformation("FillNormalBot() bot_add_{team} {difficulty} {botName}", team, difficulty, botName);
+            }
+
+            Server.ExecuteCommand($"bot_quota {Main.Instance.Config.BotQuota}");
+        });
     }
 
     private int GetDifficultyLevel(int winStreak, int looseStreak)
@@ -712,39 +766,49 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    private void AddSpecialOrBoss(int roundCount)
+    private async Task AddSpecialOrBoss(CsTeam botTeam)
     {
-        var botTeam = GetBotTeam(Server.MapName);
-        if (botTeam == CsTeam.None)
-            return;
-
         var team = botTeam == CsTeam.CounterTerrorist ? "ct" : "t";
-        if (roundCount == Main.Instance.Config.MidBossRound - 1)
+        if (Main.Instance.RoundCount == Main.Instance.Config.MidBossRound)
         {
             var midBossSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Boss[0]) == 1;
             if (!midBossSpawn)
             {
-                KickBoss();
-                Server.NextFrame(() => Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Boss[0]}"));
-            }
-            if (AppSettings.LogBotAdd)
-            {
-                _logger.LogInformation("AddSpecialBot()");
-                _logger.LogInformation("bot_add_{team} {difficulty} {boss}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Boss[0]);
+                Utility.AddTimer(0.5f, async () =>
+                {
+                    await KickBotAsync();
+                    await Server.NextWorldUpdateAsync(() =>
+                    {
+                        Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Boss[0]}");
+                        Server.ExecuteCommand("bot_quota 1");
+                        if (AppSettings.LogBotAdd)
+                        {
+                            _logger.LogInformation("AddSpecialOrBoss()");
+                            _logger.LogInformation("bot_add_{team} {difficulty} {boss}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Boss[0]);
+                        }
+                    });
+                });
             }
         }
-        else if (roundCount == Main.Instance.Config.FinalBossRound - 1)
+        else if (Main.Instance.RoundCount == Main.Instance.Config.FinalBossRound)
         {
             var finalBossSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Boss[1]) == 1;
             if (!finalBossSpawn)
             {
-                KickBoss();
-                Server.NextFrame(() => Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Boss[1]}"));
-            }
-            if (AppSettings.LogBotAdd)
-            {
-                _logger.LogInformation("AddSpecialBot()");
-                _logger.LogInformation("bot_add_{team} {difficulty} {boss}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Boss[1]);
+                Utility.AddTimer(0.5f, async () =>
+                {
+                    await KickBotAsync();
+                    await Server.NextWorldUpdateAsync(() =>
+                    {
+                        Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Boss[1]}");
+                        Server.ExecuteCommand("bot_quota 1");
+                        if (AppSettings.LogBotAdd)
+                        {
+                            _logger.LogInformation("AddSpecialOrBoss()");
+                            _logger.LogInformation("bot_add_{team} {difficulty} {boss}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Boss[1]);
+                        }
+                    });
+                });
             }
         }
         else
@@ -755,79 +819,48 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             if (!specialBotSpawn)
             {
-                KickSpecialBot();
-                Server.NextFrame(() =>
+                await KickBotAsync();
+                await Server.NextWorldUpdateAsync(() =>
                 {
                     Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[0]}");
                     Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[1]}");
                     Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[2]}");
+                    Server.ExecuteCommand("bot_quota 3");
+                    if (AppSettings.LogBotAdd)
+                    {
+                        _logger.LogInformation("AddSpecialOrBoss()");
+                        _logger.LogInformation("bot_add_{team} {difficulty} {special}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Special[0]);
+                        _logger.LogInformation("bot_add_{team} {difficulty} {special}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Special[1]);
+                        _logger.LogInformation("bot_add_{team} {difficulty} {special}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Special[2]);
+                    }
                 });
-            }
-
-            if (AppSettings.LogBotAdd)
-            {
-                _logger.LogInformation("AddSpecialBot()");
-                _logger.LogInformation("bot_add_{team} {difficulty} {special}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Special[0]);
-                _logger.LogInformation("bot_add_{team} {difficulty} {special}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Special[1]);
-                _logger.LogInformation("bot_add_{team} {difficulty} {special}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Special[2]);
             }
         }
     }
 
     private static async Task KickBotAsync()
     {
-        await Server.NextFrameAsync(() =>
+        await Server.NextWorldUpdateAsync(() =>
         {
             Server.ExecuteCommand("bot_kick");
-            Server.ExecuteCommand("bot_quota 0");
         });
     }
 
-    private static void KickNormalBot()
+    private static async Task KickNormalBotAsync()
     {
-        foreach (var bot in Utilities.GetPlayers().Where(p => p.IsBot))
+        await Server.NextFrameAsync(() =>
         {
-            var match = NormalBotNameRegex.Match(bot.PlayerName);
-
-            if (match.Success)
+            foreach (var bot in Utilities.GetPlayers().Where(p => p.IsBot))
             {
-                Server.ExecuteCommand($"kick {bot.PlayerName}");
-            }
-        }
-    }
+                var match = NormalBotNameRegex.Match(bot.PlayerName);
 
-    private static void KickSpecialBot()
-    {
-        foreach (var bot in Utilities.GetPlayers().Where(player => player.IsBot))
-        {
-            if (_specialBots.Contains(bot.PlayerName))
-            {
-                Server.ExecuteCommand($"kick {bot.PlayerName}");
+                if (match.Success)
+                {
+                    Server.ExecuteCommand($"kick {bot.PlayerName}");
+                }
             }
-        }
-    }
 
-    private static void KickBoss()
-    {
-        foreach (var bot in Utilities.GetPlayers().Where(player => player.IsBot))
-        {
-            if (_bosses.Contains(bot.PlayerName))
-            {
-                Server.ExecuteCommand($"kick {bot.PlayerName}");
-            }
-        }
-    }
-
-    private static void FixQuota(int roundCount)
-    {
-        Server.NextFrame(() =>
-        {
-            if (roundCount == Main.Instance.Config.MidBossRound - 1 || roundCount == Main.Instance.Config.FinalBossRound - 1)
-                Server.ExecuteCommand("bot_quota 1");
-            else if (roundCount == Main.Instance.Config.FinalBossRound)
-                Server.ExecuteCommand("bot_quota 3");
-            else
-                Server.ExecuteCommand($"bot_quota {Main.Instance.Config.BotQuota}");
+            Server.ExecuteCommand("bot_quota 3");
         });
     }
 
@@ -878,5 +911,59 @@ public class Bot(ILogger<Bot> logger) : IBot
                 });
             }
         }
+    }
+
+    private async Task AllowBotPickupWeapon(CCSPlayerController bot)
+    {
+        // prevent pickup = false
+        await Server.NextFrameAsync(() =>
+        {
+            // double-check pawn
+            if (!Utility.IsBotValid(bot))
+                return;
+
+            bot.PlayerPawn.Value!.WeaponServices!.PreventWeaponPickup = false;
+        });
+    }
+
+    private async Task RemoveBotWeapon(CCSPlayerController bot)
+    {
+        // remove bot's weapon
+        await Server.NextFrameAsync(() =>
+        {
+            if (!Utility.IsBotValid(bot))
+                return;
+
+            bot.RemoveWeapons();
+        });
+    }
+
+    private async Task GiveBotWeapon(CCSPlayerController bot, string mapName, CsItem? weapon = null)
+    {
+        // give bot weapon
+        await Server.NextFrameAsync(() =>
+        {
+            if (!Utility.IsBotValid(bot))
+                return;
+
+            var botTeam = GetBotTeam(mapName);
+            if (botTeam == CsTeam.None) return;
+            if (weapon is null)
+                bot.GiveNamedItem(botTeam == CsTeam.CounterTerrorist ? CsItem.M4A1 : CsItem.AK47);
+            else
+                bot.GiveNamedItem(weapon.Value);
+        });
+    }
+
+    private async Task PreventBotPickupWeapon(CCSPlayerController bot)
+    {
+        // prevent pickup = true
+        await Server.NextFrameAsync(() =>
+        {
+            if (!Utility.IsBotValid(bot))
+                return;
+
+            bot.PlayerPawn.Value!.WeaponServices!.PreventWeaponPickup = true;
+        });
     }
 }
