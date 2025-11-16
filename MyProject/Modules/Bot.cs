@@ -740,9 +740,9 @@ public class Bot(ILogger<Bot> logger) : IBot
             _ => BotProfile.Difficulty.easy,
         };
 
-        for (int i = 1; i <= Main.Instance.Config.BotQuota - BotProfile.Special.Count; i++)
+        await Server.NextFrameAsync(() =>
         {
-            await Server.NextFrameAsync(() =>
+            for (int i = 1; i <= Main.Instance.Config.BotQuota - BotProfile.Special.Count; i++)
             {
                 string botName = $"\"[{BotProfile.Grade[level]}]{BotProfile.NameGroup.Keys.ToList()[level]}#{i:D2}\"";
                 var team = (botTeam == CsTeam.CounterTerrorist) ? "ct" : "t";
@@ -750,8 +750,8 @@ public class Bot(ILogger<Bot> logger) : IBot
 
                 if (AppSettings.LogBotAdd)
                     _logger.LogInformation("FillNormalBot() bot_add_{team} {difficulty} {botName}", team, difficulty, botName);
-            });
-        }
+            }
+        });
     }
 
     private int GetDifficultyLevel(int winStreak, int looseStreak)
