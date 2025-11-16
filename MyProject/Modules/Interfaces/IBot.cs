@@ -19,7 +19,7 @@ namespace MyProject.Modules.Interfaces
 
         Task MapStartBehavior();
 
-        void WarmupEndBehavior();
+        Task WarmupEndBehavior();
 
         Task RoundStartBehavior();
 

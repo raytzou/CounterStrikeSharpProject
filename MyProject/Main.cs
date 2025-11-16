@@ -512,7 +512,19 @@ public class Main(
     {
         _roundCount = 1;
         _warmup = false;
-        _bot.WarmupEndBehavior();
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await _bot.WarmupEndBehavior();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Warmup End Behavior error: {error}", ex.Message);
+            }
+        });
+
         return HookResult.Continue;
     }
 

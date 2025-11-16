@@ -54,16 +54,16 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    public void WarmupEndBehavior()
+    public async Task WarmupEndBehavior()
     {
         if (!AppSettings.IsDebug)
         {
-            Server.ExecuteCommand("sv_cheats 0");
-            Server.ExecuteCommand("bot_stop 0");
+            await Server.NextFrameAsync(() => Server.ExecuteCommand("sv_cheats 0"));
+            await Server.NextFrameAsync(() => Server.ExecuteCommand("bot_stop 0"));
         }
 
-        FillNormalBot(GetDifficultyLevel(0, 0));
-        FixQuota(0);
+        await FillNormalBotAsync(GetDifficultyLevel(0, 0));
+        await FixQuotaAsync(0);
     }
 
     public async Task RoundStartBehavior()
@@ -208,11 +208,11 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (Main.Instance.RoundCount != Main.Instance.Config.MidBossRound - 1 && Main.Instance.RoundCount != Main.Instance.Config.FinalBossRound - 1 && Main.Instance.RoundCount != Main.Instance.Config.FinalBossRound)
             {
                 KickBossAsync();
-                FillNormalBot(GetDifficultyLevel(winStreak, looseStreak));
+                FillNormalBotAsync(GetDifficultyLevel(winStreak, looseStreak));
             }
             else if (Main.Instance.RoundCount == Main.Instance.Config.MidBossRound - 1 || Main.Instance.RoundCount == Main.Instance.Config.FinalBossRound - 1)
                 KickSpecialBotAsync();
-            FixQuota(Main.Instance.RoundCount);
+            FixQuotaAsync(Main.Instance.RoundCount);
         }
 
         void SetDefaultWeapon()
@@ -719,7 +719,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    private void FillNormalBot(int level)
+    private async Task FillNormalBotAsync(int level)
     {
         var botTeam = GetBotTeam(Server.MapName);
         if (botTeam == CsTeam.None)
@@ -736,12 +736,15 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         for (int i = 1; i <= Main.Instance.Config.BotQuota - BotProfile.Special.Count; i++)
         {
-            string botName = $"\"[{BotProfile.Grade[level]}]{BotProfile.NameGroup.Keys.ToList()[level]}#{i:D2}\"";
-            var team = (botTeam == CsTeam.CounterTerrorist) ? "ct" : "t";
-            Server.NextFrame(() => Server.ExecuteCommand($"bot_add_{team} {difficulty} {botName}"));
+            await Server.NextFrameAsync(() =>
+            {
+                string botName = $"\"[{BotProfile.Grade[level]}]{BotProfile.NameGroup.Keys.ToList()[level]}#{i:D2}\"";
+                var team = (botTeam == CsTeam.CounterTerrorist) ? "ct" : "t";
+                Server.ExecuteCommand($"bot_add_{team} {difficulty} {botName}");
 
-            if (AppSettings.LogBotAdd)
-                _logger.LogInformation("FillNormalBot() bot_add_{team} {difficulty} {botName}", team, difficulty, botName);
+                if (AppSettings.LogBotAdd)
+                    _logger.LogInformation("FillNormalBot() bot_add_{team} {difficulty} {botName}", team, difficulty, botName);
+            });
         }
     }
 
@@ -885,9 +888,9 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    private static void FixQuota(int roundCount)
+    private static async Task FixQuotaAsync(int roundCount)
     {
-        Server.NextFrame(() =>
+        await Server.NextFrameAsync(() =>
         {
             if (roundCount == Main.Instance.Config.MidBossRound - 1 || roundCount == Main.Instance.Config.FinalBossRound - 1)
                 Server.ExecuteCommand("bot_quota 1");
