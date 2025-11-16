@@ -102,8 +102,8 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             if (Main.Instance.RoundCount == Main.Instance.Config.MidBossRound)
             {
-                //var midBoss = Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(BotProfile.Boss[0]));
-                //midBoss!.PlayerPawn.Value!.Health = Main.Instance.Config.MidBossHealth;
+                var midBoss = Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(BotProfile.Boss[0]));
+                midBoss!.PlayerPawn.Value!.Health = Main.Instance.Config.MidBossHealth;
             }
             else if (Main.Instance.RoundCount == Main.Instance.Config.FinalBossRound)
             {
