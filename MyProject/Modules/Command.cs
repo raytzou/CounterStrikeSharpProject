@@ -224,6 +224,30 @@ public class Command(
         }
     }
 
+    public void OnRconCommand(CCSPlayerController? client, CommandInfo command)
+    {
+        if (command.ArgCount < 2)
+        {
+            command.ReplyToCommand("[css] Usage: css_rcon <rcon>");
+            return;
+        }
+
+        var rcon = string.Join(" ", command.GetCommandString.Split(' ').Skip(1));
+        var admin = client?.PlayerName ?? "console";
+
+        try
+        {
+            Server.ExecuteCommand(rcon);
+            _logger.LogInformation("{admin} executed RCON command '{rcon}' at {DT}", admin, rcon, DateTime.Now);
+        }
+        catch (Exception ex)
+        {
+            command.ReplyToCommand($"[css] Failed to execute RCON command");
+            _logger.LogError("RCON command execution failed. Admin: {admin}, Command: {rcon}, Error: {error}",
+            admin, rcon, ex.Message);
+        }
+    }
+
     public void OnPlayersCommand(CCSPlayerController client, CommandInfo command)
     {
         var players = Utilities.GetPlayers();
@@ -242,8 +266,8 @@ public class Command(
     public void OnSlayCommand(CCSPlayerController client, CommandInfo command)
     {
         ExecutePlayerCommand(
-            client, 
-            command, 
+            client,
+            command,
             minArgCount: 2,
             usageMessage: "[css] Usage: css_slay <target>",
             commandName: "slay",
@@ -455,7 +479,7 @@ public class Command(
             {
                 var dmgString = command.ArgCount >= 2 ? command.GetArg(2) : "0";
                 int.TryParse(dmgString, out var damage);
-                return string.IsNullOrEmpty(targetName) 
+                return string.IsNullOrEmpty(targetName)
                     ? "Admin slapped all players"
                     : $"Admin slapped {targetName} {damage} hp";
             }
@@ -491,7 +515,7 @@ public class Command(
             {
                 playerAction(player);
             }
-            
+
             var message = customBroadcastMessage?.Invoke("") ?? $"Admin {pastTenseVerb} all players";
             Server.PrintToChatAll(message);
             _logger.LogInformation("[css] {admin} {pastTense} all players at {DT}", adminName, pastTenseVerb, DateTime.Now);
@@ -503,7 +527,7 @@ public class Command(
             {
                 playerAction(player);
             }
-            
+
             Server.PrintToChatAll($"Admin {pastTenseVerb} all CT players");
             _logger.LogInformation("[css] {admin} {pastTense} all CT players at {DT}", adminName, pastTenseVerb, DateTime.Now);
             return;
@@ -514,7 +538,7 @@ public class Command(
             {
                 playerAction(player);
             }
-            
+
             Server.PrintToChatAll($"Admin {pastTenseVerb} all T players");
             _logger.LogInformation("[css] {admin} {pastTense} all T players at {DT}", adminName, pastTenseVerb, DateTime.Now);
             return;

@@ -622,6 +622,13 @@ public class Main(
         _command.OnCvarCommand(client, command);
     }
 
+    [RequiresPermissions("@css/rcon")]
+    [ConsoleCommand("css_rcon", "Use RCON")]
+    public void OnRconCommand(CCSPlayerController? client, CommandInfo command)
+    {
+        _command.OnRconCommand(client, command);
+    }
+
     [ConsoleCommand("css_players", "Player List")]
     public void OnPlayersCommand(CCSPlayerController client, CommandInfo command)
     {
