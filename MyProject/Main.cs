@@ -460,9 +460,13 @@ public class Main(
             var findBomb = false;
             foreach (var player in Utilities.GetPlayers())
             {
-                foreach (var weapon in player.PlayerPawn.Value!.WeaponServices!.MyWeapons)
+                if (player is null || !Utility.IsPlayerValidAndAlive(player)) continue;
+                if (player.PlayerPawn.Value!.WeaponServices is null) continue;
+
+                foreach (var weapon in player.PlayerPawn.Value.WeaponServices.MyWeapons)
                 {
-                    if (weapon.Value!.DesignerName == Utility.GetCsItemEnumValue(CsItem.C4))
+                    if (weapon.Value is null) continue;
+                    if (weapon.Value.DesignerName == Utility.GetCsItemEnumValue(CsItem.C4))
                     {
                         findBomb = true;
                         break;
