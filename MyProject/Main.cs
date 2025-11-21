@@ -20,7 +20,8 @@ public class Main(
     IPlayerService playerService,
     IPlayerManagementService playerManagementService,
     ICommand commmand,
-    IBot bot
+    IBot bot,
+    IMusic music
     ) : BasePlugin, IPluginConfig<MainConfig>
 {
     #region plugin info
@@ -50,6 +51,7 @@ public class Main(
     // module services
     private readonly ICommand _command = commmand;
     private readonly IBot _bot = bot;
+    private readonly IMusic _music = music;
 
     // singleton members
     public static Main Instance { get; private set; } = null!; // To Do: remove singleton one day
@@ -250,7 +252,7 @@ public class Main(
     private HookResult PlayerJoinTeamHandler(EventPlayerTeam @event, GameEventInfo info)
     {
         var player = @event.Userid;
-        if (player is null || !player.IsValid || player.IsBot || _skinUpdated[player.Slot])
+        if (!Utility.IsHumanPlayerValid(player) || _skinUpdated[player!.Slot])
             return HookResult.Continue;
         Server.NextFrameAsync(() =>
         {
@@ -258,6 +260,17 @@ public class Main(
             _playerService.UpdateDefaultSkin(player.SteamID, defaultSkin);
             _skinUpdated[player.Slot] = true;
         });
+
+        if (_roundCount == 0)
+        {
+            AddTimer(1f, () =>
+            {
+                if (player.IsValid && !player.IsBot)
+                {
+                    _music.PlayWarmupMusic(player);
+                }
+            });
+        }
         return HookResult.Continue;
     }
 
@@ -339,6 +352,7 @@ public class Main(
 
     private HookResult RoundStartHandler(EventRoundStart eventRoundStart, GameEventInfo gameEventInfo)
     {
+
         _isRoundEnd = false;
         if (!_warmup)
         {
@@ -346,6 +360,35 @@ public class Main(
             RemoveProtectionFromAllPlayers();
             ActivateAllWeaponStatuses();
             StartWeaponCheckTimer();
+
+            var endGameRound = ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>();
+            var freezeTime = ConVar.Find("mp_freezetime")!.GetPrimitiveValue<int>();
+
+            if (_roundCount == endGameRound)
+            {
+                // End Game
+                Server.ExecuteCommand("mp_maxrounds 1");
+                AddTimer(1f, () =>
+                {
+                    _music.PlayEndGameMusic();
+                });
+            }
+            else
+            {
+                AddTimer(freezeTime, () =>
+                {
+                    _music.PlayRoundMusic();
+                    Server.NextFrame(() =>
+                    {
+                        var roundMusicName = _music.CurrentRoundMusicName;
+                        if (!string.IsNullOrEmpty(roundMusicName))
+                        {
+                            Server.PrintToChatAll($"Now is playing: {roundMusicName}");
+                        }
+                    });
+                });
+            }
+
             if (_roundCount == Config.MidBossRound || _roundCount == Config.FinalBossRound)
             {
                 RemoveBomb();
@@ -373,12 +416,6 @@ public class Main(
                 }
             });
         });
-
-        if (_roundCount == ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>())
-        {
-            // End Game
-            Server.ExecuteCommand("mp_maxrounds 1");
-        }
 
         foreach (var client in Utilities.GetPlayers())
         {
@@ -485,15 +522,19 @@ public class Main(
     private HookResult RoundEndHandler(EventRoundEnd eventRoundEnd, GameEventInfo gameEventInfo)
     {
         _isRoundEnd = true;
+        _music.StopRoundMusic();
+
         if (eventRoundEnd.Winner == (int)GetHumanTeam())
         {
             _winStreak++;
             _looseStreak = 0;
+            _music.PlayRoundWinMusic();
         }
         else
         {
             _looseStreak++;
             _winStreak = 0;
+            _music.PlayRoundLoseMusic();
         }
 
         if (!_warmup)
@@ -676,6 +717,12 @@ public class Main(
     public void OnSlapCommand(CCSPlayerController client, CommandInfo command)
     {
         _command.OnSlapCommand(client, command);
+    }
+
+    [ConsoleCommand("css_volume", "music volume command")]
+    public void OnVolumeCommand(CCSPlayerController client, CommandInfo command)
+    {
+        _command.OnVolumeCommand(client, command);
     }
     #endregion commands
 

@@ -21,6 +21,7 @@ namespace MyProject.Classes
             services.AddSingleton<IPlayerManagementService, PlayerManagementService>();
             services.AddSingleton<ICommand, Command>();
             services.AddSingleton<IBot, Bot>();
+            services.AddSingleton<IMusic, Music>();
         }
     }
 }

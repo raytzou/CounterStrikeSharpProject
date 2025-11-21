@@ -31,5 +31,7 @@ namespace MyProject.Modules.Interfaces
         void OnModelsCommand(CCSPlayerController client, CommandInfo command, Main thePlugin);
 
         void OnSlapCommand(CCSPlayerController client, CommandInfo command);
+
+        void OnVolumeCommand(CCSPlayerController client, CommandInfo command);
     }
 }

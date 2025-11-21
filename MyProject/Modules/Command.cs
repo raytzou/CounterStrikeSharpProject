@@ -486,6 +486,38 @@ public class Command(
         );
     }
 
+    public void OnVolumeCommand(CCSPlayerController client, CommandInfo command)
+    {
+        if (!Utility.IsHumanPlayerValid(client)) return;
+
+        if (command.ArgCount != 2)
+        {
+            command.ReplyToCommand("[css] Usage: css_volume [volume]");
+            return;
+        }
+
+        var volumeString = command.GetArg(2);
+
+        if (string.IsNullOrEmpty(volumeString) || !byte.TryParse(volumeString, out var volume) || volume < 10 || volume > 100)
+        {
+            command.ReplyToCommand("Invalid volume");
+            return;
+        }
+
+        var playerCache = _playerService.GetPlayerCache(client.SteamID);
+
+        if (playerCache is null)
+        {
+            command.ReplyToCommand("Cannot update volume, please reconnect to server!");
+            _logger.LogWarning("Cannot update volume, player cache is not found. SteamID: {steamID}", client.SteamID);
+            return;
+        }
+
+        playerCache.Volume = volume;
+        _playerService.UpdateCache(playerCache);
+        command.ReplyToCommand($"Volume set to {volume}%");
+    }
+
     private void ExecutePlayerCommand(
         CCSPlayerController client,
         CommandInfo command,

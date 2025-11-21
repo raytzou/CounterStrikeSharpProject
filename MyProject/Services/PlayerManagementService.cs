@@ -17,7 +17,7 @@ namespace MyProject.Services
         {
             var allCaches = _playerService.GetAllCaches();
 
-            _playerService.SaveCachesToDB(allCaches);
+            _playerService.SaveCacheToDB(allCaches);
 
             foreach (var cache in allCaches)
             {

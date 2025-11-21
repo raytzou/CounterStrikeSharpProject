@@ -34,7 +34,8 @@ namespace MyProject.Services
                     SteamId = playerSteamId,
                     PlayerName = client.PlayerName,
                     IpAddress = client.IpAddress ?? string.Empty,
-                    LastTimeConnect = DateTime.Now
+                    LastTimeConnect = DateTime.Now,
+                    Volume = 50
                 };
                 _dbContext.Players.Add(playerData);
             }
@@ -84,7 +85,7 @@ namespace MyProject.Services
             _playerCache[player.SteamId] = player;
         }
 
-        public void SaveCachesToDB(IEnumerable<Player> caches)
+        public void SaveCacheToDB(IEnumerable<Player> caches)
         {
             _dbContext.Players.UpdateRange(caches);
             _dbContext.SaveChanges();
