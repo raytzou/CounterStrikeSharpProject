@@ -25,7 +25,15 @@ namespace MyProject.Modules.Interfaces
         /// </summary>
         void StopRoundMusic();
 
-        void PlayRoundEndMusic();
+        /// <summary>
+        /// Plays win music when human team win
+        /// </summary>
+        void PlayRoundWinMusic();
+
+        /// <summary>
+        /// Plays lose music when human team loose
+        /// </summary>
+        void PlayRoundLoseMusic();
 
         /// <summary>
         /// Plays end game music for all players

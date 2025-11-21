@@ -522,11 +522,13 @@ public class Main(
         {
             _winStreak++;
             _looseStreak = 0;
+            _music.PlayRoundWinMusic();
         }
         else
         {
             _looseStreak++;
             _winStreak = 0;
+            _music.PlayRoundLoseMusic();
         }
 
         if (!_warmup)

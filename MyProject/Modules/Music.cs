@@ -31,9 +31,24 @@ namespace MyProject.Modules
             }
         }
 
-        public void PlayRoundEndMusic()
+        public void PlayRoundWinMusic()
         {
-            throw new NotImplementedException();
+            var humans = Utility.GetHumanPlayers();
+
+            foreach (var player in humans)
+            {
+                PlaySound(player, Utility.SoundEvent.Win);
+            }
+        }
+
+        public void PlayRoundLoseMusic()
+        {
+            var humans = Utility.GetHumanPlayers();
+
+            foreach (var player in humans)
+            {
+                PlaySound(player, Utility.SoundEvent.Loose);
+            }
         }
 
         public void PlayRoundMusic()
