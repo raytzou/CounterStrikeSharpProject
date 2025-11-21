@@ -9,35 +9,7 @@ namespace MyProject.Modules
     public class Music : IMusic
     {
         private readonly IPlayerService _playerService;
-
         private static readonly Random _random = new Random(); // avoid repeated instantiation
-        private static readonly string[] _warmup = new string[]
-        {
-            "warmup.01",
-            "warmup.02",
-            "warmup.03",
-            "warmup.04",
-            "warmup.05"
-        };
-        private static readonly List<(string SoundEvent, string DisplayName)> _round = new()
-        {
-            ("round.01", "龍が如く0 OST - Fiercest Warrior ver 0"),
-            ("round.02", "龍が如く6 命の詩 OST - Fiercest Warrior ver.6"),
-            ("round.03", "Metal Slug 2 - Assault Theme"),
-            ("round.04", "Cyberpunk 2077 OST - The Rebel Path"),
-            ("round.05", "龍が如く0 OST - Pledge of Demon 怨魔の契り"),
-            ("round.06", "龍が如く0 OST - 閻魔の誓い"),
-            ("round.07", "龍が如く0 OST - Receive You ~Tech Trance Arrange~"), // skip 8 cuz the file is broken and removed
-            ("round.09", "Devil May Cry 3 - Divine Hate"),
-            ("round.10", "Devil May Cry 4 - Shall Never Surrender"),
-            ("round.11", "Devil May Cry 5 - Bury the Light"),
-            ("round.12", "Devil May Cry 5 - Devil Trigger"),
-        };
-        private static readonly string[] _endGame = new string[]
-        {
-            "end.01"
-        };
-
         private int? _currentPlayingIndex;
 
         public Music(IPlayerService playerService)
@@ -45,7 +17,7 @@ namespace MyProject.Modules
             _playerService = playerService;
         }
 
-        public string? CurrentRoundMusicName => _currentPlayingIndex is null ? null : _round[_currentPlayingIndex.Value].DisplayName;
+        public string? CurrentRoundMusicName => _currentPlayingIndex is null ? null : Utility.SoundEvent.Round[_currentPlayingIndex.Value].DisplayName;
 
         public void PlayEndGameMusic()
         {
@@ -53,7 +25,7 @@ namespace MyProject.Modules
 
             foreach (var player in humans)
             {
-                PlaySound(player, _endGame);
+                PlaySound(player, Utility.SoundEvent.EndGame);
             }
         }
 
@@ -65,8 +37,8 @@ namespace MyProject.Modules
         public void PlayRoundMusic()
         {
             var humans = Utility.GetHumanPlayers();
-            var selectedIndex = _random.Next(_round.Count);
-            var soundEvents = _round.Select(r => r.SoundEvent).ToArray();
+            var selectedIndex = _random.Next(Utility.SoundEvent.Round.Count);
+            var soundEvents = Utility.SoundEvent.Round.Select(soundEvent => soundEvent.EventName).ToList();
 
             _currentPlayingIndex = selectedIndex;
 
@@ -78,18 +50,18 @@ namespace MyProject.Modules
 
         public void PlayWarmupMusic(CCSPlayerController player)
         {
-            PlaySound(player, _warmup);
+            PlaySound(player, Utility.SoundEvent.Warmup);
         }
 
-        private void PlaySound(CCSPlayerController player, string[] sounds)
+        private void PlaySound(CCSPlayerController player, List<string> sounds)
         {
-            var selectedSound = sounds[_random.Next(sounds.Length)];
+            var selectedSound = sounds[_random.Next(sounds.Count)];
             EmitSoundToPlayer(player, selectedSound);
         }
 
-        private void PlaySound(CCSPlayerController player, string[] sounds, int selectedIndex)
+        private void PlaySound(CCSPlayerController player, List<string> sounds, int selectedIndex)
         {
-            if (selectedIndex < 0 || selectedIndex >= sounds.Length)
+            if (selectedIndex < 0 || selectedIndex >= sounds.Count)
                 throw new ArgumentOutOfRangeException(nameof(selectedIndex));
 
             var selectedSound = sounds[selectedIndex];

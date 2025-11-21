@@ -8,6 +8,7 @@ using MyProject.Models;
 using System.Drawing;
 using System.Reflection;
 using System.Runtime.Serialization;
+using System.Text.Json;
 
 namespace MyProject.Classes
 {
@@ -17,7 +18,9 @@ namespace MyProject.Classes
         public static IEnumerable<string> MapsFromWorkshop => _mapsFromWorkShop;
         public static IEnumerable<string> AllMaps => _mapsInPhysicalDirectory.Concat(_mapsFromWorkShop);
         public static Dictionary<string, SkinInfo> WorkshopSkins => _workshopSkins;
+        public static Music SoundEvent => _soundEvent;
 
+        private static Music _soundEvent;
         private readonly static List<CounterStrikeSharp.API.Modules.Timers.Timer> _timers;
         private static List<string> _mapsFromWorkShop;
         private static List<string> _mapsInPhysicalDirectory;
@@ -35,10 +38,12 @@ namespace MyProject.Classes
             _workshopSkins = [];
             _mapsFromWorkShop = [];
             _mapsInPhysicalDirectory = [];
+            _soundEvent = new();
 
             InitializeEnumValues();
             InitializeMaps();
             InitializeWorkshopSkins();
+            InitializeSoundEvent();
 
             static void InitializeEnumValues()
             {
@@ -97,6 +102,31 @@ namespace MyProject.Classes
                         _workshopSkins[modelName].MeshGroupIndex = int.Parse(meshGroupIndex);
                     else
                         _workshopSkins[modelName].MeshGroupIndex = null;
+                }
+            }
+
+            static void InitializeSoundEvent()
+            {
+                var soundsPath = Path.Join(Server.GameDirectory, "sounds.json");
+                if (!File.Exists(soundsPath)) throw new Exception("sounds.json could not be found in root folder");
+
+                try
+                {
+                    var json = File.ReadAllText(soundsPath);
+                    var options = new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true,
+                        ReadCommentHandling = JsonCommentHandling.Skip
+                    };
+
+                    _soundEvent = JsonSerializer.Deserialize<Music>(json, options)!;
+
+                    if (_soundEvent == null)
+                        throw new Exception("sounds.json deserialization failed");
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Invalid JSON format in sounds.json: {ex.Message}");
                 }
             }
         }
