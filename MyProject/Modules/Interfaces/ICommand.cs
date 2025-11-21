@@ -16,6 +16,8 @@ namespace MyProject.Modules.Interfaces
 
         void OnCvarCommand(CCSPlayerController client, CommandInfo command);
 
+        void OnRconCommand(CCSPlayerController? client, CommandInfo command);
+
         void OnPlayersCommand(CCSPlayerController client, CommandInfo command);
 
         void OnSlayCommand(CCSPlayerController client, CommandInfo command);

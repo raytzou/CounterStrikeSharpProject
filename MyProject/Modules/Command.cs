@@ -224,6 +224,30 @@ public class Command(
         }
     }
 
+    public void OnRconCommand(CCSPlayerController? client, CommandInfo command)
+    {
+        if (command.ArgCount < 2)
+        {
+            command.ReplyToCommand("[css] Usage: css_rcon <rcon>");
+            return;
+        }
+
+        var rcon = string.Join(" ", command.GetCommandString.Split(' ').Skip(1));
+        var admin = client?.PlayerName ?? "console";
+
+        try
+        {
+            Server.ExecuteCommand(rcon);
+            _logger.LogInformation("{admin} executed RCON command '{rcon}' at {DT}", admin, rcon, DateTime.Now);
+        }
+        catch (Exception ex)
+        {
+            command.ReplyToCommand($"[css] Failed to execute RCON command");
+            _logger.LogError("RCON command execution failed. Admin: {admin}, Command: {rcon}, Error: {error}",
+            admin, rcon, ex.Message);
+        }
+    }
+
     public void OnPlayersCommand(CCSPlayerController client, CommandInfo command)
     {
         var players = Utilities.GetPlayers();
