@@ -1,4 +1,5 @@
 ﻿using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Modules.UserMessages;
 using CounterStrikeSharp.API.Modules.Utils;
 using MyProject.Classes;
 using MyProject.Modules.Interfaces;
@@ -11,6 +12,7 @@ namespace MyProject.Modules
         private readonly IPlayerService _playerService;
         private static readonly Random _random = new Random(); // avoid repeated instantiation
         private int? _currentPlayingIndex;
+        private readonly Dictionary<int, uint> _playingRoundSounds = []; // player.Slot -> Sound Event Index
 
         public Music(IPlayerService playerService)
         {
@@ -40,12 +42,26 @@ namespace MyProject.Modules
             var selectedIndex = _random.Next(Utility.SoundEvent.Round.Count);
             var soundEvents = Utility.SoundEvent.Round.Select(soundEvent => soundEvent.EventName).ToList();
 
+            _playingRoundSounds.Clear();
             _currentPlayingIndex = selectedIndex;
 
             foreach (var player in humans)
             {
-                PlaySound(player, soundEvents, selectedIndex);
+                EmitRoundSoundToPlayer(player, soundEvents[selectedIndex]);
             }
+        }
+
+        public void StopRoundMusic()
+        {
+            foreach (var playerRoundSoundEvent in _playingRoundSounds)
+            {
+                var message = UserMessage.FromId(209);
+                message.Recipients.Add(playerRoundSoundEvent.Key);
+                message.SetUInt("soundevent_guid", playerRoundSoundEvent.Value);
+                message.Send();
+            }
+
+            _playingRoundSounds.Clear();
         }
 
         public void PlayWarmupMusic(CCSPlayerController player)
@@ -59,21 +75,21 @@ namespace MyProject.Modules
             EmitSoundToPlayer(player, selectedSound);
         }
 
-        private void PlaySound(CCSPlayerController player, List<string> sounds, int selectedIndex)
-        {
-            if (selectedIndex < 0 || selectedIndex >= sounds.Count)
-                throw new ArgumentOutOfRangeException(nameof(selectedIndex));
-
-            var selectedSound = sounds[selectedIndex];
-            EmitSoundToPlayer(player, selectedSound);
-        }
-
         private void EmitSoundToPlayer(CCSPlayerController player, string soundName)
         {
             var recipient = new RecipientFilter { player };
             var playerVolume = _playerService.GetPlayerCache(player.SteamID)?.Volume ?? 50;
 
             player.EmitSound(soundName, recipient, playerVolume / 100);
+        }
+
+        private void EmitRoundSoundToPlayer(CCSPlayerController player, string soundName)
+        {
+            var recipient = new RecipientFilter { player };
+            var playerVolume = _playerService.GetPlayerCache(player.SteamID)?.Volume ?? 50;
+
+            var soundIndex = player.EmitSound(soundName, recipient, playerVolume / 100f);
+            _playingRoundSounds[player.Slot] = soundIndex;
         }
     }
 }

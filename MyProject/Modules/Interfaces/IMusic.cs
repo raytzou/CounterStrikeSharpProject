@@ -20,6 +20,11 @@ namespace MyProject.Modules.Interfaces
         /// </summary>
         void PlayRoundMusic();
 
+        /// <summary>
+        /// Stops playing round music
+        /// </summary>
+        void StopRoundMusic();
+
         void PlayRoundEndMusic();
 
         /// <summary>

@@ -516,6 +516,8 @@ public class Main(
     private HookResult RoundEndHandler(EventRoundEnd eventRoundEnd, GameEventInfo gameEventInfo)
     {
         _isRoundEnd = true;
+        _music.StopRoundMusic();
+
         if (eventRoundEnd.Winner == (int)GetHumanTeam())
         {
             _winStreak++;
