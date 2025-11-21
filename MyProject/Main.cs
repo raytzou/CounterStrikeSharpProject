@@ -352,6 +352,8 @@ public class Main(
 
     private HookResult RoundStartHandler(EventRoundStart eventRoundStart, GameEventInfo gameEventInfo)
     {
+        var endGameRound = ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>();
+
         _isRoundEnd = false;
         if (!_warmup)
         {
@@ -361,7 +363,7 @@ public class Main(
             StartWeaponCheckTimer();
 
             // play round music after freezetime
-            if (int.TryParse(ConVar.Find("mp_freezetime")!.StringValue, out var freezeTime))
+            if (_roundCount != endGameRound && int.TryParse(ConVar.Find("mp_freezetime")!.StringValue, out var freezeTime))
             {
                 AddTimer(freezeTime, () =>
                 {
@@ -405,7 +407,7 @@ public class Main(
             });
         });
 
-        if (_roundCount == ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>())
+        if (_roundCount == endGameRound)
         {
             // End Game
             Server.ExecuteCommand("mp_maxrounds 1");
