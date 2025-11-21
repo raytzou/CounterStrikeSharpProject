@@ -23,32 +23,17 @@ namespace MyProject.Modules
 
         public void PlayEndGameMusic()
         {
-            var humans = Utility.GetHumanPlayers();
-
-            foreach (var player in humans)
-            {
-                PlaySound(player, Utility.SoundEvent.EndGame);
-            }
+            PlayMusicToAllHumans(Utility.SoundEvent.EndGame);
         }
 
         public void PlayRoundWinMusic()
         {
-            var humans = Utility.GetHumanPlayers();
-
-            foreach (var player in humans)
-            {
-                PlaySound(player, Utility.SoundEvent.Win);
-            }
+            PlayMusicToAllHumans(Utility.SoundEvent.Win);
         }
 
         public void PlayRoundLoseMusic()
         {
-            var humans = Utility.GetHumanPlayers();
-
-            foreach (var player in humans)
-            {
-                PlaySound(player, Utility.SoundEvent.Loose);
-            }
+            PlayMusicToAllHumans(Utility.SoundEvent.Loose);
         }
 
         public void PlayRoundMusic()
@@ -82,6 +67,16 @@ namespace MyProject.Modules
         public void PlayWarmupMusic(CCSPlayerController player)
         {
             PlaySound(player, Utility.SoundEvent.Warmup);
+        }
+
+        private void PlayMusicToAllHumans(List<string> sounds)
+        {
+            var humans = Utility.GetHumanPlayers();
+
+            foreach (var player in humans)
+            {
+                PlaySound(player, sounds);
+            }
         }
 
         private void PlaySound(CCSPlayerController player, List<string> sounds)
