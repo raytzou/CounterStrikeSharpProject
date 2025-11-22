@@ -231,10 +231,10 @@ public class Main(
     {
         var player = Utilities.GetPlayerFromSlot(playerSlot);
 
-        if (player is null || !player.IsValid)
+        if (!Utility.IsHumanPlayerValid(player))
             return;
 
-        if (!player.IsBot)
+        if (!player!.IsBot)
         {
             _logger.LogInformation("{client} has connected at {DT}, IP: {ipAddress}, SteamID: {steamID}", player.PlayerName, DateTime.Now, player.IpAddress, player.SteamID);
             _playerService.PlayerJoin(player);
