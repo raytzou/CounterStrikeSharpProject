@@ -35,6 +35,7 @@ namespace MyProject.Services
                     PlayerName = client.PlayerName,
                     IpAddress = client.IpAddress ?? string.Empty,
                     LastTimeConnect = DateTime.Now,
+                    DefaultSkinModelPath = string.Empty,
                     Volume = 50
                 };
                 _dbContext.Players.Add(playerData);
@@ -62,6 +63,16 @@ namespace MyProject.Services
             }
 
             playerData.DefaultSkinModelPath = skinPath;
+
+            if (_playerCache.TryGetValue(steamId, out var cachedPlayer))
+            {
+                cachedPlayer.DefaultSkinModelPath = skinPath;
+            }
+            else
+            {
+                _logger.LogWarning("Player {steamId} not found in cache when updating default skin", steamId);
+            }
+
             _dbContext.Players.Update(playerData);
             _dbContext.SaveChanges();
         }

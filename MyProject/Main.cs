@@ -39,7 +39,6 @@ public class Main(
     private readonly Dictionary<string, int> _players = []; // playerName -> slot
     private readonly Dictionary<string, Position> _position = [];
     private readonly Dictionary<string, WeaponStatus> _weaponStatus = [];
-    private readonly bool[] _skinUpdated = new bool[64];
     private CounterStrikeSharp.API.Modules.Timers.Timer? _weaponCheckTimer = null;
     private int _roundCount = 0;
     private bool _warmup = true;
@@ -86,8 +85,8 @@ public class Main(
         RegisterListener<Listeners.OnTick>(OnTick);
         RegisterListener<Listeners.OnMapStart>(OnMapStart);
         RegisterListener<Listeners.OnMapEnd>(OnMapEnd);
-        RegisterListener<Listeners.OnClientPutInServer>(OnClientPutInServer);
         RegisterListener<Listeners.OnServerPrecacheResources>(OnServerPrecacheResources);
+        RegisterEventHandler<EventPlayerConnectFull>(PlayerFullConnectHandler);
         RegisterEventHandler<EventPlayerDisconnect>(DisconnectHandler);
         RegisterEventHandler<EventPlayerTeam>(PlayerJoinTeamHandler);
         RegisterEventHandler<EventPlayerSpawn>(PlayerSpawnHandler);
@@ -227,12 +226,13 @@ public class Main(
         _playerManagementService.SaveAllCachesToDB();
     }
 
-    private void OnClientPutInServer(int playerSlot)
+    #region hook result
+    private HookResult PlayerFullConnectHandler(EventPlayerConnectFull @event, GameEventInfo info)
     {
-        var player = Utilities.GetPlayerFromSlot(playerSlot);
+        var player = @event.Userid;
 
         if (!Utility.IsHumanPlayerValid(player))
-            return;
+            return HookResult.Continue;
 
         if (!player!.IsBot)
         {
@@ -246,20 +246,15 @@ public class Main(
         }
 
         _players[player.PlayerName] = player.Slot;
+
+        return HookResult.Continue;
     }
 
-    #region hook result
     private HookResult PlayerJoinTeamHandler(EventPlayerTeam @event, GameEventInfo info)
     {
         var player = @event.Userid;
-        if (!Utility.IsHumanPlayerValid(player) || _skinUpdated[player!.Slot])
+        if (!Utility.IsHumanPlayerValid(player))
             return HookResult.Continue;
-        Server.NextFrameAsync(() =>
-        {
-            var defaultSkin = player.PlayerPawn.Value!.CBodyComponent?.SceneNode?.GetSkeletonInstance().ModelState.ModelName ?? throw new NullReferenceException($"Cannot update player default skin {player.SteamID}");
-            _playerService.UpdateDefaultSkin(player.SteamID, defaultSkin);
-            _skinUpdated[player.Slot] = true;
-        });
 
         if (_roundCount == 0)
         {
@@ -728,7 +723,6 @@ public class Main(
 
     private void InitializeFileds()
     {
-        Array.Clear(_skinUpdated, 0, _skinUpdated.Length);
         _roundCount = 0;
         _winStreak = 0;
         _warmup = true;
@@ -746,19 +740,54 @@ public class Main(
 
     private void SetClientModel(CCSPlayerController client)
     {
-        Server.NextFrameAsync(() =>
+        if (!Utility.IsHumanPlayerValid(client)) return;
+
+        var playerCache = _playerService.GetPlayerCache(client.SteamID);
+
+        if (playerCache is null)
         {
-            var playerCache = _playerService.GetPlayerCache(client.SteamID);
-            if (playerCache is null)
+            _logger.LogWarning("Setting model failed, player cache is not found. ID: {steamID}", client.SteamID);
+            return;
+        }
+
+        if (string.IsNullOrEmpty(playerCache.DefaultSkinModelPath))
+        {
+            AddTimer(0.1f, () =>
             {
-                _logger.LogWarning("Setting model failed, player cache is not found. ID: {steamID}", client.SteamID);
+                if (!Utility.IsHumanPlayerValid(client))
+                {
+                    _logger.LogWarning("Player {steamId} is no longer valid when updating default skin", client.SteamID);
+                    return;
+                }
+                var playerOriginalModel = client.PlayerPawn.Value!.CBodyComponent?.SceneNode?.GetSkeletonInstance().ModelState.ModelName;
+
+                if (!string.IsNullOrEmpty(playerOriginalModel))
+                {
+                    _playerService.UpdateDefaultSkin(client.SteamID, playerOriginalModel);
+                }
+            });
+        }
+
+        AddTimer(0.15f, () =>
+        {
+            if (!Utility.IsHumanPlayerValid(client))
+                return;
+
+            var updatedCache = _playerService.GetPlayerCache(client.SteamID);
+
+            if (updatedCache is null)
+            {
+                _logger.LogWarning("Player cache not found when setting model for {steamID}", client.SteamID);
                 return;
             }
-            var skinName = playerCache.PlayerSkins.FirstOrDefault(cache => cache.IsActive)?.SkinName ?? string.Empty;
+
+            var skinName = updatedCache.PlayerSkins.FirstOrDefault(cache => cache.IsActive)?.SkinName ?? string.Empty;
             if (!string.IsNullOrEmpty(skinName))
                 Utility.SetClientModel(client, skinName);
+            else if (!string.IsNullOrEmpty(updatedCache.DefaultSkinModelPath))
+                Utility.SetClientModel(client, updatedCache.DefaultSkinModelPath);
             else
-                Utility.SetClientModel(client, playerCache.DefaultSkinModelPath);
+                _logger.LogWarning("Cannot set model for {steamID}: both custom skin and default skin are empty", client.SteamID);
         });
     }
 
