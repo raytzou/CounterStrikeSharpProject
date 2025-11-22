@@ -13,7 +13,7 @@ namespace MyProject.Services.Interfaces
         void ClearPlayerCache();
         void ResetPlayerSkinFromCache(Player playerCache);
         void UpdateCache(Player player);
-        void SaveCacheToDB(IEnumerable<Player> caches);
         void SaveCacheToDB(Player player);
+        void SaveAllCachesToDB();
     }
 }

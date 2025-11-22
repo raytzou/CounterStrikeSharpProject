@@ -17,8 +17,6 @@ namespace MyProject.Classes
             services.AddDbContext<ProjectDbContext>(options =>
                 options.UseSqlServer(connectionString));
             services.AddSingleton<IPlayerService, PlayerService>();
-            services.AddSingleton<IPlayerSkinService, PlayerSkinService>();
-            services.AddSingleton<IPlayerManagementService, PlayerManagementService>();
             services.AddSingleton<ICommand, Command>();
             services.AddSingleton<IBot, Bot>();
             services.AddSingleton<IMusic, Music>();

@@ -18,7 +18,6 @@ namespace MyProject;
 public class Main(
     ILogger<Main> logger,
     IPlayerService playerService,
-    IPlayerManagementService playerManagementService,
     ICommand commmand,
     IBot bot,
     IMusic music
@@ -33,7 +32,6 @@ public class Main(
 
     private readonly ILogger<Main> _logger = logger;
     private readonly IPlayerService _playerService = playerService;
-    private readonly IPlayerManagementService _playerManagementService = playerManagementService;
 
     // fields
     private readonly Dictionary<string, int> _players = []; // playerName -> slot
@@ -223,7 +221,7 @@ public class Main(
 
     private void OnMapEnd()
     {
-        _playerManagementService.SaveAllCachesToDB();
+        _playerService.SaveAllCachesToDB();
     }
 
     #region hook result
@@ -596,7 +594,9 @@ public class Main(
         if (!player.IsBot)
         {
             _logger.LogInformation("{client} has disconnected at {DT}", player.PlayerName, DateTime.Now);
-            _playerManagementService.SaveCacheToDB(player.SteamID);
+            var playerCache = _playerService.GetPlayerCache(player.SteamID);
+            if (playerCache != null)
+                _playerService.SaveCacheToDB(playerCache);
         }
 
         if (_position.ContainsKey(player.PlayerName))

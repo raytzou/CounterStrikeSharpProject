@@ -426,7 +426,6 @@ public class Command(
                 {
                     var newCacheSkin = new PlayerSkin
                     {
-                        Id = Guid.NewGuid(),
                         SteamId = player.SteamID,
                         SkinName = skin.Key,
                         AcquiredAt = DateTime.Now,

@@ -27,6 +27,7 @@ namespace MyProject.Services
             var playerData = _dbContext.Players
                 .Include(x => x.PlayerSkins)
                 .FirstOrDefault(x => x.SteamId == playerSteamId);
+
             if (playerData is null)
             {
                 playerData = new Player
@@ -45,7 +46,6 @@ namespace MyProject.Services
                 playerData.LastTimeConnect = DateTime.Now;
                 playerData.PlayerName = client.PlayerName;
                 playerData.IpAddress = client.IpAddress ?? string.Empty;
-                _dbContext.Players.Update(playerData);
             }
 
             _playerCache[client.SteamID] = playerData;
@@ -96,15 +96,14 @@ namespace MyProject.Services
             _playerCache[player.SteamId] = player;
         }
 
-        public void SaveCacheToDB(IEnumerable<Player> caches)
-        {
-            _dbContext.Players.UpdateRange(caches);
-            _dbContext.SaveChanges();
-        }
-
         public void SaveCacheToDB(Player player)
         {
             _dbContext.Players.Update(player);
+            _dbContext.SaveChanges();
+        }
+
+        public void SaveAllCachesToDB()
+        {
             _dbContext.SaveChanges();
         }
     }
