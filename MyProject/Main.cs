@@ -497,7 +497,7 @@ public class Main(
             var findBomb = false;
             foreach (var player in Utilities.GetPlayers())
             {
-                if (player is null || !Utility.IsPlayerValidAndAlive(player)) continue;
+                if (!Utility.IsHumanPlayerValid(player)) continue;
                 if (player.PlayerPawn.Value!.WeaponServices is null) continue;
 
                 foreach (var weapon in player.PlayerPawn.Value.WeaponServices.MyWeapons)
