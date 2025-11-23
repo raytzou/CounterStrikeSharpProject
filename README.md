@@ -171,7 +171,6 @@ MyProject/
 ├── Services/
 │   └── Interfaces/
 │       ├── IPlayerService.cs   # 玩家服務介面
-│       └── IPlayerManagementService.cs
 └── Main.cs                     # 主插件類別
 ```
 
@@ -190,15 +189,3 @@ MyProject/
 - [ ] 完善設定檔案文檔
 - [ ] 增加更多玩家互動功能
 
-## 📄 授權
-
-本專案僅供學習與研究使用。
-
-## 🔗 相關連結
-
-- **GitHub Repository**: https://github.com/raytzou/CounterStrikeSharpProject
-- **CounterStrikeSharp**: https://github.com/roflmuffin/CounterStrikeSharp
-
----
-
-*最後更新：Music Module 完成 - 支援完整的遊戲音效系統*
