@@ -5,6 +5,7 @@ using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.UserMessages;
 using CounterStrikeSharp.API.Modules.Utils;
 using MyProject.Models;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Reflection;
 using System.Runtime.Serialization;
@@ -579,11 +580,12 @@ namespace MyProject.Classes
             fadeMsg.Send(player);
         }
 
-        public static bool IsHumanPlayerValid(CCSPlayerController? player) =>
+        public static bool IsHumanPlayerValid([NotNullWhen(true)] CCSPlayerController? player) =>
             player != null &&
             player.IsValid &&
             !player.IsBot &&
-            player.PlayerPawn.Value != null;
+            player.PlayerPawn.Value != null &&
+            player.PlayerPawn.Value.IsValid;
 
         public static bool IsHumanPlayerValidAndAlive(CCSPlayerController player) =>
             IsHumanPlayerValid(player) &&
@@ -599,7 +601,7 @@ namespace MyProject.Classes
                 .Where(player => IsHumanPlayerValid(player))
                 .ToList();
 
-        public static bool IsBotValid(CCSPlayerController? bot) =>
+        public static bool IsBotValid([NotNullWhen(true)] CCSPlayerController? bot) =>
             bot is not null &&
             bot.IsValid &&
             bot.IsBot &&

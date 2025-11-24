@@ -84,6 +84,7 @@ public class Main(
         RegisterListener<Listeners.OnMapStart>(OnMapStart);
         RegisterListener<Listeners.OnMapEnd>(OnMapEnd);
         RegisterListener<Listeners.OnServerPrecacheResources>(OnServerPrecacheResources);
+        RegisterListener<Listeners.OnEntityCreated>(OnEntityCreated);
         RegisterEventHandler<EventPlayerConnectFull>(PlayerFullConnectHandler);
         RegisterEventHandler<EventPlayerDisconnect>(DisconnectHandler);
         RegisterEventHandler<EventPlayerTeam>(PlayerJoinTeamHandler);
@@ -101,6 +102,7 @@ public class Main(
         Config = config;
     }
 
+    #region Listeners
     private void OnServerPrecacheResources(ResourceManifest manifest)
     {
         var pathSet = new HashSet<string>();
@@ -224,6 +226,94 @@ public class Main(
         _playerService.SaveAllCachesToDB();
     }
 
+    private void OnEntityCreated(CEntityInstance entity)
+    {
+        if (entity is null || !entity.IsValid || entity.Entity is null)
+            return;
+
+        FixWeaponAmmoAmount();
+
+        void FixWeaponAmmoAmount()
+        {
+            if (!entity.Entity.DesignerName.StartsWith("weapon_"))
+                return;
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await Server.NextFrameAsync(() =>
+                    {
+                        var weaponBase = new CCSWeaponBase(entity.Handle);
+                        if (weaponBase is null || !weaponBase.IsValid || weaponBase.Entity is null || weaponBase.VData is null)
+                            return;
+
+                        var weaponDesignName = weaponBase.Entity.DesignerName;
+                        var weaponIndex = weaponBase.AttributeManager.Item.ItemDefinitionIndex;
+
+                        if (AppSettings.IsDebug)
+                        {
+                            _logger.LogInformation("weapon created: {entityName}", weaponDesignName);
+                            _logger.LogInformation("weapon index: {index}", weaponIndex);
+                        }
+
+                        switch (weaponDesignName)
+                        {
+                            case "weapon_awp":
+                                SetAmmoAmount(10);
+                                SetReservedAmmoAmount(30);
+                                break;
+                            case "weapon_m4a1":
+                                if (weaponIndex == 60) // m4a1 silencer
+                                {
+                                    SetAmmoAmount(30);
+                                    SetReservedAmmoAmount(90);
+                                }
+                                break;
+                            case "weapon_hkp2000":
+                                if (weaponIndex == 61) // USP-S
+                                    SetReservedAmmoAmount(100);
+                                break;
+                            case "weapon_p250":
+                                SetReservedAmmoAmount(52);
+                                break;
+                            case "weapon_cz75a":
+                                SetReservedAmmoAmount(60);
+                                break;
+                            case "weapon_deagle":
+                                if (weaponIndex == 64) // R8 Revolver
+                                    SetReservedAmmoAmount(40);
+                                break;
+                            default:
+                                return;
+                        }
+
+                        void SetAmmoAmount(int amount)
+                        {
+                            weaponBase.VData.MaxClip1 = amount;
+                            weaponBase.VData.DefaultClip1 = amount;
+                            weaponBase.Clip1 = amount;
+
+                            Utilities.SetStateChanged(weaponBase, "CCSWeaponBase", "m_iClip1");
+                        }
+
+                        void SetReservedAmmoAmount(int amount)
+                        {
+                            weaponBase.VData.PrimaryReserveAmmoMax = amount;
+                            weaponBase.ReserveAmmo[0] = amount;
+                        }
+                    });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError("Fix ammo amount error {error}", ex);
+                }
+            });
+        }
+    }
+
+    #endregion Listeners
+
     #region hook result
     private HookResult PlayerFullConnectHandler(EventPlayerConnectFull @event, GameEventInfo info)
     {
@@ -258,10 +348,7 @@ public class Main(
         {
             AddTimer(1f, () =>
             {
-                if (player.IsValid && !player.IsBot)
-                {
-                    _music.PlayWarmupMusic(player);
-                }
+                _music.PlayWarmupMusic(player);
             });
         }
         return HookResult.Continue;
