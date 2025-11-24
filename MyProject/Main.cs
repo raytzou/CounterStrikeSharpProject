@@ -258,10 +258,7 @@ public class Main(
         {
             AddTimer(1f, () =>
             {
-                if (player.IsValid && !player.IsBot)
-                {
-                    _music.PlayWarmupMusic(player);
-                }
+                _music.PlayWarmupMusic(player);
             });
         }
         return HookResult.Continue;
