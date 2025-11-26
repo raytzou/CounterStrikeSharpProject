@@ -818,6 +818,12 @@ public class Main(
     {
         _command.OnVolumeCommand(client, command);
     }
+
+    [ConsoleCommand("css_buy", "buy command")]
+    public void OnBuyCommand(CCSPlayerController client, CommandInfo command)
+    {
+        _command.OnBuyCommand(client, command);
+    }
     #endregion commands
 
     private void InitializeFileds()
