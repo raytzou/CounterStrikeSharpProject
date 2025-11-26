@@ -580,6 +580,40 @@ namespace MyProject.Classes
             fadeMsg.Send(player);
         }
 
+        /// <summary>
+        /// Drops a specific weapon from a player's inventory. Optionally removes the dropped weapon from the game world.
+        /// </summary>
+        /// <param name="player">The player controller who will drop the weapon</param>
+        /// <param name="weaponName">The designer name of the weapon to drop (e.g., "weapon_ak47", "weapon_awp")</param>
+        /// <param name="removeWeapon">If true, the dropped weapon will be deleted from the game world after 0.1 seconds; if false, the weapon remains on the ground for pickup</param>
+        public static void DropWeapon(CCSPlayerController player, string weaponName, bool removeWeapon = false)
+        {
+            if (!IsHumanPlayerValid(player)) return;
+
+            var weaponServices = player.PlayerPawn.Value!.WeaponServices;
+            if (weaponServices is null) return;
+
+            var matchedWeapon = weaponServices.MyWeapons
+            .FirstOrDefault(w => w.IsValid && w.Value is not null && w.Value.DesignerName == weaponName);
+
+            if (matchedWeapon is not null && matchedWeapon.IsValid)
+            {
+                weaponServices.ActiveWeapon.Raw = matchedWeapon.Raw;
+
+                var activeWeapon = weaponServices.ActiveWeapon;
+                if (activeWeapon is null || !activeWeapon.IsValid || activeWeapon.Value is null || !activeWeapon.Value.IsValid)
+                    return;
+
+                var weaponEntity = activeWeapon.Value.As<CBaseEntity>();
+                if (weaponEntity is null || !weaponEntity.IsValid)
+                    return;
+
+                player.DropActiveWeapon();
+                if (removeWeapon) weaponEntity?.AddEntityIOEvent("Kill", weaponEntity, null, string.Empty, 0.1f);
+            }
+        }
+
+
         public static bool IsHumanPlayerValid([NotNullWhen(true)] CCSPlayerController? player) =>
             player != null &&
             player.IsValid &&
