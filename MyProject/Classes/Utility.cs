@@ -32,7 +32,7 @@ namespace MyProject.Classes
         {
             ["weapon_m4a1_silencer"] = "weapon_m4a1",
         };
-        private static List<(string EntityName, string DisplayName, int Price)> _weaponMenu = new() // index -> weapon tuple
+        private static readonly List<(string EntityName, string DisplayName, int Price)> _weaponMenu = new()
         {
             // pistols
             {("weapon_glock", "Glock-18", 200)},
