@@ -587,7 +587,7 @@ namespace MyProject.Classes
             player.PlayerPawn.Value != null &&
             player.PlayerPawn.Value.IsValid;
 
-        public static bool IsHumanPlayerValidAndAlive(CCSPlayerController player) =>
+        public static bool IsHumanPlayerValidAndAlive([NotNullWhen(true)] CCSPlayerController player) =>
             IsHumanPlayerValid(player) &&
             player.PlayerPawn.Value!.LifeState == (byte)LifeState_t.LIFE_ALIVE;
 
@@ -608,7 +608,7 @@ namespace MyProject.Classes
             bot.PlayerPawn.Value is not null &&
             bot.PlayerPawn.Value.IsValid;
 
-        public static bool IsBotValidAndAlive(CCSPlayerController? bot) =>
+        public static bool IsBotValidAndAlive([NotNullWhen(true)] CCSPlayerController? bot) =>
             IsBotValid(bot) &&
             bot!.PlayerPawn.Value!.LifeState == (byte)LifeState_t.LIFE_ALIVE;
 
