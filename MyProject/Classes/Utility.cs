@@ -584,6 +584,7 @@ namespace MyProject.Classes
             player != null &&
             player.IsValid &&
             !player.IsBot &&
+            player.PlayerPawn != null &&
             player.PlayerPawn.Value != null &&
             player.PlayerPawn.Value.IsValid;
 
@@ -605,12 +606,13 @@ namespace MyProject.Classes
             bot is not null &&
             bot.IsValid &&
             bot.IsBot &&
+            bot.PlayerPawn is not null &&
             bot.PlayerPawn.Value is not null &&
             bot.PlayerPawn.Value.IsValid;
 
         public static bool IsBotValidAndAlive([NotNullWhen(true)] CCSPlayerController? bot) =>
             IsBotValid(bot) &&
-            bot!.PlayerPawn.Value!.LifeState == (byte)LifeState_t.LIFE_ALIVE;
+            bot.PlayerPawn.Value!.LifeState == (byte)LifeState_t.LIFE_ALIVE;
 
         public static void PrintToAllCenter(string message)
         {
