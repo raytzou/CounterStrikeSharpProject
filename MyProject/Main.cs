@@ -44,6 +44,7 @@ public class Main(
     private int _looseStreak = 0;
     private bool _isRoundEnd = false;
     private bool _randomSpawn = false;
+    private int _currentRoundSecond = 0;
 
     // module services
     private readonly ICommand _command = commmand;
@@ -56,6 +57,7 @@ public class Main(
     public int RoundCount => _roundCount;
     public int PlayerCount => Utilities.GetPlayers().Count(p => !p.IsBot);
     public bool IsRoundEnd => _isRoundEnd;
+    public int RoundSecond => _currentRoundSecond;
 
     public int GetPlayerSlot(string playerName)
     {
@@ -432,7 +434,6 @@ public class Main(
 
     private HookResult RoundStartHandler(EventRoundStart eventRoundStart, GameEventInfo gameEventInfo)
     {
-
         _isRoundEnd = false;
         if (!_warmup)
         {
@@ -440,6 +441,7 @@ public class Main(
             RemoveProtectionFromAllPlayers();
             ActivateAllWeaponStatuses();
             StartWeaponCheckTimer();
+            StartRoundTimer();
 
             var endGameRound = ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>();
             var freezeTime = ConVar.Find("mp_freezetime")!.GetPrimitiveValue<int>();
@@ -597,12 +599,22 @@ public class Main(
                 }
             }
         }
+
+        void StartRoundTimer()
+        {
+            AddTimer(1f, () =>
+            {
+                if (!_isRoundEnd)
+                    _currentRoundSecond++;
+            }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
+        }
     }
 
     private HookResult RoundEndHandler(EventRoundEnd eventRoundEnd, GameEventInfo gameEventInfo)
     {
         _isRoundEnd = true;
         _music.StopRoundMusic();
+        _currentRoundSecond = 0;
 
         if (eventRoundEnd.Winner == (int)GetHumanTeam())
         {
@@ -817,6 +829,7 @@ public class Main(
         _position.Clear();
         _weaponStatus.Clear();
         _randomSpawn = false;
+        _currentRoundSecond = 0;
     }
 
     private static void RemovePlayerProtection(CCSPlayerController? player)
