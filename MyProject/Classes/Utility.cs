@@ -683,21 +683,27 @@ namespace MyProject.Classes
             var mainWeapons = _weaponMenu
                 .GetRange(10, 24)
                 .Select(weapon => weapon.EntityName);
+            var others = _weaponMenu
+                .GetRange(34, 2)
+                .Select(weapon => weapon.EntityName);
 
-            if (!pistols.Contains(weaponEntity) && !mainWeapons.Contains(weaponEntity))
+            if (!pistols.Contains(weaponEntity) && !mainWeapons.Contains(weaponEntity) && !others.Contains(weaponEntity))
                 throw new ArgumentException("Weapon Entity is invalid");
 
-            var playerWeapons = playerWeaponService.MyWeapons;
-            bool isPistol = pistols.Contains(weaponEntity);
-
-            foreach (var weapon in playerWeapons)
+            if (!others.Contains(weaponEntity))
             {
-                if (weapon is null || !weapon.IsValid || weapon.Value is null)
-                    continue;
+                var playerWeapons = playerWeaponService.MyWeapons;
+                bool isPistol = pistols.Contains(weaponEntity);
 
-                var weaponsToCheck = isPistol ? pistols : mainWeapons;
-                if (weaponsToCheck.Contains(weapon.Value.DesignerName))
-                    DropWeapon(player, weapon.Value.DesignerName);
+                foreach (var weapon in playerWeapons)
+                {
+                    if (weapon is null || !weapon.IsValid || weapon.Value is null)
+                        continue;
+
+                    var weaponsToCheck = isPistol ? pistols : mainWeapons;
+                    if (weaponsToCheck.Contains(weapon.Value.DesignerName))
+                        DropWeapon(player, weapon.Value.DesignerName);
+                }
             }
 
             player.GiveNamedItem(weaponEntity);
