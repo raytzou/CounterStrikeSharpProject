@@ -521,7 +521,7 @@ public class Command(
         if (!Utility.IsHumanPlayerValid(client)) return;
 
         var buyTime = ConVar.Find("mp_buytime")!.GetPrimitiveValue<float>();
-        if (Main.Instance.RoundSecond > buyTime)
+        if (Main.Instance.RoundSecond >= buyTime)
         {
             command.ReplyToCommand("buying time is over!");
             return;

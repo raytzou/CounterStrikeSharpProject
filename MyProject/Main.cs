@@ -38,6 +38,7 @@ public class Main(
     private readonly Dictionary<string, Position> _position = [];
     private readonly Dictionary<string, WeaponStatus> _weaponStatus = [];
     private CounterStrikeSharp.API.Modules.Timers.Timer? _weaponCheckTimer = null;
+    private CounterStrikeSharp.API.Modules.Timers.Timer? _roundTimer = null;
     private int _roundCount = 0;
     private bool _warmup = true;
     private int _winStreak = 0;
@@ -434,6 +435,7 @@ public class Main(
 
     private HookResult RoundStartHandler(EventRoundStart eventRoundStart, GameEventInfo gameEventInfo)
     {
+        _currentRoundSecond = 0;
         _isRoundEnd = false;
         if (!_warmup)
         {
@@ -441,7 +443,6 @@ public class Main(
             RemoveProtectionFromAllPlayers();
             ActivateAllWeaponStatuses();
             StartWeaponCheckTimer();
-            StartRoundTimer();
 
             var endGameRound = ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>();
             var freezeTime = ConVar.Find("mp_freezetime")!.GetPrimitiveValue<int>();
@@ -459,6 +460,7 @@ public class Main(
             {
                 AddTimer(freezeTime, () =>
                 {
+                    StartRoundTimer();
                     _music.PlayRoundMusic();
                     Server.NextFrame(() =>
                     {
@@ -602,7 +604,7 @@ public class Main(
 
         void StartRoundTimer()
         {
-            AddTimer(1f, () =>
+            _roundTimer = AddTimer(1f, () =>
             {
                 if (!_isRoundEnd)
                     _currentRoundSecond++;
@@ -614,7 +616,7 @@ public class Main(
     {
         _isRoundEnd = true;
         _music.StopRoundMusic();
-        _currentRoundSecond = 0;
+        KillTimer();
 
         if (eventRoundEnd.Winner == (int)GetHumanTeam())
         {
@@ -648,11 +650,16 @@ public class Main(
 
             Server.ExecuteCommand("mp_randomspawn 0");
             _randomSpawn = false;
-            _weaponCheckTimer?.Kill();
             _roundCount++;
         }
-        _weaponCheckTimer?.Kill();
+
         return HookResult.Continue;
+
+        void KillTimer()
+        {
+            _weaponCheckTimer?.Kill();
+            _roundTimer?.Kill();
+        }
     }
 
     private HookResult WarmupHandler(EventRoundAnnounceWarmup @event, GameEventInfo info)
