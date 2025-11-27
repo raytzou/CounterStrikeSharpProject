@@ -34,6 +34,6 @@ namespace MyProject.Modules.Interfaces
 
         void OnVolumeCommand(CCSPlayerController client, CommandInfo command);
 
-        void OnBuyCommand(CCSPlayerController client, CommandInfo command);
+        void OnBuyCommand(CCSPlayerController client, CommandInfo command, Main thePlugin);
     }
 }

@@ -822,7 +822,7 @@ public class Main(
     [ConsoleCommand("css_buy", "buy command")]
     public void OnBuyCommand(CCSPlayerController client, CommandInfo command)
     {
-        _command.OnBuyCommand(client, command);
+        _command.OnBuyCommand(client, command, this);
     }
     #endregion commands
 

@@ -398,7 +398,6 @@ public class Command(
     {
         var menu = new WasdMenu("Select Models", thePlugin);
         var playerCache = _playerService.GetPlayerCache(client.SteamID);
-        const int displayMenuInterval = 10; // second? TODO: need to check the unit
 
         if (playerCache is null)
         {
@@ -438,7 +437,7 @@ public class Command(
             });
         }
 
-        menu.Display(client, displayMenuInterval);
+        menu.Display(client, Main.Instance.Config.DisplayMenuInterval);
     }
 
     public void OnSlapCommand(CCSPlayerController client, CommandInfo command)
@@ -517,7 +516,7 @@ public class Command(
         command.ReplyToCommand($"Volume set to {volume}%");
     }
 
-    public void OnBuyCommand(CCSPlayerController client, CommandInfo command)
+    public void OnBuyCommand(CCSPlayerController client, CommandInfo command, Main thePlugin)
     {
         if (!Utility.IsHumanPlayerValid(client)) return;
 
@@ -565,29 +564,36 @@ public class Command(
         }
 
         var targetPrice = Utility.WeaponMenu
-            .First(weapon => weapon.EntityName == targetWeapon)
-            .Price;
-        if (client.InGameMoneyServices!.Account < targetPrice)
+                .First(weapon => weapon.EntityName == targetWeapon)
+                .Price;
+        if (!IsMoneyEnough(client, targetPrice))
         {
             command.ReplyToCommand("You don't have enough money to buy the item!");
             return;
         }
 
-        try
-        {
-            Utility.GiveWeapon(client, targetWeapon);
-            client.InGameMoneyServices.Account -= targetPrice;
-            Utilities.SetStateChanged(client, "CCSPlayerController", "m_pInGameMoneyServices");
-        }
-        catch (Exception ex)
-        {
-            command.ReplyToCommand("Failed to buy weapon. Please contact admin!");
-            _logger.LogError("Buy Command error {error}", ex);
-        }
+        BuyItem(client, targetWeapon);
 
         void OpenBuyMenu()
         {
-            throw new NotImplementedException();
+            var menu = new WasdMenu("Buy Menu", thePlugin);
+
+            foreach (var (EntityName, DisplayName, Price) in Utility.WeaponMenu)
+            {
+                menu.AddItem($"{DisplayName} ${Price}", (player, option) =>
+                {
+                    if (!IsMoneyEnough(player, Price))
+                    {
+                        player.PrintToChat("You don't have enough money to buy the item!");
+                    }
+                    else
+                    {
+                        BuyItem(player, EntityName);
+                    }
+                });
+            }
+
+            menu.Display(client, Main.Instance.Config.DisplayMenuInterval);
         }
 
         bool CanBuy()
@@ -599,6 +605,25 @@ public class Command(
                 client.InGameMoneyServices is not null &&
                 Main.Instance.RoundCount > 0 &&
                 Main.Instance.RoundCount < maxRound;
+        }
+
+        bool IsMoneyEnough(CCSPlayerController player, int itemCost) => player.InGameMoneyServices!.Account >= itemCost;
+
+        void BuyItem(CCSPlayerController client, string item)
+        {
+            try
+            {
+                var price = Utility.WeaponMenu.FirstOrDefault(w => w.EntityName == item).Price;
+
+                Utility.GiveWeapon(client, item);
+                client.InGameMoneyServices!.Account -= price;
+                Utilities.SetStateChanged(client, "CCSPlayerController", "m_pInGameMoneyServices");
+            }
+            catch (Exception ex)
+            {
+                command.ReplyToCommand("Failed to buy weapon. Please contact admin!");
+                _logger.LogError("Buy Command error {error}", ex);
+            }
         }
     }
 
