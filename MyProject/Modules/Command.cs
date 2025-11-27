@@ -578,6 +578,11 @@ public class Command(
         {
             var menu = new WasdMenu("Buy Menu", thePlugin);
 
+            menu.AddItem("Close Menu", (player, option) =>
+            {
+                return;
+            });
+
             foreach (var (EntityName, DisplayName, Price) in Utility.WeaponMenu)
             {
                 menu.AddItem($"{DisplayName} ${Price}", (player, option) =>
