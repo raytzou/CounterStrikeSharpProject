@@ -580,6 +580,55 @@ namespace MyProject.Classes
             fadeMsg.Send(player);
         }
 
+        /// <summary>
+        /// Sends sound event parameters to modify volume and pitch of an already playing sound
+        /// </summary>
+        /// <param name="client">The target player</param>
+        /// <param name="soundEventId">The sound event ID returned by EmitSound</param>
+        /// <param name="volume">Sound volume (0.0 to 1.0)</param>
+        /// <param name="pitch">Sound pitch multiplier (default: 1.0)</param>
+        /// <returns>Task for async operation</returns>
+        public static async Task SendSoundEventPackage(CCSPlayerController client, uint soundEventId, float volume, float pitch = 1f)
+        {
+            if (volume == 0.5f && pitch == 1f) return;
+
+            using var memString = new MemoryStream();
+            using var writer = new BinaryWriter(memString);
+
+            if (volume != 0.5f)
+            {
+                writer.Write((UInt32)0xBD6054E9); // volume parameter identifier
+                writer.Write((Byte)8); // parameter length
+                writer.Write((Byte)4); // data type (float)
+                writer.Write((Byte)0); // padding byte
+                writer.Write(volume); // actual volume value
+            }
+
+            if (pitch != 1f)
+            {
+                writer.Write((UInt32)0x929A57A4); // pitch parameter identifier
+                writer.Write((Byte)8);
+                writer.Write((Byte)4);
+                writer.Write((Byte)0);
+                writer.Write(pitch);
+            }
+
+            writer.Close();
+
+            var packedParams = memString.ToArray();
+
+            if (packedParams.Length > 0)
+            {
+                await Server.NextFrameAsync(() =>
+                {
+                    var userMessage = UserMessage.FromId(210);
+                    userMessage.SetInt("soundevent_guid", (int)soundEventId);
+                    userMessage.SetBytes("packed_params", packedParams);
+                    userMessage.Send(client);
+                });
+            }
+        }
+
         public static bool IsHumanPlayerValid([NotNullWhen(true)] CCSPlayerController? player) =>
             player != null &&
             player.IsValid &&
