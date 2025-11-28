@@ -20,6 +20,7 @@ namespace MyProject.Classes
         public static IEnumerable<string> AllMaps => _mapsInPhysicalDirectory.Concat(_mapsFromWorkShop);
         public static Dictionary<string, SkinInfo> WorkshopSkins => _workshopSkins;
         public static Music SoundEvent => _soundEvent;
+        public static List<(string EntityName, string DisplayName, int Price)> WeaponMenu => _weaponMenu;
 
         private static Music _soundEvent;
         private readonly static List<CounterStrikeSharp.API.Modules.Timers.Timer> _timers;
@@ -30,6 +31,52 @@ namespace MyProject.Classes
         private static readonly Dictionary<string, string> _weaponNameMappings = new()
         {
             ["weapon_m4a1_silencer"] = "weapon_m4a1",
+        };
+        private static readonly List<(string EntityName, string DisplayName, int Price)> _weaponMenu = new()
+        {
+            // pistols
+            {("weapon_glock", "Glock-18", 200)},
+            {("weapon_hkp2000", "P2000", 200)},
+            {("weapon_usp_silencer", "USP-S", 200)},
+            {("weapon_elite", "Dual Berettas", 300)},
+            {("weapon_p250", "P250", 300)},
+            {("weapon_tec9", "TEC-9", 500)},
+            {("weapon_cz75a", "CZ75-Auto", 500)},
+            {("weapon_fiveseven", "Five-SeveN", 500)},
+            {("weapon_deagle", "Desert Eagle", 700)},
+            {("weapon_revolver", "R8 Revolver ", 600)},
+            // SMGs
+            {("weapon_mac10", "MAC-10", 1050)},
+            {("weapon_mp9", "MP9", 1250)},
+            {("weapon_mp7", "MP7", 1500)},
+            {("weapon_mp5sd", "MP5-SD", 1500)},
+            {("weapon_ump45", "UMP-45", 1200)},
+            {("weapon_p90", "P90", 2350)},
+            {("weapon_bizon", "PP-Bizon", 1400)},
+            // heavy weapons
+            {("weapon_nova", "Nova", 1050)},
+            {("weapon_xm1014", "XM1014", 2000)},
+            {("weapon_sawedoff", "Sawed-Off", 1100)},
+            {("weapon_mag7", "MAG-7", 1300)},
+            {("weapon_m249", "M249", 5200)},
+            {("weapon_negev", "Negev", 1700)},
+            // rifles
+            {("weapon_galil", "Galil AR", 1800)},
+            {("weapon_famas", "FAMAS", 1950)},
+            {("weapon_ak47", "AK-47", 2700)},
+            {("weapon_m4a1", "M4A4", 2900)},
+            {("weapon_m4a1_silencer", "M4A1-S", 2900) },
+            {("weapon_ssg08", "SSG 08", 1700)},
+            {("weapon_sg556", "SG 553", 3000)},
+            {("weapon_aug", "AUG", 3300)},
+            {("weapon_awp", "AWP", 4750)},
+            {("weapon_g3sg1", "G3SG1", 5000)},
+            {("weapon_scar20", "SCAR-20", 5000)},
+            // others
+            {("weapon_healthshot", "Medi-Shot", 500)},
+            //{("weapon_shield", "Riot Shield", 800)},
+            //{("weapon_tagrenade", "Tactical Awareness Grenade", 200)},
+            {("weapon_c4", "C4", 16000)},
         };
 
         static Utility()
@@ -629,14 +676,97 @@ namespace MyProject.Classes
             }
         }
 
+        /// <summary>
+        /// Drops a specific weapon from a player's inventory. Optionally removes the dropped weapon from the game world.
+        /// </summary>
+        /// <param name="player">The player controller who will drop the weapon</param>
+        /// <param name="weaponName">The designer name of the weapon to drop (e.g., "weapon_ak47", "weapon_awp")</param>
+        /// <param name="removeWeapon">If true, the dropped weapon will be deleted from the game world after 0.1 seconds; if false, the weapon remains on the ground for pickup</param>
+        public static void DropWeapon(CCSPlayerController player, string weaponName, bool removeWeapon = false)
+        {
+            if (!IsHumanPlayerValid(player)) return;
+
+            var weaponServices = player.PlayerPawn.Value!.WeaponServices;
+            if (weaponServices is null) return;
+
+            var matchedWeapon = weaponServices.MyWeapons
+            .FirstOrDefault(w => w.IsValid && w.Value is not null && w.Value.DesignerName == weaponName);
+
+            if (matchedWeapon is not null && matchedWeapon.IsValid)
+            {
+                weaponServices.ActiveWeapon.Raw = matchedWeapon.Raw;
+
+                var activeWeapon = weaponServices.ActiveWeapon;
+                if (activeWeapon is null || !activeWeapon.IsValid || activeWeapon.Value is null || !activeWeapon.Value.IsValid)
+                    return;
+
+                var weaponEntity = activeWeapon.Value.As<CBaseEntity>();
+                if (weaponEntity is null || !weaponEntity.IsValid)
+                    return;
+
+                player.DropActiveWeapon();
+                if (removeWeapon) weaponEntity?.AddEntityIOEvent("Kill", weaponEntity, null, string.Empty, 0.1f);
+            }
+        }
+
+        /// <summary>
+        /// Gives a weapon to a player, automatically dropping conflicting weapons of the same category first.
+        /// Handles weapon category conflicts by dropping existing pistols when giving a new pistol, 
+        /// or dropping main weapons (SMGs, rifles, heavy weapons) when giving a new main weapon.
+        /// </summary>
+        /// <param name="player">The player controller who will receive the weapon</param>
+        /// <param name="weaponEntity">The entity name of the weapon to give (e.g., "weapon_ak47", "weapon_awp", "weapon_glock")</param>
+        public static void GiveWeapon(CCSPlayerController player, string weaponEntity)
+        {
+            if (!IsHumanPlayerValid(player))
+                throw new ArgumentNullException("Player is null or invalid");
+            if (string.IsNullOrEmpty(weaponEntity))
+                throw new ArgumentException($"Weapon Entity is null or empty");
+
+            var playerWeaponService = player.PlayerPawn.Value!.WeaponServices
+                ?? throw new NullReferenceException("Player Weapon Service is null");
+
+            var pistols = _weaponMenu
+                .GetRange(0, 10)
+                .Select(weapon => weapon.EntityName);
+            var mainWeapons = _weaponMenu
+                .GetRange(10, 24)
+                .Select(weapon => weapon.EntityName);
+            var others = _weaponMenu
+                .GetRange(34, 2)
+                .Select(weapon => weapon.EntityName);
+
+            if (!pistols.Contains(weaponEntity) && !mainWeapons.Contains(weaponEntity) && !others.Contains(weaponEntity))
+                throw new ArgumentException("Weapon Entity is invalid");
+
+            if (!others.Contains(weaponEntity))
+            {
+                var playerWeapons = playerWeaponService.MyWeapons;
+                bool isPistol = pistols.Contains(weaponEntity);
+
+                foreach (var weapon in playerWeapons)
+                {
+                    if (weapon is null || !weapon.IsValid || weapon.Value is null)
+                        continue;
+
+                    var weaponsToCheck = isPistol ? pistols : mainWeapons;
+                    if (weaponsToCheck.Contains(weapon.Value.DesignerName))
+                        DropWeapon(player, weapon.Value.DesignerName);
+                }
+            }
+
+            player.GiveNamedItem(weaponEntity);
+        }
+
         public static bool IsHumanPlayerValid([NotNullWhen(true)] CCSPlayerController? player) =>
             player != null &&
             player.IsValid &&
             !player.IsBot &&
+            player.PlayerPawn != null &&
             player.PlayerPawn.Value != null &&
             player.PlayerPawn.Value.IsValid;
 
-        public static bool IsHumanPlayerValidAndAlive(CCSPlayerController player) =>
+        public static bool IsHumanPlayerValidAndAlive([NotNullWhen(true)] CCSPlayerController player) =>
             IsHumanPlayerValid(player) &&
             player.PlayerPawn.Value!.LifeState == (byte)LifeState_t.LIFE_ALIVE;
 
@@ -654,12 +784,13 @@ namespace MyProject.Classes
             bot is not null &&
             bot.IsValid &&
             bot.IsBot &&
+            bot.PlayerPawn is not null &&
             bot.PlayerPawn.Value is not null &&
             bot.PlayerPawn.Value.IsValid;
 
-        public static bool IsBotValidAndAlive(CCSPlayerController? bot) =>
+        public static bool IsBotValidAndAlive([NotNullWhen(true)] CCSPlayerController? bot) =>
             IsBotValid(bot) &&
-            bot!.PlayerPawn.Value!.LifeState == (byte)LifeState_t.LIFE_ALIVE;
+            bot.PlayerPawn.Value!.LifeState == (byte)LifeState_t.LIFE_ALIVE;
 
         public static void PrintToAllCenter(string message)
         {

@@ -398,7 +398,6 @@ public class Command(
     {
         var menu = new WasdMenu("Select Models", thePlugin);
         var playerCache = _playerService.GetPlayerCache(client.SteamID);
-        const int displayMenuInterval = 10; // second? TODO: need to check the unit
 
         if (playerCache is null)
         {
@@ -438,7 +437,7 @@ public class Command(
             });
         }
 
-        menu.Display(client, displayMenuInterval);
+        menu.Display(client, Main.Instance.Config.DisplayMenuInterval);
     }
 
     public void OnSlapCommand(CCSPlayerController client, CommandInfo command)
@@ -518,6 +517,122 @@ public class Command(
         playerCache.Volume = volume;
         _playerService.UpdateCache(playerCache);
         command.ReplyToCommand($"Volume set to {volume}%");
+    }
+
+    public void OnBuyCommand(CCSPlayerController client, CommandInfo command, Main thePlugin)
+    {
+        if (!Utility.IsHumanPlayerValid(client)) return;
+
+        var buyTime = ConVar.Find("mp_buytime")!.GetPrimitiveValue<float>();
+        if (Main.Instance.RoundSecond >= buyTime)
+        {
+            command.ReplyToCommand("buying time is over!");
+            return;
+        }
+
+        if (!CanBuy())
+        {
+            command.ReplyToCommand("You can't buy anything right now");
+            return;
+        }
+
+        if (command.ArgCount < 2)
+        {
+            OpenBuyMenu();
+            return;
+        }
+
+        var buyTarget = command.GetArg(1).ToLower();
+        var weaponSet = Utility.WeaponMenu
+            .Select(weapon => weapon.EntityName);
+        var exactMatch = weaponSet
+            .FirstOrDefault(w => w.Equals(buyTarget, StringComparison.OrdinalIgnoreCase));
+        var fuzzyMatches = weaponSet
+            .Where(w => w.Contains(buyTarget, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        string? targetWeapon = null;
+        if (exactMatch != null)
+        {
+            targetWeapon = exactMatch;
+        }
+        else if (fuzzyMatches.Count == 1)
+        {
+            targetWeapon = fuzzyMatches[0];
+        }
+        else if (fuzzyMatches.Count > 1 || string.IsNullOrEmpty(targetWeapon))
+        {
+            command.ReplyToCommand($"Invalid weapon: {buyTarget}");
+            return;
+        }
+
+        var targetPrice = Utility.WeaponMenu
+                .First(weapon => weapon.EntityName == targetWeapon)
+                .Price;
+        if (!IsMoneyEnough(client, targetPrice))
+        {
+            command.ReplyToCommand("You don't have enough money to buy the item!");
+            return;
+        }
+
+        BuyItem(client, targetWeapon);
+
+        void OpenBuyMenu()
+        {
+            var menu = new WasdMenu("Buy Menu", thePlugin);
+
+            menu.AddItem("Close Menu", (player, option) =>
+            {
+                return;
+            });
+
+            foreach (var (EntityName, DisplayName, Price) in Utility.WeaponMenu)
+            {
+                menu.AddItem($"{DisplayName} ${Price}", (player, option) =>
+                {
+                    if (!IsMoneyEnough(player, Price))
+                    {
+                        player.PrintToChat("You don't have enough money to buy the item!");
+                    }
+                    else
+                    {
+                        BuyItem(player, EntityName);
+                    }
+                });
+            }
+
+            menu.Display(client, Main.Instance.Config.DisplayMenuInterval);
+        }
+
+        bool CanBuy()
+        {
+            var maxRound = ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>();
+
+            return client.PlayerPawn.Value!.WeaponServices is not null &&
+                client.PlayerPawn.Value.LifeState == (byte)LifeState_t.LIFE_ALIVE &&
+                client.InGameMoneyServices is not null &&
+                Main.Instance.RoundCount > 0 &&
+                Main.Instance.RoundCount < maxRound;
+        }
+
+        bool IsMoneyEnough(CCSPlayerController player, int itemCost) => player.InGameMoneyServices!.Account >= itemCost;
+
+        void BuyItem(CCSPlayerController client, string item)
+        {
+            try
+            {
+                var price = Utility.WeaponMenu.FirstOrDefault(w => w.EntityName == item).Price;
+
+                Utility.GiveWeapon(client, item);
+                client.InGameMoneyServices!.Account -= price;
+                Utilities.SetStateChanged(client, "CCSPlayerController", "m_pInGameMoneyServices");
+            }
+            catch (Exception ex)
+            {
+                command.ReplyToCommand("Failed to buy weapon. Please contact admin!");
+                _logger.LogError("Buy Command error {error}", ex);
+            }
+        }
     }
 
     private void ExecutePlayerCommand(

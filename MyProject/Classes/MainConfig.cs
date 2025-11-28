@@ -16,5 +16,6 @@ namespace MyProject.Classes
         public double BossActiveAbilityChance = 5;
         public int MidBossHealth = 5000;
         public int FinalBossHealth = 10000;
+        public int DisplayMenuInterval = 30;
     }
 }

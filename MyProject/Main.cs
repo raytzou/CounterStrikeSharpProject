@@ -38,12 +38,14 @@ public class Main(
     private readonly Dictionary<string, Position> _position = [];
     private readonly Dictionary<string, WeaponStatus> _weaponStatus = [];
     private CounterStrikeSharp.API.Modules.Timers.Timer? _weaponCheckTimer = null;
+    private CounterStrikeSharp.API.Modules.Timers.Timer? _roundTimer = null;
     private int _roundCount = 0;
     private bool _warmup = true;
     private int _winStreak = 0;
     private int _looseStreak = 0;
     private bool _isRoundEnd = false;
     private bool _randomSpawn = false;
+    private int _currentRoundSecond = 0;
 
     // module services
     private readonly ICommand _command = commmand;
@@ -56,6 +58,7 @@ public class Main(
     public int RoundCount => _roundCount;
     public int PlayerCount => Utilities.GetPlayers().Count(p => !p.IsBot);
     public bool IsRoundEnd => _isRoundEnd;
+    public int RoundSecond => _currentRoundSecond;
 
     public int GetPlayerSlot(string playerName)
     {
@@ -432,7 +435,7 @@ public class Main(
 
     private HookResult RoundStartHandler(EventRoundStart eventRoundStart, GameEventInfo gameEventInfo)
     {
-
+        _currentRoundSecond = 0;
         _isRoundEnd = false;
         if (!_warmup)
         {
@@ -457,6 +460,7 @@ public class Main(
             {
                 AddTimer(freezeTime, () =>
                 {
+                    StartRoundTimer();
                     _music.PlayRoundMusic();
                     Server.NextFrame(() =>
                     {
@@ -597,12 +601,22 @@ public class Main(
                 }
             }
         }
+
+        void StartRoundTimer()
+        {
+            _roundTimer = AddTimer(1f, () =>
+            {
+                if (!_isRoundEnd)
+                    _currentRoundSecond++;
+            }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
+        }
     }
 
     private HookResult RoundEndHandler(EventRoundEnd eventRoundEnd, GameEventInfo gameEventInfo)
     {
         _isRoundEnd = true;
         _music.StopRoundMusic();
+        KillTimer();
 
         if (eventRoundEnd.Winner == (int)GetHumanTeam())
         {
@@ -636,11 +650,16 @@ public class Main(
 
             Server.ExecuteCommand("mp_randomspawn 0");
             _randomSpawn = false;
-            _weaponCheckTimer?.Kill();
             _roundCount++;
         }
-        _weaponCheckTimer?.Kill();
+
         return HookResult.Continue;
+
+        void KillTimer()
+        {
+            _weaponCheckTimer?.Kill();
+            _roundTimer?.Kill();
+        }
     }
 
     private HookResult WarmupHandler(EventRoundAnnounceWarmup @event, GameEventInfo info)
@@ -806,6 +825,12 @@ public class Main(
     {
         _command.OnVolumeCommand(client, command);
     }
+
+    [ConsoleCommand("css_buy", "buy command")]
+    public void OnBuyCommand(CCSPlayerController client, CommandInfo command)
+    {
+        _command.OnBuyCommand(client, command, this);
+    }
     #endregion commands
 
     private void InitializeFileds()
@@ -817,6 +842,7 @@ public class Main(
         _position.Clear();
         _weaponStatus.Clear();
         _randomSpawn = false;
+        _currentRoundSecond = 0;
     }
 
     private static void RemovePlayerProtection(CCSPlayerController? player)
