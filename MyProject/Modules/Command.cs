@@ -495,7 +495,7 @@ public class Command(
             return;
         }
 
-        var volumeString = command.GetArg(2);
+        var volumeString = command.GetArg(1);
 
         if (string.IsNullOrEmpty(volumeString) || !byte.TryParse(volumeString, out var volume) || volume < 10 || volume > 100)
         {
