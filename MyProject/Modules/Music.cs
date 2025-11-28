@@ -50,7 +50,7 @@ namespace MyProject.Modules
 
             foreach (var player in humans)
             {
-                EmitRoundSoundToPlayer(player, soundEvents[selectedIndex]);
+                _playingRoundSounds[player.Slot] = EmitSound(player, soundEvents[selectedIndex]);
             }
         }
 
@@ -85,14 +85,15 @@ namespace MyProject.Modules
         private void PlaySound(CCSPlayerController player, List<string> sounds)
         {
             var selectedSound = sounds[_random.Next(sounds.Count)];
-            EmitSoundToPlayer(player, selectedSound);
+
+            EmitSound(player, selectedSound);
         }
 
-        private void EmitSoundToPlayer(CCSPlayerController player, string soundName)
+        private uint EmitSound(CCSPlayerController player, string soundName)
         {
             var recipient = new RecipientFilter { player };
             var playerVolume = _playerService.GetPlayerCache(player.SteamID)?.Volume ?? 50;
-            var soundEventId = player.EmitSound(soundName, recipient, playerVolume / 100);
+            var soundEventId = player.EmitSound(soundName, recipient, playerVolume / 100f);
 
             _ = Task.Run(async () =>
             {
@@ -107,27 +108,8 @@ namespace MyProject.Modules
                     _logger.LogError("Send Sound Event error {error}", ex);
                 }
             });
-        }
 
-        private void EmitRoundSoundToPlayer(CCSPlayerController player, string soundName)
-        {
-            var recipient = new RecipientFilter { player };
-            var playerVolume = _playerService.GetPlayerCache(player.SteamID)?.Volume ?? 50;
-            var soundEventId = player.EmitSound(soundName, recipient, playerVolume / 100f);
-
-            _playingRoundSounds[player.Slot] = soundEventId;
-
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await Utility.SendSoundEventPackage(player, soundEventId, playerVolume / 100f);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError("Send Sound Event error {error}", ex);
-                }
-            });
+            return soundEventId;
         }
 
 
