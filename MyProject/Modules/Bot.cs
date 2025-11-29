@@ -92,7 +92,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 {
                     if (!Utility.IsBotValid(bot)) continue;
 
-                    await PreventBotPickupWeapon(bot);
+                    await PreventBotPickupWeaponAfter3Seconds(bot);
                 }
             }
         }
@@ -121,7 +121,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             await AllowBotPickupWeapon(bot);
             await RemoveBotWeapon(bot);
             await GiveBotWeapon(bot, mapName, item);
-            await PreventBotPickupWeapon(bot);
+            await PreventBotPickupWeaponAfter3Seconds(bot);
 
             if (AppSettings.IsDebug)
             {
@@ -265,25 +265,31 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (Main.Instance.RoundCount > 1)
             {
                 await AllowBotPickupWeapon(bot);
-                await RemoveBotWeapon(bot);
-                await GiveBotWeapon(bot, mapName);
-                await PreventBotPickupWeapon(bot);
+                await PreventBotPickupWeaponAfter3Seconds(bot);
 
                 if (AppSettings.IsDebug)
                 {
                     await Server.NextFrameAsync(() =>
                     {
-                        if (Utility.IsBotValid(bot))
+                        Utility.AddTimer(1f, () =>
                         {
-                            var currentWeapon = bot.PlayerPawn.Value!.WeaponServices?.ActiveWeapon.Value?.DesignerName;
-                            var botTeam = GetBotTeam(mapName);
-                            var expectedWeapon = Utility.GetCsItemEnumValue(botTeam == CsTeam.CounterTerrorist ? CsItem.M4A1 : CsItem.AK47);
-                            if (currentWeapon != expectedWeapon)
+                            if (Utility.IsBotValid(bot))
                             {
-                                _logger.LogWarning("Respawn bot {BotName} weapon mismatch. Expected: {Expected}, Actual: {Actual}",
-                                    bot.PlayerName, expectedWeapon, currentWeapon ?? "None");
+                                var botTeam = GetBotTeam(mapName);
+                                var expectedWeapon = Utility.GetCsItemEnumValue(botTeam == CsTeam.CounterTerrorist ? CsItem.M4A1 : CsItem.AK47);
+
+                                if (bot.PlayerPawn.Value!.WeaponServices is null)
+                                {
+                                    _logger.LogError("Bot {botName} Weapon Service is null after respawning", bot.PlayerName);
+                                    return;
+                                }
+
+                                if (!bot.PlayerPawn.Value.WeaponServices.MyWeapons.Any(w => w.IsValid && w.Value!.DesignerName == expectedWeapon))
+                                {
+                                    _logger.LogError("Respawn bot {BotName} lost {Expected}", bot.PlayerName, expectedWeapon);
+                                }
                             }
-                        }
+                        });
                     });
                 }
             }
@@ -922,7 +928,10 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (!Utility.IsBotValid(bot))
                 return;
 
-            bot.PlayerPawn.Value!.WeaponServices!.PreventWeaponPickup = false;
+            if (bot.PlayerPawn.Value!.WeaponServices is null)
+                throw new NullReferenceException("Bot Weapon Service is null, cannot allow bot pickup weapon");
+
+            bot.PlayerPawn.Value!.WeaponServices.PreventWeaponPickup = false;
         });
     }
 
@@ -948,22 +957,34 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             var botTeam = GetBotTeam(mapName);
             if (botTeam == CsTeam.None) return;
-            if (weapon is null)
-                bot.GiveNamedItem(botTeam == CsTeam.CounterTerrorist ? CsItem.M4A1 : CsItem.AK47);
-            else
-                bot.GiveNamedItem(weapon.Value);
+
+            var weaponToGive = weapon ?? (botTeam == CsTeam.CounterTerrorist ? CsItem.M4A1 : CsItem.AK47);
+
+            if (bot.PlayerPawn.Value!.WeaponServices == null)
+                throw new NullReferenceException("Bot Weapon Service is null, cannot give bot weapon");
+
+            bot.GiveNamedItem(weaponToGive);
         });
     }
 
-    private async Task PreventBotPickupWeapon(CCSPlayerController bot)
+    private async Task PreventBotPickupWeaponAfter3Seconds(CCSPlayerController bot)
     {
         // prevent pickup = true
         await Server.NextFrameAsync(() =>
         {
-            if (!Utility.IsBotValid(bot))
-                return;
+            Utility.AddTimer(3f, () =>
+            {
+                if (!Utility.IsBotValid(bot))
+                    return;
 
-            bot.PlayerPawn.Value!.WeaponServices!.PreventWeaponPickup = true;
+                if (bot.PlayerPawn.Value!.WeaponServices is null)
+                {
+                    _logger.LogError("Bot {BotName} WeaponServices is null, cannot schedule prevent pickup", bot.PlayerName);
+                    return;
+                }
+
+                bot.PlayerPawn.Value!.WeaponServices.PreventWeaponPickup = true;
+            });
         });
     }
 }
