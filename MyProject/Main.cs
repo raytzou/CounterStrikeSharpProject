@@ -296,8 +296,6 @@ public class Main(
                             weaponBase.VData.MaxClip1 = amount;
                             weaponBase.VData.DefaultClip1 = amount;
                             weaponBase.Clip1 = amount;
-
-                            Utilities.SetStateChanged(weaponBase, "CCSWeaponBase", "m_iClip1");
                         }
 
                         void SetReservedAmmoAmount(int amount)
