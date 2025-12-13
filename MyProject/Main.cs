@@ -39,6 +39,7 @@ public class Main(
     private readonly Dictionary<string, WeaponStatus> _weaponStatus = [];
     private CounterStrikeSharp.API.Modules.Timers.Timer? _weaponCheckTimer = null;
     private CounterStrikeSharp.API.Modules.Timers.Timer? _roundTimer = null;
+    private CounterStrikeSharp.API.Modules.Timers.Timer? _bombTimer = null;
     private int _roundCount = 0;
     private bool _warmup = true;
     private int _winStreak = 0;
@@ -643,6 +644,7 @@ public class Main(
         {
             _weaponCheckTimer?.Kill();
             _roundTimer?.Kill();
+            _bombTimer?.Kill();
         }
     }
 
@@ -712,6 +714,36 @@ public class Main(
 
         if (_bot.IsBoss(victim))
             _bot.BossBehavior(victim);
+
+        return HookResult.Continue;
+    }
+
+    private HookResult BombPlantedHandler(EventBombPlanted @event, GameEventInfo info)
+    {
+        var c4Timer = ConVar.Find("mp_c4timer")!.GetPrimitiveValue<int>();
+
+        _bombTimer = AddTimer(1f, () =>
+        {
+            var humans = Utility.GetHumanPlayers();
+            foreach (var human in humans)
+            {
+                human.PrintToCenter($"C4 Counter: {c4Timer--}");
+            }
+        }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
+
+        return HookResult.Continue;
+    }
+
+    private HookResult BombExplodedHandler(EventBombExploded @event, GameEventInfo info)
+    {
+        BombEventHandler("C4 has exploded!");
+
+        return HookResult.Continue;
+    }
+
+    private HookResult BombDefusedHandler(EventBombDefused @event, GameEventInfo info)
+    {
+        BombEventHandler("Bomb has been defuesed");
 
         return HookResult.Continue;
     }
@@ -925,6 +957,14 @@ public class Main(
         }
     }
 
+    private void BombEventHandler(string message)
+    {
+        var humans = Utility.GetHumanPlayers();
+
+        Utility.PrintToAllCenter(message);
+        _bombTimer?.Kill();
+    }
+
     private void Reigsters()
     {
         RegisterListener<Listeners.OnTick>(OnTick);
@@ -942,6 +982,9 @@ public class Main(
         RegisterEventHandler<EventRoundStart>(RoundStartHandler);
         RegisterEventHandler<EventRoundEnd>(RoundEndHandler);
         RegisterEventHandler<EventPlayerHurt>(PlayerHurtHandler);
+        RegisterEventHandler<EventBombPlanted>(BombPlantedHandler);
+        RegisterEventHandler<EventBombDefused>(BombDefusedHandler);
+        RegisterEventHandler<EventBombExploded>(BombExplodedHandler);
     }
 
     public string GetTargetNameByKeyword(string keyword)
