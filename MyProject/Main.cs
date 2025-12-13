@@ -83,21 +83,7 @@ public class Main(
         if (AppSettings.IsDebug)
             _logger.LogWarning("Debug mode is on");
         _logger.LogInformation("Server host time: {DT}", DateTime.Now);
-        RegisterListener<Listeners.OnTick>(OnTick);
-        RegisterListener<Listeners.OnMapStart>(OnMapStart);
-        RegisterListener<Listeners.OnMapEnd>(OnMapEnd);
-        RegisterListener<Listeners.OnServerPrecacheResources>(OnServerPrecacheResources);
-        RegisterListener<Listeners.OnEntityCreated>(OnEntityCreated);
-        RegisterEventHandler<EventPlayerConnectFull>(PlayerFullConnectHandler);
-        RegisterEventHandler<EventPlayerDisconnect>(DisconnectHandler);
-        RegisterEventHandler<EventPlayerTeam>(PlayerJoinTeamHandler);
-        RegisterEventHandler<EventPlayerSpawn>(PlayerSpawnHandler);
-        RegisterEventHandler<EventPlayerDeath>(PlayerDeathHandler);
-        RegisterEventHandler<EventRoundAnnounceWarmup>(WarmupHandler);
-        RegisterEventHandler<EventWarmupEnd>(WarmupEndHandler);
-        RegisterEventHandler<EventRoundStart>(RoundStartHandler);
-        RegisterEventHandler<EventRoundEnd>(RoundEndHandler);
-        RegisterEventHandler<EventPlayerHurt>(PlayerHurtHandler);
+        Reigsters();
     }
 
     public void OnConfigParsed(MainConfig config)
@@ -937,6 +923,25 @@ public class Main(
 
             Utilities.SetStateChanged(pawn, "CCSPlayerPawn", "m_entitySpottedState", Schema.GetSchemaOffset("EntitySpottedState_t", "m_bSpottedByMask"));
         }
+    }
+
+    private void Reigsters()
+    {
+        RegisterListener<Listeners.OnTick>(OnTick);
+        RegisterListener<Listeners.OnMapStart>(OnMapStart);
+        RegisterListener<Listeners.OnMapEnd>(OnMapEnd);
+        RegisterListener<Listeners.OnServerPrecacheResources>(OnServerPrecacheResources);
+        RegisterListener<Listeners.OnEntityCreated>(OnEntityCreated);
+        RegisterEventHandler<EventPlayerConnectFull>(PlayerFullConnectHandler);
+        RegisterEventHandler<EventPlayerDisconnect>(DisconnectHandler);
+        RegisterEventHandler<EventPlayerTeam>(PlayerJoinTeamHandler);
+        RegisterEventHandler<EventPlayerSpawn>(PlayerSpawnHandler);
+        RegisterEventHandler<EventPlayerDeath>(PlayerDeathHandler);
+        RegisterEventHandler<EventRoundAnnounceWarmup>(WarmupHandler);
+        RegisterEventHandler<EventWarmupEnd>(WarmupEndHandler);
+        RegisterEventHandler<EventRoundStart>(RoundStartHandler);
+        RegisterEventHandler<EventRoundEnd>(RoundEndHandler);
+        RegisterEventHandler<EventPlayerHurt>(PlayerHurtHandler);
     }
 
     public string GetTargetNameByKeyword(string keyword)
