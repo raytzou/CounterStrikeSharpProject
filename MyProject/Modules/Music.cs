@@ -24,6 +24,7 @@ namespace MyProject.Modules
         }
 
         public string? CurrentRoundMusicName => _currentPlayingIndex is null ? null : Utility.SoundEvent.Round[_currentPlayingIndex.Value].DisplayName;
+        public uint? GetPlayingRoundSoundID(int playerSlot) => _playingRoundSounds.TryGetValue(playerSlot, out uint id) ? id : null;
 
         public void PlayEndGameMusic()
         {

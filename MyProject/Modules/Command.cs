@@ -18,11 +18,13 @@ namespace MyProject.Modules;
 
 public class Command(
     ILogger<Command> logger,
-    IPlayerService playerService
+    IPlayerService playerService,
+    IMusic music
     ) : ICommand
 {
     private readonly ILogger<Command> _logger = logger;
     private readonly IPlayerService _playerService = playerService;
+    private readonly IMusic _music = music;
 
     public void OnKickCommand(CCSPlayerController client, CommandInfo command)
     {
@@ -501,7 +503,7 @@ public class Command(
             command.ReplyToCommand("[css] Usage: css_volume [volume]");
             Utility.AddTimer(0.5f, () =>
             {
-                client.PrintToChat($"Current volume: {playerCache.Volume}");
+                client.PrintToChat($"Current volume: {playerCache.Volume}%");
             });
             return;
         }
@@ -514,9 +516,21 @@ public class Command(
             return;
         }
 
-        playerCache.Volume = volume;
-        _playerService.UpdateCache(playerCache);
-        command.ReplyToCommand($"Volume set to {volume}%");
+        // update player's sound volume immediately
+        Server.NextWorldUpdate(() =>
+        {
+            if (!Utility.IsHumanPlayerValid(client))
+                return;
+
+            playerCache.Volume = volume;
+            _playerService.UpdateCache(playerCache);
+            command.ReplyToCommand($"Volume set to {volume}%");
+
+            var soundEventId = _music.GetPlayingRoundSoundID(client.Slot);
+
+            if (soundEventId != null)
+                Utility.SendSoundEventPackage(client, soundEventId.Value, volume / 100f);
+        });
     }
 
     public void OnBuyCommand(CCSPlayerController client, CommandInfo command, Main thePlugin)

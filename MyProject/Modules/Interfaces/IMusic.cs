@@ -39,5 +39,10 @@ namespace MyProject.Modules.Interfaces
         /// Plays end game music for all players
         /// </summary>
         void PlayEndGameMusic();
+
+        /// <summary>
+        /// Gets the playing round sound ID by player's slot
+        /// </summary>
+        uint? GetPlayingRoundSoundID(int playerSlot);
     }
 }
