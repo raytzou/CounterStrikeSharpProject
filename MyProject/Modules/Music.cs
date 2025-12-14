@@ -1,4 +1,5 @@
-﻿using CounterStrikeSharp.API.Core;
+﻿using CounterStrikeSharp.API;
+using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.UserMessages;
 using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
@@ -95,18 +96,12 @@ namespace MyProject.Modules
             var playerVolume = _playerService.GetPlayerCache(player.SteamID)?.Volume ?? 50;
             var soundEventId = player.EmitSound(soundName, recipient, playerVolume / 100f);
 
-            _ = Task.Run(async () =>
+            Server.NextWorldUpdate(() =>
             {
-                try
-                {
-                    // FYI: volume and pitch parameters in CCSPlayerController.EmitSound won't work
-                    // thus I have to send UserMessage package for client
-                    await Utility.SendSoundEventPackage(player, soundEventId, playerVolume / 100f);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError("Send Sound Event error {error}", ex);
-                }
+                if (!Utility.IsHumanPlayerValid(player))
+                    return;
+
+                Utility.SendSoundEventPackage(player, soundEventId, playerVolume / 100f);
             });
 
             return soundEventId;

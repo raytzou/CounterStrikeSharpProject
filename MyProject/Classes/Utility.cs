@@ -635,9 +635,11 @@ namespace MyProject.Classes
         /// <param name="volume">Sound volume (0.0 to 1.0)</param>
         /// <param name="pitch">Sound pitch multiplier (default: 1.0)</param>
         /// <returns>Task for async operation</returns>
-        public static async Task SendSoundEventPackage(CCSPlayerController client, uint soundEventId, float volume, float pitch = 1f)
+        public static void SendSoundEventPackage(CCSPlayerController client, uint soundEventId, float volume, float pitch = 1f)
         {
             if (volume == 0.5f && pitch == 1f) return;
+            if (volume is < 0 or > 1)
+                throw new ArgumentOutOfRangeException(nameof(volume), volume, "Volume must be between 0.0 and 1.0");
 
             using var memString = new MemoryStream();
             using var writer = new BinaryWriter(memString);
@@ -666,7 +668,7 @@ namespace MyProject.Classes
 
             if (packedParams.Length > 0)
             {
-                await Server.NextFrameAsync(() =>
+                Server.NextFrame(() =>
                 {
                     var userMessage = UserMessage.FromId(210);
                     userMessage.SetInt("soundevent_guid", (int)soundEventId);
