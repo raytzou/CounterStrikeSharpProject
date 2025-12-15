@@ -4,7 +4,7 @@ namespace SaySoundHelper
 {
     public class SaySoundHelper
     {
-
+        
     }
 
     internal class ConfigProvider
@@ -23,8 +23,8 @@ namespace SaySoundHelper
 
         internal class ConfigModel
         {
-            internal string DownloadUrl { get; set; } = string.Empty;
-            internal string OutputPath { get; set; } = string.Empty;
+            public string DownloadUrl { get; set; } = string.Empty;
+            public string OutputPath { get; set; } = string.Empty;
         }
     }
 }
