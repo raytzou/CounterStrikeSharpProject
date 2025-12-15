@@ -85,6 +85,7 @@ public class Main(
             _logger.LogWarning("Debug mode is on");
         _logger.LogInformation("Server host time: {DT}", DateTime.Now);
         Reigsters();
+        DownloadSaySoundSheet();
     }
 
     public void OnConfigParsed(MainConfig config)
@@ -985,6 +986,33 @@ public class Main(
         RegisterEventHandler<EventBombPlanted>(BombPlantedHandler);
         RegisterEventHandler<EventBombDefused>(BombDefusedHandler);
         RegisterEventHandler<EventBombExploded>(BombExplodedHandler);
+    }
+
+    private void DownloadSaySoundSheet()
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await SaySoundHelper.SaySoundHelper.DownloadSaySoundSheet(ModuleDirectory);
+            }
+            catch (FileNotFoundException ex)
+            {
+                _logger.LogError(ex, "SaySound helper config file not found");
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogError(ex, "SaySound helper configuration error");
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "Failed to download SaySound sheet (network error)");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error while downloading SaySound sheet");
+            }
+        });
     }
 
     public string GetTargetNameByKeyword(string keyword)
