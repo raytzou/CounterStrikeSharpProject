@@ -62,6 +62,7 @@ namespace SaySoundHelper
         {
             public string DownloadUrl { get; set; } = string.Empty;
             public string OutputPath { get; set; } = string.Empty;
+            public string SheetName { get; set; } = string.Empty;
         }
     }
 }
