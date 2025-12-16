@@ -36,6 +36,9 @@ namespace SaySoundHelper
             if (!string.IsNullOrEmpty(outputDirectory) && !Directory.Exists(outputDirectory))
                 Directory.CreateDirectory(outputDirectory);
 
+            if (File.Exists(outputPath))
+                File.Delete(outputPath);
+
             await File.WriteAllBytesAsync(outputPath, bytes);
         }
     }
