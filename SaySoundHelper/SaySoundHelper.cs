@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using ClosedXML.Excel;
+using System.Text.Json;
 
 namespace SaySoundHelper
 {
@@ -18,7 +19,7 @@ namespace SaySoundHelper
                 new System.Net.Http.Headers.ProductInfoHeaderValue("SaysoundSheetDownloader", "1.0"));
         }
 
-        public static async Task DownloadSaySoundSheet(string pluginDirectory)
+        public static async Task DownloadSaySoundExcel(string pluginDirectory)
         {
             var cfgProvider = new ConfigProvider(pluginDirectory);
             var url = cfgProvider.Config.DownloadUrl;
@@ -40,6 +41,42 @@ namespace SaySoundHelper
                 File.Delete(outputPath);
 
             await File.WriteAllBytesAsync(outputPath, bytes);
+        }
+
+        public static async Task<List<(string SaySound, string Content, string TWContent, string JPContent)>> LoadSaySounds(string pluginDirectory)
+        {
+            var cfgProvider = new ConfigProvider(pluginDirectory);
+            var outputPath = cfgProvider.Config.OutputPath;
+            if (string.IsNullOrWhiteSpace(outputPath))
+                throw new InvalidOperationException("OutputPath is not configured in config.json");
+
+            var saysoundDocument = Path.Combine(pluginDirectory, outputPath);
+            if (!File.Exists(saysoundDocument))
+                throw new InvalidOperationException("Cannot find the SaySound document");
+
+            using var workbook = new XLWorkbook(saysoundDocument);
+            var sheetName = cfgProvider.Config.SheetName;
+
+            if (string.IsNullOrWhiteSpace(sheetName))
+                throw new InvalidOperationException("SheetName is not configured in config.json");
+
+            var sheet = workbook.Worksheet(sheetName);
+
+            const int saySoundCol = 1;
+            const int contentCol = 8;
+            const int twContentCol = 7;
+            const int jpContentCol = 6;
+
+            return sheet.RowsUsed()
+                .Skip(1)
+                .Where(row => row.Cell(saySoundCol) is not null && !row.Cell(saySoundCol).Value.IsBlank)
+                .Select(row => (
+                    SaySound: row.Cell(saySoundCol).GetString(),
+                    Content: row.Cell(contentCol).GetString(),
+                    TWContent: row.Cell(twContentCol).GetString(),
+                    JPContent: row.Cell(jpContentCol).GetString()
+                ))
+                .ToList();
         }
     }
 

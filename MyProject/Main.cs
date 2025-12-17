@@ -994,7 +994,7 @@ public class Main(
         {
             try
             {
-                await SaySoundHelper.SaySoundHelper.DownloadSaySoundSheet(ModuleDirectory);
+                await SaySoundHelper.SaySoundHelper.DownloadSaySoundExcel(ModuleDirectory);
             }
             catch (FileNotFoundException ex)
             {
