@@ -85,7 +85,7 @@ public class Main(
             _logger.LogWarning("Debug mode is on");
         _logger.LogInformation("Server host time: {DT}", DateTime.Now);
         Reigsters();
-        DownloadSaySoundSheet();
+        InitialSaySounds();
     }
 
     public void OnConfigParsed(MainConfig config)
@@ -988,29 +988,18 @@ public class Main(
         RegisterEventHandler<EventBombExploded>(BombExplodedHandler);
     }
 
-    private void DownloadSaySoundSheet()
+    private void InitialSaySounds()
     {
         _ = Task.Run(async () =>
         {
             try
             {
-                await SaySoundHelper.SaySoundHelper.DownloadSaySoundExcel(ModuleDirectory);
-            }
-            catch (FileNotFoundException ex)
-            {
-                _logger.LogError(ex, "SaySound helper config file not found");
-            }
-            catch (InvalidOperationException ex)
-            {
-                _logger.LogError(ex, "SaySound helper configuration error");
-            }
-            catch (HttpRequestException ex)
-            {
-                _logger.LogError(ex, "Failed to download SaySound sheet (network error)");
+                await SaySoundHelper.SaySoundHelper.InitializeAsync(ModuleDirectory);
+                _logger.LogInformation("SaySoundHelper initialized with {count} sounds", SaySoundHelper.SaySoundHelper.SaySounds.Count);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error while downloading SaySound sheet");
+                _logger.LogError(ex, "Failed to initialize SaySoundHelper");
             }
         });
     }

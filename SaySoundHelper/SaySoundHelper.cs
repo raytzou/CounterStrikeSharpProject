@@ -12,6 +12,7 @@ namespace SaySoundHelper
         {
             Timeout = TimeSpan.FromSeconds(30)
         };
+        private static List<(string SaySound, string Content, string TWContent, string JPContent)>? _saysounds;
 
         static SaySoundHelper()
         {
@@ -19,7 +20,16 @@ namespace SaySoundHelper
                 new System.Net.Http.Headers.ProductInfoHeaderValue("SaysoundSheetDownloader", "1.0"));
         }
 
-        public static async Task DownloadSaySoundExcel(string pluginDirectory)
+        public static List<(string SaySound, string Content, string TWContent, string JPContent)> SaySounds
+            => _saysounds ?? throw new InvalidOperationException("SaySoundHelper not initialized");
+
+        public static async Task InitializeAsync(string pluginDirectory)
+        {
+            await DownloadSaySoundExcel(pluginDirectory);
+            _saysounds = await LoadSaySounds(pluginDirectory);
+        }
+
+        private static async Task DownloadSaySoundExcel(string pluginDirectory)
         {
             var cfgProvider = new ConfigProvider(pluginDirectory);
             var url = cfgProvider.Config.DownloadUrl;
@@ -43,7 +53,7 @@ namespace SaySoundHelper
             await File.WriteAllBytesAsync(outputPath, bytes);
         }
 
-        public static async Task<List<(string SaySound, string Content, string TWContent, string JPContent)>> LoadSaySounds(string pluginDirectory)
+        private static async Task<List<(string SaySound, string Content, string TWContent, string JPContent)>> LoadSaySounds(string pluginDirectory)
         {
             var cfgProvider = new ConfigProvider(pluginDirectory);
             var outputPath = cfgProvider.Config.OutputPath;
