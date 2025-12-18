@@ -12,7 +12,7 @@ namespace SaySoundHelper
         {
             Timeout = TimeSpan.FromSeconds(30)
         };
-        private static List<(string SaySound, string SoundEvent, string Content, string TWContent, string JPContent)>? _saysounds;
+        private static Dictionary<string, (string SoundEvent, string Content, string TWContent, string JPContent)>? _saysounds;
 
         static SaySoundHelper()
         {
@@ -20,7 +20,7 @@ namespace SaySoundHelper
                 new System.Net.Http.Headers.ProductInfoHeaderValue("SaysoundSheetDownloader", "1.0"));
         }
 
-        public static List<(string SaySound, string SoundEvent, string Content, string TWContent, string JPContent)> SaySounds
+        public static Dictionary<string, (string SoundEvent, string Content, string TWContent, string JPContent)> SaySounds
             => _saysounds ?? throw new InvalidOperationException("SaySoundHelper not initialized");
 
         public static async Task InitializeAsync(string pluginDirectory)
@@ -53,7 +53,7 @@ namespace SaySoundHelper
             await File.WriteAllBytesAsync(outputPath, bytes);
         }
 
-        private static async Task<List<(string SaySound, string SoundEvent, string Content, string TWContent, string JPContent)>> LoadSaySounds(string pluginDirectory)
+        private static async Task<Dictionary<string, (string SoundEvent, string Content, string TWContent, string JPContent)>> LoadSaySounds(string pluginDirectory)
         {
             var cfgProvider = new ConfigProvider(pluginDirectory);
             var outputPath = cfgProvider.Config.OutputPath;
@@ -89,14 +89,17 @@ namespace SaySoundHelper
                     x.Row.Cell(saySoundCol) is not null
                     && !x.Row.Cell(saySoundCol).Value.IsBlank
                     && HasSoundEvent(x.RawSoundEvent))
-                .Select(x => (
-                    SaySound: x.Row.Cell(saySoundCol).GetString(),
-                    SoundEvent: GetSoundEventName(x.RawSoundEvent),
-                    Content: x.Row.Cell(contentCol).GetString(),
-                    TWContent: x.Row.Cell(twContentCol).GetString(),
-                    JPContent: x.Row.Cell(jpContentCol).GetString()
-                ))
-                .ToList();
+                .Select(x => new
+                {
+                    SaySound = x.Row.Cell(saySoundCol).GetString(),
+                    Contents = (
+                        SoundEvent: GetSoundEventName(x.RawSoundEvent),
+                        Content: x.Row.Cell(contentCol).GetString(),
+                        TWContent: x.Row.Cell(twContentCol).GetString(),
+                        JPContent: x.Row.Cell(jpContentCol).GetString()
+                    )
+                })
+                .ToDictionary(keySelector: x => x.SaySound, elementSelector: x => x.Contents);
 
             bool HasSoundEvent(string rawSoundEvent)
                 => !string.IsNullOrWhiteSpace(rawSoundEvent)
