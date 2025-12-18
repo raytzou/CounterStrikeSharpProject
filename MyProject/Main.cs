@@ -300,7 +300,6 @@ public class Main(
             });
         }
     }
-
     #endregion Listeners
 
     #region hook result
@@ -748,6 +747,25 @@ public class Main(
 
         return HookResult.Continue;
     }
+
+    private HookResult OnPlayerSayCommand(CCSPlayerController? player, CommandInfo commandInfo)
+    {
+        if (!Utility.IsHumanPlayerValid(player))
+            return HookResult.Continue;
+
+        var message = commandInfo.GetArg(1);
+
+        if (SaySoundHelper.SaySoundHelper.SaySounds.TryGetValue(message, out var saySound))
+        {
+            var content = string.IsNullOrWhiteSpace(saySound.Content) ? message : saySound.Content;
+
+            Server.PrintToChatAll($" {ChatColors.Yellow}{player.PlayerName}: {ChatColors.Grey}[{message}] {ChatColors.Green}{content}");
+
+            return HookResult.Handled;
+        }
+
+        return HookResult.Continue;
+    }
     #endregion hook result
 
     #region commands
@@ -986,6 +1004,9 @@ public class Main(
         RegisterEventHandler<EventBombPlanted>(BombPlantedHandler);
         RegisterEventHandler<EventBombDefused>(BombDefusedHandler);
         RegisterEventHandler<EventBombExploded>(BombExplodedHandler);
+
+        AddCommandListener("say", OnPlayerSayCommand);
+        AddCommandListener("say_team", OnPlayerSayCommand);
     }
 
     private void InitialSaySounds()
