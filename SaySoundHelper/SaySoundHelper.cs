@@ -12,7 +12,7 @@ namespace SaySoundHelper
         {
             Timeout = TimeSpan.FromSeconds(30)
         };
-        private static List<(string SaySound, string Content, string TWContent, string JPContent)>? _saysounds;
+        private static List<(string SaySound, string SoundEvent, string Content, string TWContent, string JPContent)>? _saysounds;
 
         static SaySoundHelper()
         {
@@ -20,7 +20,7 @@ namespace SaySoundHelper
                 new System.Net.Http.Headers.ProductInfoHeaderValue("SaysoundSheetDownloader", "1.0"));
         }
 
-        public static List<(string SaySound, string Content, string TWContent, string JPContent)> SaySounds
+        public static List<(string SaySound, string SoundEvent, string Content, string TWContent, string JPContent)> SaySounds
             => _saysounds ?? throw new InvalidOperationException("SaySoundHelper not initialized");
 
         public static async Task InitializeAsync(string pluginDirectory)
@@ -53,7 +53,7 @@ namespace SaySoundHelper
             await File.WriteAllBytesAsync(outputPath, bytes);
         }
 
-        private static async Task<List<(string SaySound, string Content, string TWContent, string JPContent)>> LoadSaySounds(string pluginDirectory)
+        private static async Task<List<(string SaySound, string SoundEvent, string Content, string TWContent, string JPContent)>> LoadSaySounds(string pluginDirectory)
         {
             var cfgProvider = new ConfigProvider(pluginDirectory);
             var outputPath = cfgProvider.Config.OutputPath;
@@ -73,20 +73,41 @@ namespace SaySoundHelper
             var sheet = workbook.Worksheet(sheetName);
 
             const int saySoundCol = 1;
+            const int soundEventCol = 12;
             const int contentCol = 8;
             const int twContentCol = 7;
             const int jpContentCol = 6;
 
             return sheet.RowsUsed()
                 .Skip(1)
-                .Where(row => row.Cell(saySoundCol) is not null && !row.Cell(saySoundCol).Value.IsBlank)
-                .Select(row => (
-                    SaySound: row.Cell(saySoundCol).GetString(),
-                    Content: row.Cell(contentCol).GetString(),
-                    TWContent: row.Cell(twContentCol).GetString(),
-                    JPContent: row.Cell(jpContentCol).GetString()
+                .Select(row => new
+                {
+                    Row = row,
+                    RawSoundEvent = row.Cell(soundEventCol).GetString()
+                })
+                .Where(x =>
+                    x.Row.Cell(saySoundCol) is not null
+                    && !x.Row.Cell(saySoundCol).Value.IsBlank
+                    && HasSoundEvent(x.RawSoundEvent))
+                .Select(x => (
+                    SaySound: x.Row.Cell(saySoundCol).GetString(),
+                    SoundEvent: GetSoundEventName(x.RawSoundEvent),
+                    Content: x.Row.Cell(contentCol).GetString(),
+                    TWContent: x.Row.Cell(twContentCol).GetString(),
+                    JPContent: x.Row.Cell(jpContentCol).GetString()
                 ))
                 .ToList();
+
+            bool HasSoundEvent(string rawSoundEvent)
+                => !string.IsNullOrWhiteSpace(rawSoundEvent)
+                && rawSoundEvent.StartsWith('"')
+                && rawSoundEvent.Contains('=');
+
+            string GetSoundEventName(string rawSoundEvent)
+            {
+                var firstPart = rawSoundEvent.Split('=')[0].Trim();
+                return firstPart.Trim('"');
+            }
         }
     }
 
