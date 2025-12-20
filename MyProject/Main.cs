@@ -758,44 +758,47 @@ public class Main(
 
         var message = commandInfo.GetArg(1);
 
-        if (SaySoundHelper.SaySoundHelper.SaySounds.TryGetValue(message, out var saySound))
-        {
-            _music.PlaySaySound(saySound.SoundEvent);
+        if (!SaySoundHelper.SaySoundHelper.SaySounds.TryGetValue(message, out var saySound))
+            return HookResult.Continue;
 
+        _music.PlaySaySound(saySound.SoundEvent);
+
+        BroadcastLocalizedSaySoundMessage(player, message, saySound);
+
+        return HookResult.Handled;
+
+        void BroadcastLocalizedSaySoundMessage(
+            CCSPlayerController sender,
+            string keyword,
+            (string SoundEvent, string Content, string TWContent, string JPContent) saySound)
+        {
             var humans = Utility.GetHumanPlayers();
 
             foreach (var human in humans)
             {
-                var playerCache = _playerService.GetPlayerCache(human.SteamID);
-                var languageOption = LanguageOption.English;
-
-                if (playerCache is not null && !string.IsNullOrEmpty(playerCache.Language))
-                    languageOption = playerCache.Language;
-
-                var content = string.Empty;
-                switch (languageOption)
-                {
-                    case LanguageOption.Japanese:
-                        content = saySound.JPContent;
-                        break;
-                    case LanguageOption.TraditionalChinese:
-                        content = saySound.TWContent;
-                        break;
-                    case LanguageOption.English:
-                    default:
-                        content = saySound.Content;
-                        break;
-                }
-                if (string.IsNullOrWhiteSpace(content))
-                    content = message;
-
-                human.PrintToChat($" {ChatColors.Yellow}{player.PlayerName}: {ChatColors.Grey}[{message}] {ChatColors.Green}{content}");
+                var localizedContent = GetLocalizedSaySoundContent(human, saySound, keyword);
+                human.PrintToChat($" {ChatColors.Yellow}{sender.PlayerName}: {ChatColors.Grey}[{keyword}] {ChatColors.Green}{localizedContent}");
             }
-
-            return HookResult.Handled;
         }
 
-        return HookResult.Continue;
+        string GetLocalizedSaySoundContent(
+            CCSPlayerController player,
+            (string SoundEvent, string Content, string TWContent, string JPContent) saySound,
+            string fallbackKeyword)
+        {
+            var playerCache = _playerService.GetPlayerCache(player.SteamID);
+            var language = playerCache?.Language ?? LanguageOption.English;
+
+            var content = language switch
+            {
+                LanguageOption.Japanese => saySound.JPContent,
+                LanguageOption.TraditionalChinese => saySound.TWContent,
+                LanguageOption.English => saySound.Content,
+                _ => saySound.Content
+            };
+
+            return string.IsNullOrWhiteSpace(content) ? fallbackKeyword : content;
+        }
     }
     #endregion hook result
 
