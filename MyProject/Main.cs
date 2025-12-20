@@ -9,6 +9,7 @@ using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
 using MyProject.Classes;
+using MyProject.Domains;
 using MyProject.Models;
 using MyProject.Modules.Interfaces;
 using MyProject.Services.Interfaces;
@@ -759,10 +760,37 @@ public class Main(
 
         if (SaySoundHelper.SaySoundHelper.SaySounds.TryGetValue(message, out var saySound))
         {
-            var content = string.IsNullOrWhiteSpace(saySound.Content) ? message : saySound.Content;
-
             _music.PlaySaySound(saySound.SoundEvent);
-            Server.PrintToChatAll($" {ChatColors.Yellow}{player.PlayerName}: {ChatColors.Grey}[{message}] {ChatColors.Green}{content}");
+
+            var humans = Utility.GetHumanPlayers();
+
+            foreach (var human in humans)
+            {
+                var playerCache = _playerService.GetPlayerCache(human.SteamID);
+                var languageOption = LanguageOption.English;
+
+                if (playerCache is not null && !string.IsNullOrEmpty(playerCache.Language))
+                    languageOption = playerCache.Language;
+
+                var content = string.Empty;
+                switch (languageOption)
+                {
+                    case LanguageOption.Japanese:
+                        content = saySound.JPContent;
+                        break;
+                    case LanguageOption.TraditionalChinese:
+                        content = saySound.TWContent;
+                        break;
+                    case LanguageOption.English:
+                    default:
+                        content = saySound.Content;
+                        break;
+                }
+                if (string.IsNullOrWhiteSpace(content))
+                    content = message;
+
+                human.PrintToChat($" {ChatColors.Yellow}{player.PlayerName}: {ChatColors.Grey}[{message}] {ChatColors.Green}{content}");
+            }
 
             return HookResult.Handled;
         }
