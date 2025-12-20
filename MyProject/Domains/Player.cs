@@ -27,4 +27,11 @@ namespace MyProject.Domains
         // navigation properties
         public virtual ICollection<PlayerSkin> PlayerSkins { get; set; } = new List<PlayerSkin>();
     }
+
+    public class LanguageOption
+    {
+        public const string TraditionalChinese = "zh-TW";
+        public const string Japanese = "ja";
+        public const string English = "en";
+    }
 }
