@@ -19,6 +19,10 @@ namespace MyProject.Domains
         public string DefaultSkinModelPath { get; set; } = null!;
         [Column("volume")]
         public byte Volume { get; set; }
+        [Column("ss_volume")]
+        public byte SaySoundVolume { get; set; }
+        [Column("language")]
+        public string? Language { get; set; }
 
         // navigation properties
         public virtual ICollection<PlayerSkin> PlayerSkins { get; set; } = new List<PlayerSkin>();
