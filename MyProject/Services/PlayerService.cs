@@ -37,7 +37,9 @@ namespace MyProject.Services
                     IpAddress = client.IpAddress ?? string.Empty,
                     LastTimeConnect = DateTime.Now,
                     DefaultSkinModelPath = string.Empty,
-                    Volume = 50
+                    Volume = 50,
+                    SaySoundVolume = 50,
+                    Language = LanguageOption.English
                 };
                 _dbContext.Players.Add(playerData);
             }
