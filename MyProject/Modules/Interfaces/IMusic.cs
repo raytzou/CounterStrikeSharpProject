@@ -44,5 +44,7 @@ namespace MyProject.Modules.Interfaces
         /// Gets the playing round sound ID by player's slot
         /// </summary>
         uint? GetPlayingRoundSoundID(int playerSlot);
+
+        void PlaySaySound(string soundEventName);
     }
 }

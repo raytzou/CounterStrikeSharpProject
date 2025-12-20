@@ -108,6 +108,8 @@ public class Main(
             manifest.AddResource(path);
         foreach (var path in armSet)
             manifest.AddResource(path);
+
+        manifest.AddResource(SaySoundHelper.SaySoundHelper.SoundEventFile);
     }
 
     private void OnTick()
@@ -759,6 +761,7 @@ public class Main(
         {
             var content = string.IsNullOrWhiteSpace(saySound.Content) ? message : saySound.Content;
 
+            _music.PlaySaySound(saySound.SoundEvent);
             Server.PrintToChatAll($" {ChatColors.Yellow}{player.PlayerName}: {ChatColors.Grey}[{message}] {ChatColors.Green}{content}");
 
             return HookResult.Handled;

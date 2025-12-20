@@ -74,6 +74,16 @@ namespace MyProject.Modules
             PlaySound(player, Utility.SoundEvent.Warmup);
         }
 
+        public void PlaySaySound(string soundEventName)
+        {
+            var humans = Utility.GetHumanPlayers();
+
+            foreach (var human in humans)
+            {
+                EmitSound(human, soundEventName); // TODO: implement saysound volume for player cache
+            }
+        }
+
         private void PlayMusicToAllHumans(List<string> sounds)
         {
             var humans = Utility.GetHumanPlayers();
@@ -107,7 +117,5 @@ namespace MyProject.Modules
 
             return soundEventId;
         }
-
-
     }
 }
