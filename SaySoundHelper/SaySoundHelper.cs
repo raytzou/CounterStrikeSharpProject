@@ -13,6 +13,7 @@ namespace SaySoundHelper
             Timeout = TimeSpan.FromSeconds(30)
         };
         private static Dictionary<string, (string SoundEvent, string Content, string TWContent, string JPContent)>? _saysounds;
+        private static string? _soundEventFile;
 
         static SaySoundHelper()
         {
@@ -22,6 +23,8 @@ namespace SaySoundHelper
 
         public static Dictionary<string, (string SoundEvent, string Content, string TWContent, string JPContent)> SaySounds
             => _saysounds ?? throw new InvalidOperationException("SaySoundHelper not initialized");
+
+        public static string SoundEventFile => _soundEventFile ?? throw new InvalidOperationException("SaySoundHelper not initialized");
 
         public static async Task InitializeAsync(string pluginDirectory)
         {
@@ -51,6 +54,7 @@ namespace SaySoundHelper
                 File.Delete(outputPath);
 
             await File.WriteAllBytesAsync(outputPath, bytes);
+            _soundEventFile = cfgProvider.Config.SoundEventFile;
         }
 
         private static async Task<Dictionary<string, (string SoundEvent, string Content, string TWContent, string JPContent)>> LoadSaySounds(string pluginDirectory)
@@ -137,6 +141,7 @@ namespace SaySoundHelper
             public string DownloadUrl { get; set; } = string.Empty;
             public string OutputPath { get; set; } = string.Empty;
             public string SheetName { get; set; } = string.Empty;
+            public string SoundEventFile { get; set; } = string.Empty;
         }
     }
 }
