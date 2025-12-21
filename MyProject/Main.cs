@@ -875,7 +875,7 @@ public class Main(
         _command.OnPlayersCommand(client, command);
     }
 
-    [RequiresPermissions("@css/kick")]
+    [RequiresPermissions("@css/slay")]
     [ConsoleCommand("css_slay", "Slay Player")]
     public void OnSlayCommand(CCSPlayerController client, CommandInfo command)
     {
@@ -908,6 +908,7 @@ public class Main(
         _command.OnModelsCommand(client, command, this);
     }
 
+    [RequiresPermissions("@css/slay")]
     [ConsoleCommand("css_slap", "slap command")]
     public void OnSlapCommand(CCSPlayerController client, CommandInfo command)
     {
