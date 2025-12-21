@@ -28,13 +28,15 @@ namespace SaySoundHelper
 
         public static async Task InitializeAsync(string pluginDirectory)
         {
-            await DownloadSaySoundExcel(pluginDirectory);
-            _saysounds = await LoadSaySounds(pluginDirectory);
+            var cfgProvider = new ConfigProvider(pluginDirectory);
+
+            _soundEventFile = cfgProvider.Config.SoundEventFile;
+            await DownloadSaySoundExcel(pluginDirectory, cfgProvider).ConfigureAwait(false);
+            _saysounds = LoadSaySounds(pluginDirectory);
         }
 
-        private static async Task DownloadSaySoundExcel(string pluginDirectory)
+        private static async Task DownloadSaySoundExcel(string pluginDirectory, ConfigProvider cfgProvider)
         {
-            var cfgProvider = new ConfigProvider(pluginDirectory);
             var url = cfgProvider.Config.DownloadUrl;
 
             if (string.IsNullOrWhiteSpace(url))
@@ -43,7 +45,7 @@ namespace SaySoundHelper
             if (!Uri.TryCreate(url, UriKind.Absolute, out _))
                 throw new InvalidOperationException($"Invalid URL: {url}");
 
-            var bytes = await _httpClient.GetByteArrayAsync(url);
+            var bytes = await _httpClient.GetByteArrayAsync(url).ConfigureAwait(false);
             var outputPath = Path.Combine(pluginDirectory, cfgProvider.Config.OutputPath);
             var outputDirectory = Path.GetDirectoryName(outputPath);
 
@@ -53,11 +55,10 @@ namespace SaySoundHelper
             if (File.Exists(outputPath))
                 File.Delete(outputPath);
 
-            await File.WriteAllBytesAsync(outputPath, bytes);
-            _soundEventFile = cfgProvider.Config.SoundEventFile;
+            await File.WriteAllBytesAsync(outputPath, bytes).ConfigureAwait(false);
         }
 
-        private static async Task<Dictionary<string, (string SoundEvent, string Content, string TWContent, string JPContent)>> LoadSaySounds(string pluginDirectory)
+        private static Dictionary<string, (string SoundEvent, string Content, string TWContent, string JPContent)> LoadSaySounds(string pluginDirectory)
         {
             var cfgProvider = new ConfigProvider(pluginDirectory);
             var outputPath = cfgProvider.Config.OutputPath;

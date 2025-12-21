@@ -85,8 +85,8 @@ public class Main(
         if (AppSettings.IsDebug)
             _logger.LogWarning("Debug mode is on");
         _logger.LogInformation("Server host time: {DT}", DateTime.Now);
+        InitialSaySoundsSync();
         Reigsters();
-        InitialSaySounds();
     }
 
     public void OnConfigParsed(MainConfig config)
@@ -1043,20 +1043,17 @@ public class Main(
         AddCommandListener("say_team", OnPlayerSayCommand);
     }
 
-    private void InitialSaySounds()
+    private void InitialSaySoundsSync()
     {
-        _ = Task.Run(async () =>
+        try
         {
-            try
-            {
-                await SaySoundHelper.SaySoundHelper.InitializeAsync(ModuleDirectory);
-                _logger.LogInformation("SaySoundHelper initialized with {count} sounds", SaySoundHelper.SaySoundHelper.SaySounds.Count);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to initialize SaySoundHelper");
-            }
-        });
+            SaySoundHelper.SaySoundHelper.InitializeAsync(ModuleDirectory).GetAwaiter().GetResult();
+            _logger.LogInformation("SaySoundHelper initialized with {count} sounds", SaySoundHelper.SaySoundHelper.SaySounds.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to initialize SaySoundHelper");
+        }
     }
 
     public string GetTargetNameByKeyword(string keyword)
