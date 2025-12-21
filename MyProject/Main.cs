@@ -920,6 +920,12 @@ public class Main(
         _command.OnVolumeCommand(client, command);
     }
 
+    [ConsoleCommand("css_ss_volume", "saysound volume command")]
+    public void OnSaySoundVolumeCommand(CCSPlayerController client, CommandInfo command)
+    {
+        _command.OnSaySoundVolumeCommand(client, command);
+    }
+
     [ConsoleCommand("css_buy", "buy command")]
     public void OnBuyCommand(CCSPlayerController client, CommandInfo command)
     {

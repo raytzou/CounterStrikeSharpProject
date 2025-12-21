@@ -2,6 +2,12 @@
 
 namespace MyProject.Modules.Interfaces
 {
+    public enum VolumeType
+    {
+        Music,
+        SaySound
+    }
+
     public interface IMusic
     {
         /// <summary>
