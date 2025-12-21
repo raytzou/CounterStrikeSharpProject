@@ -757,12 +757,26 @@ public class Main(
             return HookResult.Continue;
 
         var message = commandInfo.GetArg(1);
+        var messageParts = message.Split(' ');
 
-        if (!SaySoundHelper.SaySoundHelper.SaySounds.TryGetValue(message, out var saySound))
+        if (!SaySoundHelper.SaySoundHelper.SaySounds.TryGetValue(messageParts[0], out var saySound))
             return HookResult.Continue;
 
-        _music.PlaySaySound(saySound.SoundEvent);
+        var pitchText = messageParts.Length > 1 ? messageParts[1] : string.Empty;
+        float pitch = pitchText switch
+        {
+            "qq" => 1.5f,
+            "q" => 1.3f,
+            "f" => 1.15f,
+            "s" => 0.85f,
+            "d" => 0.75f,
+            "r" => new Random().Next(75, 150) / 100f,
+            _ => 1f,
+        };
 
+        pitchText = pitch == 1f ? string.Empty : pitchText;
+        message = pitchText == string.Empty ? messageParts[0] : $"{messageParts[0]} {pitchText}";
+        _music.PlaySaySound(saySound.SoundEvent, pitch);
         BroadcastLocalizedSaySoundMessage(player, message, saySound);
 
         return HookResult.Handled;

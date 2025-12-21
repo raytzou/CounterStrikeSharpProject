@@ -45,6 +45,6 @@ namespace MyProject.Modules.Interfaces
         /// </summary>
         uint? GetPlayingRoundSoundID(int playerSlot);
 
-        void PlaySaySound(string soundEventName);
+        void PlaySaySound(string soundEventName, float pitch);
     }
 }
