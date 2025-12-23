@@ -932,6 +932,22 @@ public class Main(
     {
         _command.OnBuyCommand(client, command, this);
     }
+
+    [ConsoleCommand("en", "Switch SaySound to English")]
+    [ConsoleCommand("tw", "Switch SaySound to Traditional Chinese")]
+    [ConsoleCommand("jp", "Switch SaySound to Japanese")]
+    public void OnLanguageCommand(CCSPlayerController client, CommandInfo command)
+    {
+        var language = command.GetCommandString switch
+        {
+            "en" => LanguageOption.English,
+            "tw" => LanguageOption.TraditionalChinese,
+            "jp" => LanguageOption.Japanese,
+            _ => LanguageOption.English
+        };
+
+        _command.OnLanguageCommand(client, command, language);
+    }
     #endregion commands
 
     private void InitializeFileds()

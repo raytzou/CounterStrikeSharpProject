@@ -647,6 +647,41 @@ public class Command(
         }
     }
 
+    public void OnLanguageCommand(CCSPlayerController client, CommandInfo command, string language)
+    {
+        if (!Utility.IsHumanPlayerValid(client))
+            return;
+
+        var playerCache = _playerService.GetPlayerCache(client.SteamID);
+        if (playerCache is null)
+        {
+            command.ReplyToCommand("Cannot update language, please reconnect to server!");
+            _logger.LogWarning("Cannot update language, player cache is not found. SteamID: {steamID}", client.SteamID);
+            return;
+        }
+
+        if (language != LanguageOption.English &&
+            language != LanguageOption.TraditionalChinese &&
+            language != LanguageOption.Japanese)
+        {
+            command.ReplyToCommand($"Invalid language: {language}");
+            return;
+        }
+
+        playerCache.Language = language;
+        _playerService.UpdateCache(playerCache);
+
+        var languageName = language switch
+        {
+            LanguageOption.English => "English",
+            LanguageOption.TraditionalChinese => "Traditional Chinese (繁體中文)",
+            LanguageOption.Japanese => "Japanese (日本語)",
+            _ => "Unknown"
+        };
+
+        command.ReplyToCommand($"SaySound set to {languageName}");
+    }
+
     private void ExecutePlayerCommand(
         CCSPlayerController client,
         CommandInfo command,
