@@ -34,6 +34,10 @@ namespace MyProject.Modules.Interfaces
 
         void OnVolumeCommand(CCSPlayerController client, CommandInfo command);
 
+        void OnSaySoundVolumeCommand(CCSPlayerController client, CommandInfo command);
+
         void OnBuyCommand(CCSPlayerController client, CommandInfo command, Main thePlugin);
+
+        void OnLanguageCommand(CCSPlayerController client, CommandInfo command, string language);
     }
 }

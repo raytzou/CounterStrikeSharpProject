@@ -53,6 +53,8 @@ namespace MyProject.Modules
             foreach (var player in humans)
             {
                 _playingRoundSounds[player.Slot] = EmitSound(player, soundEvents[selectedIndex]);
+                var volume = _playerService.GetPlayerCache(player.SteamID)?.Volume ?? 50;
+                SendSoundEventPackage(player, volume, _playingRoundSounds[player.Slot]);
             }
         }
 
@@ -74,6 +76,19 @@ namespace MyProject.Modules
             PlaySound(player, Utility.SoundEvent.Warmup);
         }
 
+        public void PlaySaySound(string soundEventName, float pitch)
+        {
+            var humans = Utility.GetHumanPlayers();
+
+            foreach (var human in humans)
+            {
+                var soundEventId = EmitSound(human, soundEventName);
+                var volume = _playerService.GetPlayerCache(human.SteamID)?.SaySoundVolume ?? 50;
+
+                SendSoundEventPackage(human, volume, soundEventId, pitch);
+            }
+        }
+
         private void PlayMusicToAllHumans(List<string> sounds)
         {
             var humans = Utility.GetHumanPlayers();
@@ -87,27 +102,29 @@ namespace MyProject.Modules
         private void PlaySound(CCSPlayerController player, List<string> sounds)
         {
             var selectedSound = sounds[_random.Next(sounds.Count)];
+            var soundEventId = EmitSound(player, selectedSound);
+            var volume = _playerService.GetPlayerCache(player.SteamID)?.Volume ?? 50;
 
-            EmitSound(player, selectedSound);
+            SendSoundEventPackage(player, volume, soundEventId);
         }
 
         private uint EmitSound(CCSPlayerController player, string soundName)
         {
             var recipient = new RecipientFilter { player };
-            var playerVolume = _playerService.GetPlayerCache(player.SteamID)?.Volume ?? 50;
-            var soundEventId = player.EmitSound(soundName, recipient, playerVolume / 100f);
+            var soundEventId = player.EmitSound(soundName, recipient);
 
+            return soundEventId;
+        }
+
+        private static void SendSoundEventPackage(CCSPlayerController player, byte volume, uint soundEventId, float pitch = 1f)
+        {
             Server.NextWorldUpdate(() =>
             {
                 if (!Utility.IsHumanPlayerValid(player))
                     return;
 
-                Utility.SendSoundEventPackage(player, soundEventId, playerVolume / 100f);
+                Utility.SendSoundEventPackage(player, soundEventId, volume / 100f, pitch);
             });
-
-            return soundEventId;
         }
-
-
     }
 }

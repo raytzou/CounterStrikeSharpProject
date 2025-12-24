@@ -9,6 +9,7 @@ using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
 using MyProject.Classes;
+using MyProject.Domains;
 using MyProject.Models;
 using MyProject.Modules.Interfaces;
 using MyProject.Services.Interfaces;
@@ -84,6 +85,7 @@ public class Main(
         if (AppSettings.IsDebug)
             _logger.LogWarning("Debug mode is on");
         _logger.LogInformation("Server host time: {DT}", DateTime.Now);
+        InitialSaySoundsSync();
         Reigsters();
     }
 
@@ -107,6 +109,8 @@ public class Main(
             manifest.AddResource(path);
         foreach (var path in armSet)
             manifest.AddResource(path);
+
+        manifest.AddResource(SaySoundHelper.SaySoundHelper.SoundEventFile);
     }
 
     private void OnTick()
@@ -299,7 +303,6 @@ public class Main(
             });
         }
     }
-
     #endregion Listeners
 
     #region hook result
@@ -747,6 +750,81 @@ public class Main(
 
         return HookResult.Continue;
     }
+
+    private HookResult OnPlayerSayCommand(CCSPlayerController? player, CommandInfo commandInfo)
+    {
+        if (!Utility.IsHumanPlayerValid(player))
+            return HookResult.Continue;
+
+        var message = commandInfo.GetArg(1);
+        var (keyword, pitch, displayMessage) = ParseSaySoundMessage(message);
+
+        if (!SaySoundHelper.SaySoundHelper.SaySounds.TryGetValue(keyword, out var saySound))
+            return HookResult.Continue;
+
+        _music.PlaySaySound(saySound.SoundEvent, pitch);
+        BroadcastLocalizedSaySoundMessage(player, displayMessage, saySound);
+
+        return HookResult.Handled;
+
+        #region local methods
+        (string Keyword, float Pitch, string DisplayMessage) ParseSaySoundMessage(string rawMessage)
+        {
+            var parts = rawMessage.Split(' ', 2);
+            var keyword = parts[0];
+            var pitchText = parts.Length > 1 ? parts[1] : string.Empty;
+
+            var pitch = ParsePitchModifier(pitchText);
+            var displayMessage = pitch == 1f ? keyword : $"{keyword} {pitchText}";
+
+            return (keyword, pitch, displayMessage);
+        }
+
+        float ParsePitchModifier(string pitchText) => pitchText switch
+        {
+            "qq" => 1.5f,
+            "q" => 1.3f,
+            "f" => 1.15f,
+            "s" => 0.85f,
+            "d" => 0.75f,
+            "r" => Random.Shared.Next(75, 150) / 100f,
+            _ => 1f
+        };
+
+        void BroadcastLocalizedSaySoundMessage(
+            CCSPlayerController sender,
+            string keyword,
+            (string SoundEvent, string Content, string TWContent, string JPContent) saySound)
+        {
+            var humans = Utility.GetHumanPlayers();
+
+            foreach (var human in humans)
+            {
+                var localizedContent = GetLocalizedSaySoundContent(human, saySound, keyword);
+                human.PrintToChat($" {ChatColors.Yellow}{sender.PlayerName}: {ChatColors.Grey}[{keyword}] {ChatColors.Green}{localizedContent}");
+            }
+        }
+
+        string GetLocalizedSaySoundContent(
+            CCSPlayerController player,
+            (string SoundEvent, string Content, string TWContent, string JPContent) saySound,
+            string fallbackKeyword)
+        {
+            var playerCache = _playerService.GetPlayerCache(player.SteamID);
+            var language = playerCache?.Language ?? LanguageOption.English;
+
+            var content = language switch
+            {
+                LanguageOption.Japanese => saySound.JPContent,
+                LanguageOption.TraditionalChinese => saySound.TWContent,
+                LanguageOption.English => saySound.Content,
+                _ => saySound.Content
+            };
+
+            return string.IsNullOrWhiteSpace(content) ? fallbackKeyword : content;
+        }
+        #endregion local methods
+    }
     #endregion hook result
 
     #region commands
@@ -843,10 +921,32 @@ public class Main(
         _command.OnVolumeCommand(client, command);
     }
 
+    [ConsoleCommand("css_ss_volume", "saysound volume command")]
+    public void OnSaySoundVolumeCommand(CCSPlayerController client, CommandInfo command)
+    {
+        _command.OnSaySoundVolumeCommand(client, command);
+    }
+
     [ConsoleCommand("css_buy", "buy command")]
     public void OnBuyCommand(CCSPlayerController client, CommandInfo command)
     {
         _command.OnBuyCommand(client, command, this);
+    }
+
+    [ConsoleCommand("en", "Switch SaySound to English")]
+    [ConsoleCommand("tw", "Switch SaySound to Traditional Chinese")]
+    [ConsoleCommand("jp", "Switch SaySound to Japanese")]
+    public void OnLanguageCommand(CCSPlayerController client, CommandInfo command)
+    {
+        var language = command.GetCommandString switch
+        {
+            "en" => LanguageOption.English,
+            "tw" => LanguageOption.TraditionalChinese,
+            "jp" => LanguageOption.Japanese,
+            _ => LanguageOption.English
+        };
+
+        _command.OnLanguageCommand(client, command, language);
     }
     #endregion commands
 
@@ -986,6 +1086,22 @@ public class Main(
         RegisterEventHandler<EventBombPlanted>(BombPlantedHandler);
         RegisterEventHandler<EventBombDefused>(BombDefusedHandler);
         RegisterEventHandler<EventBombExploded>(BombExplodedHandler);
+
+        AddCommandListener("say", OnPlayerSayCommand);
+        AddCommandListener("say_team", OnPlayerSayCommand);
+    }
+
+    private void InitialSaySoundsSync()
+    {
+        try
+        {
+            SaySoundHelper.SaySoundHelper.InitializeAsync(ModuleDirectory).GetAwaiter().GetResult();
+            _logger.LogInformation("SaySoundHelper initialized with {count} sounds", SaySoundHelper.SaySoundHelper.SaySounds.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to initialize SaySoundHelper");
+        }
     }
 
     public string GetTargetNameByKeyword(string keyword)

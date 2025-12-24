@@ -488,35 +488,17 @@ public class Command(
 
     public void OnVolumeCommand(CCSPlayerController client, CommandInfo command)
     {
-        if (!Utility.IsHumanPlayerValid(client)) return;
-
-        var playerCache = _playerService.GetPlayerCache(client.SteamID);
-        if (playerCache is null)
-        {
-            command.ReplyToCommand("Cannot update volume, please reconnect to server!");
-            _logger.LogWarning("Cannot update volume, player cache is not found. SteamID: {steamID}", client.SteamID);
+        if (!TryValidateVolumeCommand(
+            client,
+            command,
+            "css_volume",
+            VolumeType.Music,
+            out var playerCache,
+            out var
+            volume))
             return;
-        }
 
-        if (command.ArgCount != 2)
-        {
-            command.ReplyToCommand("[css] Usage: css_volume [volume]");
-            Utility.AddTimer(0.5f, () =>
-            {
-                client.PrintToChat($"Current volume: {playerCache.Volume}%");
-            });
-            return;
-        }
-
-        var volumeString = command.GetArg(1);
-
-        if (string.IsNullOrEmpty(volumeString) || !byte.TryParse(volumeString, out var volume) || volume < 0 || volume > 100)
-        {
-            command.ReplyToCommand("Invalid volume");
-            return;
-        }
-
-        // update player's sound volume immediately
+        // Update player's sound volume immediately
         Server.NextWorldUpdate(() =>
         {
             if (!Utility.IsHumanPlayerValid(client))
@@ -531,6 +513,22 @@ public class Command(
             if (soundEventId != null)
                 Utility.SendSoundEventPackage(client, soundEventId.Value, volume / 100f);
         });
+    }
+
+    public void OnSaySoundVolumeCommand(CCSPlayerController client, CommandInfo command)
+    {
+        if (!TryValidateVolumeCommand(
+            client,
+            command,
+            "css_ss_volume",
+            VolumeType.SaySound,
+            out var playerCache,
+            out var volume))
+            return;
+
+        playerCache.SaySoundVolume = volume;
+        _playerService.UpdateCache(playerCache);
+        command.ReplyToCommand($"Volume set to {volume}%");
     }
 
     public void OnBuyCommand(CCSPlayerController client, CommandInfo command, Main thePlugin)
@@ -647,6 +645,41 @@ public class Command(
                 _logger.LogError("Buy Command error {error}", ex);
             }
         }
+    }
+
+    public void OnLanguageCommand(CCSPlayerController client, CommandInfo command, string language)
+    {
+        if (!Utility.IsHumanPlayerValid(client))
+            return;
+
+        var playerCache = _playerService.GetPlayerCache(client.SteamID);
+        if (playerCache is null)
+        {
+            command.ReplyToCommand("Cannot update language, please reconnect to server!");
+            _logger.LogWarning("Cannot update language, player cache is not found. SteamID: {steamID}", client.SteamID);
+            return;
+        }
+
+        if (language != LanguageOption.English &&
+            language != LanguageOption.TraditionalChinese &&
+            language != LanguageOption.Japanese)
+        {
+            command.ReplyToCommand($"Invalid language: {language}");
+            return;
+        }
+
+        playerCache.Language = language;
+        _playerService.UpdateCache(playerCache);
+
+        var languageName = language switch
+        {
+            LanguageOption.English => "English",
+            LanguageOption.TraditionalChinese => "Traditional Chinese (繁體中文)",
+            LanguageOption.Japanese => "Japanese (日本語)",
+            _ => "Unknown"
+        };
+
+        command.ReplyToCommand($"SaySound set to {languageName}");
     }
 
     private void ExecutePlayerCommand(
@@ -772,5 +805,58 @@ public class Command(
             });
             timer?.Kill();
         }
+    }
+
+    private bool TryValidateVolumeCommand(
+        CCSPlayerController client,
+        CommandInfo command,
+        string commandName,
+        VolumeType volumeType,
+        out Player playerCache,
+        out byte volume)
+    {
+        playerCache = null!;
+        volume = 0;
+
+        if (!Utility.IsHumanPlayerValid(client))
+            return false;
+
+        var tryGetCache = _playerService.GetPlayerCache(client.SteamID);
+        if (tryGetCache is null)
+        {
+            command.ReplyToCommand("Cannot update volume, please reconnect to server!");
+            _logger.LogWarning("Cannot update volume, player cache is not found. SteamID: {steamID}", client.SteamID);
+            return false;
+        }
+
+        playerCache = tryGetCache;
+
+        if (command.ArgCount != 2)
+        {
+            command.ReplyToCommand($"[css] Usage: {commandName} [volume]");
+
+            var currentVolume = volumeType switch
+            {
+                VolumeType.SaySound => playerCache.SaySoundVolume,
+                VolumeType.Music => playerCache.Volume,
+                _ => playerCache.Volume
+            };
+
+            Utility.AddTimer(0.5f, () =>
+            {
+                client.PrintToChat($"{volumeType} volume: {currentVolume}%");
+            });
+            return false;
+        }
+
+        var volumeString = command.GetArg(1);
+
+        if (string.IsNullOrEmpty(volumeString) || !byte.TryParse(volumeString, out volume) || volume > 100)
+        {
+            command.ReplyToCommand("Invalid volume");
+            return false;
+        }
+
+        return true;
     }
 }
