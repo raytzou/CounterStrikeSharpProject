@@ -802,5 +802,17 @@ namespace MyProject.Classes
                 player.PrintToCenter(message);
             }
         }
+
+        public static void PrintToChatAllWithColor(string message)
+        {
+            Server.PrintToChatAll($" {ChatColors.Yellow}{message}");
+        }
+
+        public static void PrintToChatWithTeamColor(CCSPlayerController? player, string message)
+        {
+            player?.PrintToChat($" {GetPlayerTeamChatColor(player)}{message}");
+        }
+
+        public static char GetPlayerTeamChatColor(CCSPlayerController? player) => player is null ? ChatColors.Default : ChatColors.ForPlayer(player);
     }
 }
