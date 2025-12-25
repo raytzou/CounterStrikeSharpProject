@@ -503,9 +503,9 @@ public class Main(
         {
             if (_roundCount != ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>())
             {
-                Utility.PrintToChatAllWithColor($"Round: {ChatColors.Yellow}{_roundCount}{ChatColors.Grey}/{ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>() - 1}");
+                Utility.PrintToChatAllWithColor($"Round: {ChatColors.LightRed}{_roundCount}{ChatColors.Grey}/{ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>() - 1}");
                 Utility.PrintToChatAllWithColor($"Difficulty level: {ChatColors.Purple}{_bot.CurrentLevel}{ChatColors.Grey}/{BotProfile.MaxLevel}");
-                Utility.PrintToChatAllWithColor($"Bot respawn: {ChatColors.Grey}{_bot.MaxRespawnTimes}");
+                Utility.PrintToChatAllWithColor($"Bot respawn: {ChatColors.Green}{_bot.MaxRespawnTimes}");
             }
         }
 
