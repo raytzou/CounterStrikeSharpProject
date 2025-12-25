@@ -455,7 +455,7 @@ public class Main(
                         var roundMusicName = _music.CurrentRoundMusicName;
                         if (!string.IsNullOrEmpty(roundMusicName))
                         {
-                            Server.PrintToChatAll($"Now is playing: {roundMusicName}");
+                            Utility.PrintToChatAllWithColor($"Now is playing: {ChatColors.Lime}{roundMusicName}");
                         }
                     });
                 });
@@ -503,9 +503,9 @@ public class Main(
         {
             if (_roundCount != ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>())
             {
-                Server.PrintToChatAll($"Round: {_roundCount}");
-                Server.PrintToChatAll($"Difficulty level: {_bot.CurrentLevel}/{BotProfile.MaxLevel}");
-                Server.PrintToChatAll($"Bot respawn: {_bot.MaxRespawnTimes}");
+                Utility.PrintToChatAllWithColor($"Round: {ChatColors.Yellow}{_roundCount}{ChatColors.Grey}/{ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>() - 1}");
+                Utility.PrintToChatAllWithColor($"Difficulty level: {ChatColors.Purple}{_bot.CurrentLevel}{ChatColors.Grey}/{BotProfile.MaxLevel}");
+                Utility.PrintToChatAllWithColor($"Bot respawn: {ChatColors.Grey}{_bot.MaxRespawnTimes}");
             }
         }
 
@@ -801,7 +801,7 @@ public class Main(
             foreach (var human in humans)
             {
                 var localizedContent = GetLocalizedSaySoundContent(human, saySound, keyword);
-                human.PrintToChat($" {ChatColors.Yellow}{sender.PlayerName}: {ChatColors.Grey}[{keyword}] {ChatColors.Green}{localizedContent}");
+                Utility.PrintToChatWithTeamColor(human, $"{sender.PlayerName}: {ChatColors.Grey}[{keyword}] {ChatColors.Green}{localizedContent}");
             }
         }
 

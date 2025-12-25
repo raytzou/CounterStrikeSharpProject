@@ -30,7 +30,7 @@ public class Command(
     {
         if (command.ArgCount < 2)
         {
-            command.ReplyToCommand("[css] Usage: css_kick <target>");
+            ReplyToCommandWithTeamColor(client, command, "[css] Usage: css_kick <target>");
             return;
         }
 
@@ -38,32 +38,32 @@ public class Command(
 
         if (string.IsNullOrEmpty(targetName))
         {
-            command.ReplyToCommand("[css] Target not found.");
+            ReplyToCommandWithTeamColor(client, command, "[css] Target not found.");
             return;
         }
 
         Server.ExecuteCommand($"kick {targetName}");
-        command.ReplyToCommand($"[css] You kick {targetName}");
+        ReplyToCommandWithTeamColor(client, command, "[css] You kick {targetName}");
         _logger.LogInformation("[css] {admin} kicked {targetName} at {DT}", client.PlayerName, targetName, DateTime.Now);
-        Server.PrintToChatAll($"Admin kicked {targetName}");
+        Utility.PrintToChatAllWithColor($"Admin kicked {targetName}");
     }
 
     public void OnInfoCommand(CCSPlayerController client, CommandInfo command, int botRespawnRemaining)
     {
-        command.ReplyToCommand("----------");
-        command.ReplyToCommand($"Server local time: {DateTime.Now}");
-        command.ReplyToCommand($"Current map: {Server.MapName}");
-        command.ReplyToCommand($"Player: {Main.Instance.PlayerCount}/{Server.MaxPlayers}");
-        command.ReplyToCommand($"Round: {Main.Instance.RoundCount}/{ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>()}");
-        command.ReplyToCommand($"Bot respawn remaining: {botRespawnRemaining}");
-        command.ReplyToCommand("----------");
+        command.ReplyToCommand($" {ChatColors.Grey}----- {ChatColors.Purple}{ConVar.Find("hostname")!.StringValue} {ChatColors.Grey}-----");
+        ReplyToCommandWithTeamColor(client, command, $"Server local time: {ChatColors.Red}{DateTime.Now}");
+        ReplyToCommandWithTeamColor(client, command, $"Current map: {ChatColors.Lime}{Server.MapName}");
+        ReplyToCommandWithTeamColor(client, command, $"Player: {ChatColors.Yellow}{Main.Instance.PlayerCount}{ChatColors.Grey}/{Server.MaxPlayers}");
+        ReplyToCommandWithTeamColor(client, command, $"Round: {ChatColors.Yellow}{Main.Instance.RoundCount}{ChatColors.Grey}/{ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>() - 1}");
+        ReplyToCommandWithTeamColor(client, command, $"Bot respawn remaining: {ChatColors.Green}{botRespawnRemaining}");
+        command.ReplyToCommand($" {ChatColors.Grey}----------");
     }
 
     public void OnChangeMapCommand(CCSPlayerController client, CommandInfo command, float changeMapTimeBuffer)
     {
         if (command.ArgCount < 2)
         {
-            command.ReplyToCommand("[css] Usage: css_map <map name>");
+            ReplyToCommandWithTeamColor(client, command, "[css] Usage: css_map <map name>");
             return;
         }
 
@@ -71,12 +71,12 @@ public class Command(
 
         if (!Utility.AllMaps.Contains(mapName))
         {
-            command.ReplyToCommand($"[css] Map not found: {mapName}");
+            ReplyToCommandWithTeamColor(client, command, $"[css] Map not found: {mapName}");
             return;
         }
 
         _logger.LogInformation("{admin} changed map to {mapName} at {DT}", client?.PlayerName is null ? "console" : client.PlayerName, mapName, DateTime.Now);
-        Server.PrintToChatAll($"Admin changed map to {mapName}");
+        Utility.PrintToChatAllWithColor($"Admin changed map to {mapName}");
 
         Utility.AddTimer(changeMapTimeBuffer, () =>
         {
@@ -91,7 +91,7 @@ public class Command(
     {
         foreach (var map in Utility.AllMaps)
         {
-            command.ReplyToCommand(map);
+            ReplyToCommandWithTeamColor(client, command, map);
         }
     }
 
@@ -99,7 +99,7 @@ public class Command(
     {
         if (command.ArgCount < 2)
         {
-            command.ReplyToCommand("[css] Usage: css_cvar <ConVar> <Value>");
+            ReplyToCommandWithTeamColor(client, command, "[css] Usage: css_cvar <ConVar> <Value>");
             return;
         }
 
@@ -107,7 +107,7 @@ public class Command(
 
         if (cvar is null)
         {
-            command.ReplyToCommand($"[css] Cannot find the ConVar: {command.GetArg(1)}");
+            ReplyToCommandWithTeamColor(client, command, $"[css] Cannot find the ConVar: {command.GetArg(1)}");
             return;
         }
         else if (command.ArgCount == 2)
@@ -120,17 +120,17 @@ public class Command(
                 case ConVarType.UInt16:
                 case ConVarType.UInt32:
                 case ConVarType.UInt64:
-                    command.ReplyToCommand($"{cvar.Name}: {cvar.GetPrimitiveValue<int>()}");
+                    ReplyToCommandWithTeamColor(client, command, $"{cvar.Name}: {cvar.GetPrimitiveValue<int>()}");
                     break;
                 case ConVarType.Float32:
                 case ConVarType.Float64:
-                    command.ReplyToCommand($"{cvar.Name}: {cvar.GetPrimitiveValue<float>()}");
+                    ReplyToCommandWithTeamColor(client, command, $"{cvar.Name}: {cvar.GetPrimitiveValue<float>()}");
                     break;
                 case ConVarType.Bool:
-                    command.ReplyToCommand($"{cvar.Name}: {cvar.GetPrimitiveValue<bool>()}");
+                    ReplyToCommandWithTeamColor(client, command, $"{cvar.Name}: {cvar.GetPrimitiveValue<bool>()}");
                     break;
                 default:
-                    command.ReplyToCommand($"[css] ConVar: {cvar.Name}, type: {cvar.Type}");
+                    ReplyToCommandWithTeamColor(client, command, $"[css] ConVar: {cvar.Name}, type: {cvar.Type}");
                     break;
             }
 
@@ -154,7 +154,7 @@ public class Command(
                 }
                 else
                 {
-                    command.ReplyToCommand("[css] Value type error!");
+                    ReplyToCommandWithTeamColor(client, command, "[css] Value type error!");
                     return;
                 }
                 break;
@@ -167,7 +167,7 @@ public class Command(
                 }
                 else
                 {
-                    command.ReplyToCommand("[css] Value type error!");
+                    ReplyToCommandWithTeamColor(client, command, "[css] Value type error!");
                     return;
                 }
                 break;
@@ -198,7 +198,7 @@ public class Command(
                     }
                     else
                     {
-                        command.ReplyToCommand("[css] Value type error!");
+                        ReplyToCommandWithTeamColor(client, command, "[css] Value type error!");
                         return;
                     }
                 }
@@ -221,7 +221,7 @@ public class Command(
 
         if (!string.IsNullOrEmpty(value))
         {
-            Server.PrintToChatAll($"{cvar.Name} changed to {value}");
+            Utility.PrintToChatAllWithColor($"{cvar.Name} changed to {value}");
             _logger.LogInformation("{admin} changed {cvar} to {value} at {DT}", client?.PlayerName is null ? "console" : client.PlayerName, cvar.Name, value, DateTime.Now);
         }
     }
@@ -230,7 +230,7 @@ public class Command(
     {
         if (command.ArgCount < 2)
         {
-            command.ReplyToCommand("[css] Usage: css_rcon <rcon>");
+            ReplyToCommandWithTeamColor(client, command, $"[css] Usage: css_rcon <rcon>");
             return;
         }
 
@@ -244,7 +244,7 @@ public class Command(
         }
         catch (Exception ex)
         {
-            command.ReplyToCommand($"[css] Failed to execute RCON command");
+            ReplyToCommandWithTeamColor(client, command, "[css] Failed to execute RCON command");
             _logger.LogError("RCON command execution failed. Admin: {admin}, Command: {rcon}, Error: {error}",
             admin, rcon, ex.Message);
         }
@@ -255,13 +255,13 @@ public class Command(
         var players = Utilities.GetPlayers();
         if (players.Count == 0)
         {
-            command.ReplyToCommand("no any player");
+            ReplyToCommandWithTeamColor(client, command, "[css] There is no any player");
             return;
         }
 
         foreach (var player in players)
         {
-            command.ReplyToCommand(player.PlayerName);
+            ReplyToCommandWithTeamColor(client, command, player.PlayerName);
         }
     }
 
@@ -284,9 +284,9 @@ public class Command(
         var takeDamage = client.PlayerPawn.Value!.TakesDamage;
 
         if (takeDamage)
-            command.ReplyToCommand("[css] God mode on");
+            ReplyToCommandWithTeamColor(client, command, "[css] God mode on");
         else
-            command.ReplyToCommand("[css] God mode off");
+            ReplyToCommandWithTeamColor(client, command, "[css] God mode off");
 
         client.PlayerPawn.Value.TakesDamage = !takeDamage;
     }
@@ -305,19 +305,19 @@ public class Command(
 
         if (client.Team == CounterStrikeSharp.API.Modules.Utils.CsTeam.Spectator)
         {
-            command.ReplyToCommand("[css] You are in spectator mode, cannot revive.");
+            ReplyToCommandWithTeamColor(client, command, "[css] You are in spectator mode, cannot revive.");
             return;
         }
 
         if (client.PawnIsAlive)
         {
-            command.ReplyToCommand("[css] You are alive."); // after connecting server, the Health is alawys 100, no matter player is dead or alive
+            ReplyToCommandWithTeamColor(client, command, "[css] You are alive.");
             return;
         }
 
         if (client.Score - reviveCost < 0 && !AppSettings.IsDebug)
         {
-            command.ReplyToCommand($"[css] You don't have enough score ({reviveCost}) to revive.");
+            ReplyToCommandWithTeamColor(client, command, $"[css] You don't have enough score ({reviveCost}) to revive.");
             return;
         }
 
@@ -403,7 +403,7 @@ public class Command(
 
         if (playerCache is null)
         {
-            command.ReplyToCommand("Cannot open model menu, please reconnect to server!");
+            ReplyToCommandWithTeamColor(client, command, "[css] Cannot open model menu, please reconnect to server!");
             _logger.LogWarning("Cannot open model menu, player cache is not found. SteamID: {steamID}", client.SteamID);
             return;
         }
@@ -450,7 +450,7 @@ public class Command(
             var dmgString = command.GetArg(2);
             if (!int.TryParse(dmgString, out var damage) || damage < 0)
             {
-                command.ReplyToCommand($"[css] {dmgString} is invalid amount.");
+                ReplyToCommandWithTeamColor(client, command, $"[css] {dmgString} is invalid amount.");
                 return;
             }
         }
@@ -506,7 +506,7 @@ public class Command(
 
             playerCache.Volume = volume;
             _playerService.UpdateCache(playerCache);
-            command.ReplyToCommand($"Volume set to {volume}%");
+            ReplyToCommandWithTeamColor(client, command, $"[css] Volume set to {volume}%");
 
             var soundEventId = _music.GetPlayingRoundSoundID(client.Slot);
 
@@ -528,7 +528,7 @@ public class Command(
 
         playerCache.SaySoundVolume = volume;
         _playerService.UpdateCache(playerCache);
-        command.ReplyToCommand($"Volume set to {volume}%");
+        ReplyToCommandWithTeamColor(client, command, $"[css] Volume set to {volume}%");
     }
 
     public void OnBuyCommand(CCSPlayerController client, CommandInfo command, Main thePlugin)
@@ -538,13 +538,13 @@ public class Command(
         var buyTime = ConVar.Find("mp_buytime")!.GetPrimitiveValue<float>();
         if (Main.Instance.RoundSecond >= buyTime)
         {
-            command.ReplyToCommand("buying time is over!");
+            ReplyToCommandWithTeamColor(client, command, "[css] buying time is over!");
             return;
         }
 
         if (!CanBuy())
         {
-            command.ReplyToCommand("You can't buy anything right now");
+            ReplyToCommandWithTeamColor(client, command, "[css] You can't buy anything right now");
             return;
         }
 
@@ -574,7 +574,7 @@ public class Command(
         }
         else if (fuzzyMatches.Count > 1 || string.IsNullOrEmpty(targetWeapon))
         {
-            command.ReplyToCommand($"Invalid weapon: {buyTarget}");
+            ReplyToCommandWithTeamColor(client, command, $"[css] Invalid weapon: {buyTarget}");
             return;
         }
 
@@ -583,7 +583,7 @@ public class Command(
                 .Price;
         if (!IsMoneyEnough(client, targetPrice))
         {
-            command.ReplyToCommand("You don't have enough money to buy the item!");
+            ReplyToCommandWithTeamColor(client, command, "[css] You don't have enough money to buy the item!");
             return;
         }
 
@@ -604,7 +604,7 @@ public class Command(
                 {
                     if (!IsMoneyEnough(player, Price))
                     {
-                        player.PrintToChat("You don't have enough money to buy the item!");
+                        Utility.PrintToChatWithTeamColor(player, "[css] You don't have enough money to buy the item!");
                     }
                     else
                     {
@@ -641,7 +641,7 @@ public class Command(
             }
             catch (Exception ex)
             {
-                command.ReplyToCommand("Failed to buy weapon. Please contact admin!");
+                ReplyToCommandWithTeamColor(client, command, "[css] Failed to buy weapon. Please contact admin!");
                 _logger.LogError("Buy Command error {error}", ex);
             }
         }
@@ -655,7 +655,7 @@ public class Command(
         var playerCache = _playerService.GetPlayerCache(client.SteamID);
         if (playerCache is null)
         {
-            command.ReplyToCommand("Cannot update language, please reconnect to server!");
+            ReplyToCommandWithTeamColor(client, command, "[css] Cannot update language, please reconnect to server!");
             _logger.LogWarning("Cannot update language, player cache is not found. SteamID: {steamID}", client.SteamID);
             return;
         }
@@ -664,7 +664,7 @@ public class Command(
             language != LanguageOption.TraditionalChinese &&
             language != LanguageOption.Japanese)
         {
-            command.ReplyToCommand($"Invalid language: {language}");
+            ReplyToCommandWithTeamColor(client, command, $"[css] Invalid language: {language}");
             return;
         }
 
@@ -679,7 +679,7 @@ public class Command(
             _ => "Unknown"
         };
 
-        command.ReplyToCommand($"SaySound set to {languageName}");
+        ReplyToCommandWithTeamColor(client, command, $"SaySound language set to {languageName}");
     }
 
     private void ExecutePlayerCommand(
@@ -697,7 +697,7 @@ public class Command(
         // Validate argument count
         if (command.ArgCount < minArgCount || command.ArgCount > maxArgCount)
         {
-            command.ReplyToCommand(usageMessage);
+            ReplyToCommandWithTeamColor(client, command, usageMessage);
             return;
         }
 
@@ -713,7 +713,7 @@ public class Command(
             }
 
             var message = customBroadcastMessage?.Invoke("") ?? $"Admin {pastTenseVerb} all players";
-            Server.PrintToChatAll(message);
+            Utility.PrintToChatAllWithColor(message);
             _logger.LogInformation("[css] {admin} {pastTense} all players at {DT}", adminName, pastTenseVerb, DateTime.Now);
             return;
         }
@@ -724,7 +724,7 @@ public class Command(
                 playerAction(player);
             }
 
-            Server.PrintToChatAll($"Admin {pastTenseVerb} all CT players");
+            Utility.PrintToChatAllWithColor($"Admin {pastTenseVerb} all CT players");
             _logger.LogInformation("[css] {admin} {pastTense} all CT players at {DT}", adminName, pastTenseVerb, DateTime.Now);
             return;
         }
@@ -735,7 +735,7 @@ public class Command(
                 playerAction(player);
             }
 
-            Server.PrintToChatAll($"Admin {pastTenseVerb} all T players");
+            Utility.PrintToChatAllWithColor($"Admin {pastTenseVerb} all T players");
             _logger.LogInformation("[css] {admin} {pastTense} all T players at {DT}", adminName, pastTenseVerb, DateTime.Now);
             return;
         }
@@ -745,7 +745,7 @@ public class Command(
 
         if (string.IsNullOrEmpty(targetName))
         {
-            command.ReplyToCommand("[css] Target not found.");
+            ReplyToCommandWithTeamColor(client, command, "[css] Target not found.");
             return;
         }
 
@@ -756,9 +756,9 @@ public class Command(
         var replyMessage = customSingleMessage?.Invoke(targetName) ?? $"[css] You {commandName} {targetName}";
         var broadcastMessage = customBroadcastMessage?.Invoke(targetName) ?? $"Admin {pastTenseVerb} {targetName}";
 
-        command.ReplyToCommand(replyMessage);
+        ReplyToCommandWithTeamColor(client, command, replyMessage);
         _logger.LogInformation("[css] {admin} {pastTense} {targetName} at {DT}", adminName, pastTenseVerb, targetName, DateTime.Now);
-        Server.PrintToChatAll(broadcastMessage);
+        Utility.PrintToChatAllWithColor(broadcastMessage);
     }
 
     private static void ReviveCallBack(ref float time, CCSPlayerController client, Position position, Timer? timer, WeaponStatus weaponStatus)
@@ -824,7 +824,7 @@ public class Command(
         var tryGetCache = _playerService.GetPlayerCache(client.SteamID);
         if (tryGetCache is null)
         {
-            command.ReplyToCommand("Cannot update volume, please reconnect to server!");
+            ReplyToCommandWithTeamColor(client, command, "[css] Cannot update volume, please reconnect to server!");
             _logger.LogWarning("Cannot update volume, player cache is not found. SteamID: {steamID}", client.SteamID);
             return false;
         }
@@ -833,7 +833,7 @@ public class Command(
 
         if (command.ArgCount != 2)
         {
-            command.ReplyToCommand($"[css] Usage: {commandName} [volume]");
+            ReplyToCommandWithTeamColor(client, command, $"[css] Usage: {commandName} [volume]");
 
             var currentVolume = volumeType switch
             {
@@ -844,7 +844,7 @@ public class Command(
 
             Utility.AddTimer(0.5f, () =>
             {
-                client.PrintToChat($"{volumeType} volume: {currentVolume}%");
+                Utility.PrintToChatWithTeamColor(client, $"{volumeType} volume: {currentVolume}%");
             });
             return false;
         }
@@ -853,7 +853,7 @@ public class Command(
 
         if (string.IsNullOrEmpty(volumeString) || !byte.TryParse(volumeString, out volume) || volume > 100)
         {
-            command.ReplyToCommand("Invalid volume");
+            ReplyToCommandWithTeamColor(client, command, "[css] Invalid volume");
             return false;
         }
 
