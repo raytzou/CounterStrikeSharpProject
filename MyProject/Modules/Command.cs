@@ -859,4 +859,9 @@ public class Command(
 
         return true;
     }
+
+    private void ReplyToCommandWithTeamColor(CCSPlayerController? player, CommandInfo command, string message)
+    {
+        command.ReplyToCommand($" {Utility.GetPlayerTeamChatColor(player)}{message}");
+    }
 }
