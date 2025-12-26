@@ -340,6 +340,8 @@ public class Main(
         {
             AddTimer(1f, () =>
             {
+                if (!Utility.IsHumanPlayerValid(player))
+                    return;
                 _music.PlayWarmupMusic(player);
             });
         }
