@@ -6,6 +6,12 @@ namespace MyProject.Modules.Interfaces
 {
     public interface ICommand
     {
+        IReadOnlyDictionary<string, CommandMetadata> AllCommands { get; }
+
+        void RegisterCommands();
+
+        IEnumerable<CommandMetadata> GetAvailableCommandsForPlayer(CCSPlayerController player);
+
         void OnKickCommand(CCSPlayerController client, CommandInfo command);
 
         void OnInfoCommand(CCSPlayerController client, CommandInfo command, int botRespawnRemaining);

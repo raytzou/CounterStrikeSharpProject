@@ -87,6 +87,7 @@ public class Main(
         _logger.LogInformation("Server host time: {DT}", DateTime.Now);
         InitialSaySoundsSync();
         Reigsters();
+        _command.RegisterCommands();
     }
 
     public void OnConfigParsed(MainConfig config)

@@ -1,5 +1,7 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Core.Attributes.Registration;
+using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Entities.Constants;
@@ -12,6 +14,7 @@ using MyProject.Domains;
 using MyProject.Models;
 using MyProject.Modules.Interfaces;
 using MyProject.Services.Interfaces;
+using System.Reflection;
 using Timer = CounterStrikeSharp.API.Modules.Timers.Timer;
 
 namespace MyProject.Modules;
@@ -19,12 +22,50 @@ namespace MyProject.Modules;
 public class Command(
     ILogger<Command> logger,
     IPlayerService playerService,
-    IMusic music
+    IMusic music,
+    IBot bot
     ) : ICommand
 {
     private readonly ILogger<Command> _logger = logger;
     private readonly IPlayerService _playerService = playerService;
     private readonly IMusic _music = music;
+    private readonly IBot _bot = bot;
+
+    private readonly Dictionary<string, CommandMetadata> _registeredCommands = [];
+
+    public IReadOnlyDictionary<string, CommandMetadata> AllCommands => _registeredCommands;
+
+    public void RegisterCommands()
+    {
+        var mainType = typeof(Main);
+        var methods = mainType.GetMethods(BindingFlags.Public | BindingFlags.Instance);
+
+        foreach (var method in methods)
+        {
+            var consoleCommandAttrs = method.GetCustomAttributes<ConsoleCommandAttribute>();
+            var requiresPermissionAttr = method.GetCustomAttribute<RequiresPermissions>();
+
+            foreach (var cmdAttr in consoleCommandAttrs)
+            {
+                _registeredCommands[cmdAttr.Command] = new CommandMetadata
+                {
+                    Name = cmdAttr.Command,
+                    Description = cmdAttr.Description,
+                    Permissions = requiresPermissionAttr?.Permissions.ToArray()
+                };
+
+                if (AppSettings.IsDebug)
+                    _logger.LogInformation("Registered command: {CommandName} (Permission: {Permission})",
+                        cmdAttr.Command, string.Join(",", requiresPermissionAttr?.Permissions ?? []) ?? "none");
+            }
+        }
+
+        _logger.LogInformation("Successfully registered {Count} commands", _registeredCommands.Count);
+    }
+
+    public IEnumerable<CommandMetadata> GetAvailableCommandsForPlayer(CCSPlayerController player) =>
+        _registeredCommands.Values.Where(cmd =>
+            cmd.Permissions == null || AdminManager.PlayerHasPermissions(player, cmd.Permissions));
 
     public void OnKickCommand(CCSPlayerController client, CommandInfo command)
     {
