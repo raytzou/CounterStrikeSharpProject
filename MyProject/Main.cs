@@ -350,11 +350,15 @@ public class Main(
     {
         var player = @event.Userid;
 
-        if (player is null || !player.IsValid || player.PlayerPawn.Value is null)
+        if (!Utility.IsPlayerValid(player))
             return HookResult.Continue;
 
-        if (_warmup && player.PlayerPawn.Value.TakesDamage)
-            SetPlayerProtection(player);
+        if (_warmup)
+        {
+            WelcomeMessage();
+            if (player.PlayerPawn.Value!.TakesDamage)
+                SetPlayerProtection(player);
+        }
         else
             RemovePlayerProtection(player);
 
@@ -370,6 +374,19 @@ public class Main(
         {
             if (player is not null && player.PlayerPawn.Value is not null)
                 player.PlayerPawn.Value.TakesDamage = false;
+        }
+
+        void WelcomeMessage()
+        {
+            AddTimer(1f, () =>
+            {
+                if (!Utility.IsHumanPlayerValid(player))
+                    return;
+                player.PrintToChat($" {ChatColors.Lime}Welcome to {ChatColors.Purple}{ConVar.Find("hostname")!.StringValue}{ChatColors.Lime}!");
+                player.PrintToChat($" {ChatColors.Lime}Type {ChatColors.Orange}'!help' {ChatColors.Lime}for more information!");
+                player.PrintToChat($" {ChatColors.Lime}If you have any problem, feel free to contact the admin!");
+                player.PrintToChat($" {ChatColors.Lime}Hope you enjoy here ^^");
+            });
         }
     }
 
