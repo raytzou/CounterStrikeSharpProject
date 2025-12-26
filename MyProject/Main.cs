@@ -884,7 +884,7 @@ public class Main(
     }
 
     [RequiresPermissions("@css/cheats")]
-    [ConsoleCommand("css_god", "enable godmode")]
+    [ConsoleCommand("css_god", "Godmode Toggler")]
     public void OnGodCommand(CCSPlayerController client, CommandInfo command)
     {
         _command.OnGodCommand(client, command);
@@ -897,44 +897,44 @@ public class Main(
         _command.OnDebugCommand(client, command, _weaponStatus);
     }
 
-    [ConsoleCommand("css_revive", "revive command")]
+    [ConsoleCommand("css_revive", "Revive Command")]
     public void OnReviveCommand(CCSPlayerController client, CommandInfo command)
     {
         _command.OnReviveCommand(client, command, _position[client.PlayerName], _weaponStatus[client.PlayerName]);
     }
 
-    [ConsoleCommand("css_models", "models command")]
+    [ConsoleCommand("css_models", "Models Command")]
     public void OnModelsCommand(CCSPlayerController client, CommandInfo command)
     {
         _command.OnModelsCommand(client, command, this);
     }
 
     [RequiresPermissions("@css/slay")]
-    [ConsoleCommand("css_slap", "slap command")]
+    [ConsoleCommand("css_slap", "Slap Command")]
     public void OnSlapCommand(CCSPlayerController client, CommandInfo command)
     {
         _command.OnSlapCommand(client, command);
     }
 
-    [ConsoleCommand("css_volume", "music volume command")]
+    [ConsoleCommand("css_volume", "Music Volume Command")]
     public void OnVolumeCommand(CCSPlayerController client, CommandInfo command)
     {
         _command.OnVolumeCommand(client, command);
     }
 
-    [ConsoleCommand("css_ss_volume", "saysound volume command")]
+    [ConsoleCommand("css_ss_volume", "SaySound Volume Command")]
     public void OnSaySoundVolumeCommand(CCSPlayerController client, CommandInfo command)
     {
         _command.OnSaySoundVolumeCommand(client, command);
     }
 
-    [ConsoleCommand("css_buy", "buy command")]
+    [ConsoleCommand("css_buy", "Buy Command")]
     public void OnBuyCommand(CCSPlayerController client, CommandInfo command)
     {
         _command.OnBuyCommand(client, command, this);
     }
 
-    [ConsoleCommand("css_help", "help command")]
+    [ConsoleCommand("css_help", "Help Command")]
     public void OnHelpCommand(CCSPlayerController client, CommandInfo command)
     {
         _command.OnHelpCommand(client, command);
