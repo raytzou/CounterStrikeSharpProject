@@ -61,8 +61,8 @@ public class Bot(ILogger<Bot> logger) : IBot
     {
         if (!AppSettings.IsDebug)
         {
+            await Server.NextFrameAsync(() => Server.ExecuteCommand("css_cvar bot_stop 0"));
             await Server.NextFrameAsync(() => Server.ExecuteCommand("sv_cheats 0"));
-            await Server.NextFrameAsync(() => Server.ExecuteCommand("bot_stop 0"));
         }
 
         var botTeam = GetBotTeam(mapName);
