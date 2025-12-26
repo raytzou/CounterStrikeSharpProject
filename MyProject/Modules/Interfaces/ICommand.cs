@@ -39,5 +39,7 @@ namespace MyProject.Modules.Interfaces
         void OnBuyCommand(CCSPlayerController client, CommandInfo command, Main thePlugin);
 
         void OnLanguageCommand(CCSPlayerController client, CommandInfo command, string language);
+
+        void OnHelpCommand(CCSPlayerController client, CommandInfo command);
     }
 }

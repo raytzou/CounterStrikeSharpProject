@@ -682,6 +682,11 @@ public class Command(
         ReplyToCommandWithTeamColor(client, command, $"SaySound language set to {languageName}");
     }
 
+    public void OnHelpCommand(CCSPlayerController client, CommandInfo command)
+    {
+        throw new NotImplementedException();
+    }
+
     private void ExecutePlayerCommand(
         CCSPlayerController client,
         CommandInfo command,

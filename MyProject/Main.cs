@@ -933,6 +933,12 @@ public class Main(
         _command.OnBuyCommand(client, command, this);
     }
 
+    [ConsoleCommand("css_help", "help command")]
+    public void OnHelpCommand(CCSPlayerController client, CommandInfo command)
+    {
+        _command.OnHelpCommand(client, command);
+    }
+
     [ConsoleCommand("en", "Switch SaySound to English")]
     [ConsoleCommand("tw", "Switch SaySound to Traditional Chinese")]
     [ConsoleCommand("jp", "Switch SaySound to Japanese")]
