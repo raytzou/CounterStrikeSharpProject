@@ -768,7 +768,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void SetMaxRespawnTimes(int level)
         {
-            _maxRespawnTimes = (level < 3) ? 20 : (level == 4) ? 50 : 80;
+            _maxRespawnTimes = (level < 3) ? 100 : (level == 4) ? 120 : 150;
         }
     }
 
