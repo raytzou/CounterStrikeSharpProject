@@ -794,6 +794,13 @@ namespace MyProject.Classes
             IsBotValid(bot) &&
             bot.PlayerPawn.Value!.LifeState == (byte)LifeState_t.LIFE_ALIVE;
 
+        public static bool IsPlayerValid([NotNullWhen(true)] CCSPlayerController? player) =>
+            player != null &&
+            player.IsValid &&
+            player.PlayerPawn != null &&
+            player.PlayerPawn.Value != null &&
+            player.PlayerPawn.IsValid;
+
         public static void PrintToAllCenter(string message)
         {
             foreach (var player in Utilities.GetPlayers().Where(p =>
