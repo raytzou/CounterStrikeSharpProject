@@ -725,7 +725,45 @@ public class Command(
 
     public void OnHelpCommand(CCSPlayerController client, CommandInfo command)
     {
-        throw new NotImplementedException();
+        if (!Utility.IsHumanPlayerValid(client))
+            return;
+
+        var availableCommands = GetAvailableCommandsForPlayer(client)
+            .OrderBy(cmd => cmd.Name)
+            .ToList();
+
+        if (availableCommands.Count == 0)
+        {
+            ReplyToCommandWithTeamColor(client, command, "[css] No commands available");
+            return;
+        }
+
+        var adminCommands = availableCommands.Where(cmd => cmd.Permissions != null).ToList();
+        var playerCommands = availableCommands.Where(cmd => cmd.Permissions == null).ToList();
+
+        command.ReplyToCommand($" {ChatColors.Grey}===== {ChatColors.Purple}Available Commands {ChatColors.Grey}=====");
+
+        if (playerCommands.Count != 0)
+        {
+            command.ReplyToCommand($" {ChatColors.Green}Player Commands:");
+            foreach (var cmd in playerCommands)
+            {
+                ReplyToCommandWithTeamColor(client, command, $"{ChatColors.Yellow}{cmd.Name} {ChatColors.Grey}- {cmd.Description}");
+            }
+        }
+
+        if (adminCommands.Count != 0)
+        {
+            command.ReplyToCommand($" {ChatColors.Red}Admin Commands:");
+            foreach (var cmd in adminCommands)
+            {
+                ReplyToCommandWithTeamColor(client, command,
+                    $"  {ChatColors.Yellow}{cmd.Name} {ChatColors.Grey}[{ChatColors.Orange}{string.Join(",", cmd.Permissions?.ToArray() ?? [])}{ChatColors.Grey}] - {cmd.Description}");
+            }
+        }
+
+        command.ReplyToCommand($" {ChatColors.Grey}==================");
+        ReplyToCommandWithTeamColor(client, command, $"Total: {ChatColors.Lime}{availableCommands.Count} {ChatColors.Grey}commands");
     }
 
     private void ExecutePlayerCommand(
