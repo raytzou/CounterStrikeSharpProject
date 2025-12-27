@@ -223,16 +223,10 @@ public class Main(
 
     private void OnEntityCreated(CEntityInstance entity)
     {
-        if (!Utility.IsEntityValid(entity))
-            return;
-
         FixWeaponAmmoAmount();
 
         void FixWeaponAmmoAmount()
         {
-            if (!entity.Entity!.DesignerName.StartsWith("weapon_"))
-                return;
-
             Server.NextFrame(() =>
             {
                 if (!Utility.IsEntityValid(entity))
@@ -240,6 +234,15 @@ public class Main(
                     _logger.LogWarning("Entity invalidated before weapon ammo fix");
                     return;
                 }
+
+                if (string.IsNullOrEmpty(entity.Entity!.DesignerName))
+                {
+                    _logger.LogWarning("Entity DesignerName is null or empty before weapon ammo fix");
+                    return;
+                }
+
+                if (!entity.Entity.DesignerName.StartsWith("weapon_"))
+                    return;
 
                 CCSWeaponBase? weaponBase = null;
 
