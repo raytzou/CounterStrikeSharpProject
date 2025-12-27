@@ -506,7 +506,7 @@ public class Main(
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError("Bot Round Start Behavior error: {error}", ex);
+                    _logger.LogError("Bot Round Start Behavior error, round: {round} {ex}", _roundCount, ex);
                 }
             });
         });
@@ -655,7 +655,7 @@ public class Main(
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError("Round End Behavior error: {error}", ex);
+                    _logger.LogError("Round End Behavior error, round: {round} {ex}", _roundCount, ex);
                 }
             });
 
