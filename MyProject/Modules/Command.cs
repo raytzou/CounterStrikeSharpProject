@@ -604,16 +604,8 @@ public class Command(
             .Where(w => w.Contains(buyTarget, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
-        string? targetWeapon = null;
-        if (exactMatch != null)
-        {
-            targetWeapon = exactMatch;
-        }
-        else if (fuzzyMatches.Count == 1)
-        {
-            targetWeapon = fuzzyMatches[0];
-        }
-        else if (fuzzyMatches.Count > 1 || string.IsNullOrEmpty(targetWeapon))
+        var targetWeapon = Utility.ResolveWeaponEntity(buyTarget);
+        if (targetWeapon == null)
         {
             ReplyToCommandWithTeamColor(client, command, $"[css] Invalid weapon: {buyTarget}");
             return;

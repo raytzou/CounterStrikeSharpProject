@@ -31,6 +31,13 @@ namespace MyProject.Classes
         private static readonly Dictionary<string, string> _weaponNameMappings = new()
         {
             ["weapon_m4a1_silencer"] = "weapon_m4a1",
+            ["m4a1-s"] = "weapon_m4a1_silencer",
+            ["m4a1s"] = "weapon_m4a1_silencer",
+            ["m4a1"] = "weapon_m4a1_silencer",
+            ["m4a4"] = "weapon_m4a1",
+            ["usp-s"] = "weapon_usp_silencer",
+            ["usps"] = "weapon_usp_silencer",
+            ["usp"] = "weapon_usp_silencer",
         };
         private static readonly List<(string EntityName, string DisplayName, int Price)> _weaponMenu = new()
         {
@@ -758,6 +765,32 @@ namespace MyProject.Classes
             }
 
             player.GiveNamedItem(weaponEntity);
+        }
+
+        /// <summary>
+        /// Resolves user input to the correct weapon entity name.
+        /// Handles both exact matches and common aliases.
+        /// </summary>
+        /// <param name="input">User input (e.g., "m4a1-s", "ak", "weapon_ak47")</param>
+        /// <returns>The resolved weapon entity name, or null if not found</returns>
+        public static string? ResolveWeaponEntity(string input)
+        {
+            var normalized = input.ToLowerInvariant().Trim();
+
+            // Check if it's a direct alias
+            if (_weaponNameMappings.TryGetValue(normalized, out var mapped))
+                return mapped;
+
+            // Check if it's already a valid entity name
+            if (_weaponMenu.Any(w => w.EntityName.Equals(normalized, StringComparison.OrdinalIgnoreCase)))
+                return normalized;
+
+            // Fuzzy match on entity names (existing behavior)
+            var matches = _weaponMenu
+                .Where(w => w.EntityName.Contains(normalized, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            return matches.Count == 1 ? matches[0].EntityName : null;
         }
 
         public static bool IsHumanPlayerValid([NotNullWhen(true)] CCSPlayerController? player) =>
