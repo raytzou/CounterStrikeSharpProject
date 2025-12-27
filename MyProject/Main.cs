@@ -790,7 +790,7 @@ public class Main(
             { "d", 0.75f },
             { "r", Random.Shared.Next(75, 150) / 100f }
         };
-        var (keyword, pitch, displayMessage) = ParseSaySoundMessage(message);
+        var (keyword, pitch, keywordPtch) = ParseSaySoundMessage(message);
 
         if (!SaySoundHelper.SaySoundHelper.SaySounds.TryGetValue(keyword, out var saySound))
             return HookResult.Continue;
@@ -806,45 +806,40 @@ public class Main(
         }
 
         _music.PlaySaySound(saySound.SoundEvent, pitch);
-        BroadcastLocalizedSaySoundMessage(player, displayMessage, saySound);
+        BroadcastLocalizedSaySoundMessage();
 
         return HookResult.Handled;
 
         #region local methods
-        (string Keyword, float Pitch, string DisplayMessage) ParseSaySoundMessage(string rawMessage)
+        (string Keyword, float Pitch, string KeywordPitch) ParseSaySoundMessage(string rawMessage)
         {
             var parts = rawMessage.Split(' ', 2);
             var keyword = parts[0];
             var pitchText = parts.Length > 1 ? parts[1] : string.Empty;
 
             var pitch = ParsePitchModifier(pitchText);
-            var displayMessage = pitch == 1f ? keyword : $"{keyword} {pitchText}";
+            var keywordPitch = pitch == 1f ? keyword : $"{keyword} {pitchText}";
 
-            return (keyword, pitch, displayMessage);
+            return (keyword, pitch, keywordPitch);
         }
 
         float ParsePitchModifier(string pitchText) => pitchModifiers.TryGetValue(pitchText, out var pitch) ? pitch : 1f;
 
-        void BroadcastLocalizedSaySoundMessage(
-            CCSPlayerController sender,
-            string keyword,
-            (string SoundEvent, string Content, string TWContent, string JPContent) saySound)
+        void BroadcastLocalizedSaySoundMessage()
         {
             var humans = Utility.GetHumanPlayers();
 
             foreach (var human in humans)
             {
-                var localizedContent = GetLocalizedSaySoundContent(human, saySound, keyword);
-                Utility.PrintToChatWithTeamColor(human, $"{sender.PlayerName}: {ChatColors.Grey}[{keyword}] {ChatColors.Green}{localizedContent}");
+                var localizedContent = GetLocalizedSaySoundContent(human);
+                Utility.PrintToChatWithTeamColor(human, $"{player.PlayerName}: {ChatColors.Grey}[{keywordPtch}] {ChatColors.Green}{localizedContent}");
             }
         }
 
         string GetLocalizedSaySoundContent(
-            CCSPlayerController player,
-            (string SoundEvent, string Content, string TWContent, string JPContent) saySound,
-            string fallbackKeyword)
+            CCSPlayerController targetPlayer)
         {
-            var playerCache = _playerService.GetPlayerCache(player.SteamID);
+            var playerCache = _playerService.GetPlayerCache(targetPlayer.SteamID);
             var language = playerCache?.Language ?? LanguageOption.English;
 
             var content = language switch
@@ -855,7 +850,7 @@ public class Main(
                 _ => saySound.Content
             };
 
-            return string.IsNullOrWhiteSpace(content) ? fallbackKeyword : content;
+            return string.IsNullOrWhiteSpace(content) ? keyword : content;
         }
         #endregion local methods
     }
