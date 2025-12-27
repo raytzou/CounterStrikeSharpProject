@@ -784,7 +784,7 @@ public class Bot(ILogger<Bot> logger) : IBot
     {
         var team = botTeam == CsTeam.CounterTerrorist ? "ct" : "t";
         if (AppSettings.IsDebug)
-            Server.PrintToChatAll($"AddSpecialOrBoss Round: {Main.Instance.RoundCount}");
+            Server.PrintToChatAll($"AddSpecialOrBoss Next Round: {Main.Instance.RoundCount}");
         if (Main.Instance.RoundCount == Main.Instance.Config.MidBossRound)
         {
             if (AppSettings.IsDebug)
