@@ -223,83 +223,104 @@ public class Main(
 
     private void OnEntityCreated(CEntityInstance entity)
     {
-        if (entity is null || !entity.IsValid || entity.Entity is null)
+        if (!Utility.IsEntityValid(entity))
             return;
 
         FixWeaponAmmoAmount();
 
         void FixWeaponAmmoAmount()
         {
-            if (!entity.Entity.DesignerName.StartsWith("weapon_"))
+            if (!entity.Entity!.DesignerName.StartsWith("weapon_"))
                 return;
 
-            _ = Task.Run(async () =>
+            Server.NextFrame(() =>
             {
+                if (!Utility.IsEntityValid(entity))
+                {
+                    _logger.LogWarning("Entity invalidated before weapon ammo fix");
+                    return;
+                }
+
+                CCSWeaponBase? weaponBase = null;
+
                 try
                 {
-                    await Server.NextFrameAsync(() =>
-                    {
-                        var weaponBase = new CCSWeaponBase(entity.Handle);
-                        if (weaponBase is null || !weaponBase.IsValid || weaponBase.Entity is null || weaponBase.VData is null)
-                            return;
-
-                        var weaponDesignName = weaponBase.Entity.DesignerName;
-                        var weaponIndex = weaponBase.AttributeManager.Item.ItemDefinitionIndex;
-
-                        if (AppSettings.IsDebug)
-                        {
-                            _logger.LogInformation("weapon created: {entityName}", weaponDesignName);
-                            _logger.LogInformation("weapon index: {index}", weaponIndex);
-                        }
-
-                        switch (weaponDesignName)
-                        {
-                            case "weapon_awp":
-                                SetAmmoAmount(10);
-                                SetReservedAmmoAmount(30);
-                                break;
-                            case "weapon_m4a1":
-                                if (weaponIndex == 60) // m4a1 silencer
-                                {
-                                    SetAmmoAmount(30);
-                                    SetReservedAmmoAmount(90);
-                                }
-                                break;
-                            case "weapon_hkp2000":
-                                if (weaponIndex == 61) // USP-S
-                                    SetReservedAmmoAmount(100);
-                                break;
-                            case "weapon_p250":
-                                SetReservedAmmoAmount(52);
-                                break;
-                            case "weapon_cz75a":
-                                SetReservedAmmoAmount(60);
-                                break;
-                            case "weapon_deagle":
-                                if (weaponIndex == 64) // R8 Revolver
-                                    SetReservedAmmoAmount(40);
-                                break;
-                            default:
-                                return;
-                        }
-
-                        void SetAmmoAmount(int amount)
-                        {
-                            weaponBase.VData.MaxClip1 = amount;
-                            weaponBase.VData.DefaultClip1 = amount;
-                            weaponBase.Clip1 = amount;
-                        }
-
-                        void SetReservedAmmoAmount(int amount)
-                        {
-                            weaponBase.VData.PrimaryReserveAmmoMax = amount;
-                            weaponBase.ReserveAmmo[0] = amount;
-                        }
-                    });
+                    weaponBase = new CCSWeaponBase(entity.Handle);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError("Fix ammo amount error {error}", ex);
+                    _logger.LogWarning("Entity handle invalidated during weapon ammo fix: {error}", ex.Message);
+                    return;
+                }
+
+                if (weaponBase is null || !weaponBase.IsValid || weaponBase.Entity is null || weaponBase.VData is null)
+                {
+                    _logger.LogWarning("Weapon base invalid after construction during weapon ammo fix");
+                    return;
+                }
+
+                try
+                {
+                    var weaponDesignName = weaponBase.Entity.DesignerName;
+                    var weaponIndex = weaponBase.AttributeManager.Item.ItemDefinitionIndex;
+
+                    if (AppSettings.IsDebug)
+                    {
+                        _logger.LogInformation("weapon created: {entityName}", weaponDesignName);
+                        _logger.LogInformation("weapon index: {index}", weaponIndex);
+                    }
+
+                    switch (weaponDesignName)
+                    {
+                        case "weapon_awp":
+                            SetAmmoAmount(10);
+                            SetReservedAmmoAmount(30);
+                            break;
+                        case "weapon_m4a1":
+                            if (weaponIndex == 60) // m4a1 silencer
+                            {
+                                SetAmmoAmount(30);
+                                SetReservedAmmoAmount(90);
+                            }
+                            break;
+                        case "weapon_hkp2000":
+                            if (weaponIndex == 61) // USP-S
+                                SetReservedAmmoAmount(100);
+                            break;
+                        case "weapon_p250":
+                            SetReservedAmmoAmount(52);
+                            break;
+                        case "weapon_cz75a":
+                            SetReservedAmmoAmount(60);
+                            break;
+                        case "weapon_deagle":
+                            if (weaponIndex == 64) // R8 Revolver
+                                SetReservedAmmoAmount(40);
+                            break;
+                        default:
+                            return;
+                    }
+
+                    void SetAmmoAmount(int amount)
+                    {
+                        weaponBase.VData.MaxClip1 = amount;
+                        weaponBase.VData.DefaultClip1 = amount;
+                        weaponBase.Clip1 = amount;
+                    }
+
+                    void SetReservedAmmoAmount(int amount)
+                    {
+                        weaponBase.VData.PrimaryReserveAmmoMax = amount;
+                        weaponBase.ReserveAmmo[0] = amount;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (!ex.Message.Contains("Entity is not valid") &&
+                        !ex.Message.Contains("Invoked on a non-main thread"))
+                    {
+                        _logger.LogError(ex, "Unexpected error fixing weapon ammo");
+                    }
                 }
             });
         }
