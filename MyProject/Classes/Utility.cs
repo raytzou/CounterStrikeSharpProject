@@ -801,6 +801,10 @@ namespace MyProject.Classes
             player.PlayerPawn.Value != null &&
             player.PlayerPawn.IsValid;
 
+        public static bool IsEntityValid([NotNullWhen(true)] CBaseEntity entity) =>
+            entity != null &&
+            entity.IsValid;
+
         public static void PrintToAllCenter(string message)
         {
             foreach (var player in Utilities.GetPlayers().Where(p =>
