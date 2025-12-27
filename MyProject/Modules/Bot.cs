@@ -783,8 +783,12 @@ public class Bot(ILogger<Bot> logger) : IBot
     private async Task AddSpecialOrBoss(CsTeam botTeam)
     {
         var team = botTeam == CsTeam.CounterTerrorist ? "ct" : "t";
+        if (AppSettings.IsDebug)
+            Server.PrintToChatAll($"AddSpecialOrBoss Round: {Main.Instance.RoundCount}");
         if (Main.Instance.RoundCount == Main.Instance.Config.MidBossRound)
         {
+            if (AppSettings.IsDebug)
+                Server.PrintToChatAll($"AddSpecialOrBoss spawn Mid Boss");
             var midBossSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Boss[0]) == 1;
             if (!midBossSpawn)
             {
@@ -806,6 +810,8 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
         else if (Main.Instance.RoundCount == Main.Instance.Config.FinalBossRound)
         {
+            if (AppSettings.IsDebug)
+                Server.PrintToChatAll($"AddSpecialOrBoss spawn Final Boss");
             var finalBossSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Boss[1]) == 1;
             if (!finalBossSpawn)
             {
@@ -827,6 +833,8 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
         else
         {
+            if (AppSettings.IsDebug)
+                Server.PrintToChatAll($"AddSpecialOrBoss spawn Special");
             var specialBotSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Special[0]) == 1 &&
                 Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Special[1]) == 1 &&
                 Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Special[2]) == 1;
