@@ -1165,11 +1165,6 @@ public class Main(
             case "de_":
                 return CsTeam.Terrorist;
             default:
-                if (mapName == "cs2_whiterun" ||
-                    mapName == "sandstone_new" ||
-                    mapName == "legend4" ||
-                    mapName == "pango")
-                    return CsTeam.Terrorist;
                 _logger.LogWarning("Cannot identify the category of map: {mapName}", mapName);
                 return CsTeam.Terrorist;
         }

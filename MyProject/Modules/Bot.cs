@@ -725,14 +725,8 @@ public class Bot(ILogger<Bot> logger) : IBot
             case "de_":
                 return CsTeam.CounterTerrorist;
             default:
-                if (mapName == "cs2_whiterun" ||
-                    mapName == "sandstone_new" ||
-                    mapName == "legend4" ||
-                    mapName == "pango")
-                    return CsTeam.CounterTerrorist;
-
                 _logger.LogWarning("Bot team not found. {mapName}", Server.MapName);
-                return CsTeam.None;
+                return CsTeam.CounterTerrorist;
         }
     }
 
