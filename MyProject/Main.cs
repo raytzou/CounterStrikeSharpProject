@@ -781,10 +781,29 @@ public class Main(
             return HookResult.Continue;
 
         var message = commandInfo.GetArg(1);
+        var pitchModifiers = new Dictionary<string, float>()
+        {
+            { "qq", 1.5f },
+            { "q", 1.3f },
+            { "f", 1.15f },
+            { "s", 0.85f },
+            { "d", 0.75f },
+            { "r", Random.Shared.Next(75, 150) / 100f }
+        };
         var (keyword, pitch, displayMessage) = ParseSaySoundMessage(message);
 
         if (!SaySoundHelper.SaySoundHelper.SaySounds.TryGetValue(keyword, out var saySound))
             return HookResult.Continue;
+
+        var messageParts = message.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (messageParts.Length > 2)
+            return HookResult.Continue;
+
+        if (messageParts.Length == 2)
+        {
+            if (!pitchModifiers.ContainsKey(messageParts[1]))
+                return HookResult.Continue;
+        }
 
         _music.PlaySaySound(saySound.SoundEvent, pitch);
         BroadcastLocalizedSaySoundMessage(player, displayMessage, saySound);
@@ -804,16 +823,7 @@ public class Main(
             return (keyword, pitch, displayMessage);
         }
 
-        float ParsePitchModifier(string pitchText) => pitchText switch
-        {
-            "qq" => 1.5f,
-            "q" => 1.3f,
-            "f" => 1.15f,
-            "s" => 0.85f,
-            "d" => 0.75f,
-            "r" => Random.Shared.Next(75, 150) / 100f,
-            _ => 1f
-        };
+        float ParsePitchModifier(string pitchText) => pitchModifiers.TryGetValue(pitchText, out var pitch) ? pitch : 1f;
 
         void BroadcastLocalizedSaySoundMessage(
             CCSPlayerController sender,
