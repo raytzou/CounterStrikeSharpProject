@@ -496,6 +496,8 @@ public class Main(
         {
             var mapName = Server.MapName;
 
+            _bot.ClearDamageTimer();
+
             _ = Task.Run(async () =>
             {
                 try
@@ -642,6 +644,8 @@ public class Main(
         if (!_warmup)
         {
             var mapName = Server.MapName;
+
+            _bot.ClearDamageTimer();
 
             _ = Task.Run(async () =>
             {

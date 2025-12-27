@@ -72,7 +72,6 @@ public class Bot(ILogger<Bot> logger) : IBot
 
     public async Task RoundStartBehavior(string mapName)
     {
-        ClearDamageTimer();
         await SetBotMoneyToZero();
 
         if (Main.Instance.RoundCount != Main.Instance.Config.MidBossRound && Main.Instance.RoundCount != Main.Instance.Config.FinalBossRound)
@@ -202,7 +201,6 @@ public class Bot(ILogger<Bot> logger) : IBot
 
     public async Task RoundEndBehavior(int winStreak, int looseStreak, string mapName)
     {
-        ClearDamageTimer();
         var botTeam = GetBotTeam(mapName);
 
         if (Main.Instance.RoundCount > 0)
@@ -708,6 +706,16 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
+    public void ClearDamageTimer()
+    {
+        foreach (var timer in _damageTimers)
+        {
+            timer?.Kill();
+        }
+
+        _damageTimers.Clear();
+    }
+
     private CsTeam GetBotTeam(string mapName)
     {
         switch (mapName[..3])
@@ -868,15 +876,6 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             Server.ExecuteCommand("bot_quota 3");
         });
-    }
-
-    private void ClearDamageTimer()
-    {
-        foreach (var timer in _damageTimers)
-        {
-            timer?.Kill();
-        }
-        _damageTimers.Clear();
     }
 
     private static void ApplyScreenOverlay(CCSPlayerPawn pawn, float timeInterval)

@@ -30,5 +30,7 @@ namespace MyProject.Modules.Interfaces
         bool IsBoss(CCSPlayerController player);
 
         void BossBehavior(CCSPlayerController boss);
+
+        void ClearDamageTimer();
     }
 }
