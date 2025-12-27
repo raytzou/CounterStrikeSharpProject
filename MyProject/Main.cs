@@ -484,6 +484,7 @@ public class Main(
             if (_roundCount == Config.MidBossRound || _roundCount == Config.FinalBossRound)
             {
                 RemoveBomb();
+                RemoveHostage();
             }
         }
 
@@ -609,6 +610,15 @@ public class Main(
                     player.RemoveItemByDesignerName(Utility.GetCsItemEnumValue(CsItem.C4));
                     break;
                 }
+            }
+        }
+
+        void RemoveHostage()
+        {
+            foreach (var entity in Utilities.FindAllEntitiesByDesignerName<CBaseEntity>("hostage_entity"))
+            {
+                if (!Utility.IsEntityValid(entity)) continue;
+                entity.Remove();
             }
         }
 
