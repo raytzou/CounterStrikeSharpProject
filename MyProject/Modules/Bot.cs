@@ -724,7 +724,8 @@ public class Bot(ILogger<Bot> logger) : IBot
             case "de_":
                 return CsTeam.CounterTerrorist;
             default:
-                _logger.LogWarning("Bot team not found. {mapName}", mapName);
+                if (AppSettings.IsDebug)
+                    _logger.LogWarning("Bot team not found. {mapName}", mapName);
                 return CsTeam.CounterTerrorist;
         }
     }

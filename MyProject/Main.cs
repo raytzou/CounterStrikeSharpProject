@@ -1206,7 +1206,8 @@ public class Main(
             case "de_":
                 return CsTeam.Terrorist;
             default:
-                _logger.LogWarning("Cannot identify the category of map: {mapName}", mapName);
+                if (AppSettings.IsDebug)
+                    _logger.LogWarning("Cannot identify the category of map: {mapName}", mapName);
                 return CsTeam.Terrorist;
         }
     }
