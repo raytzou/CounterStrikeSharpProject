@@ -231,13 +231,15 @@ public class Main(
             {
                 if (!Utility.IsEntityValid(entity))
                 {
-                    _logger.LogWarning("Entity invalidated before weapon ammo fix");
+                    if (AppSettings.IsDebug)
+                        _logger.LogWarning("Entity invalidated before weapon ammo fix");
                     return;
                 }
 
                 if (string.IsNullOrEmpty(entity.Entity!.DesignerName))
                 {
-                    _logger.LogWarning("Entity DesignerName is null or empty before weapon ammo fix");
+                    if (AppSettings.IsDebug)
+                        _logger.LogWarning("Entity DesignerName is null or empty before weapon ammo fix");
                     return;
                 }
 
