@@ -161,8 +161,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                     var eagleEye = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[0]));
                     var mimic = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[1]));
                     var rush = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[2]));
-                    var random = new Random();
-                    var randomSkin = Utility.WorkshopSkins.ElementAt(random.Next(Utility.WorkshopSkins.Count));
+                    var randomSkin = Utility.WorkshopSkins.ElementAt(Random.Shared.Next(Utility.WorkshopSkins.Count));
 
                     Utility.SetClientModel(mimic!, randomSkin.Key);
                     Utility.SetClientModel(eagleEye!, Main.Instance.Config.EagleEyeModel);
