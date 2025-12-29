@@ -215,21 +215,17 @@ public class Bot(ILogger<Bot> logger) : IBot
         if (Main.Instance.RoundCount > 0)
         {
             await SetDefaultWeapon();
-            if (botTeam != CsTeam.None)
-                await AddSpecialOrBoss(botTeam);
+            await AddSpecialOrBoss(botTeam);
             await KickNormalBotAsync();
-            if (Main.Instance.RoundCount != Main.Instance.Config.MidBossRound && Main.Instance.RoundCount < Main.Instance.Config.FinalBossRound)
-            {
-                if (botTeam != CsTeam.None)
-                    await FillNormalBotAsync(GetDifficultyLevel(winStreak, looseStreak), botTeam);
-            }
+        }
+
+        if (Main.Instance.RoundCount != Main.Instance.Config.MidBossRound && Main.Instance.RoundCount < Main.Instance.Config.FinalBossRound)
+        {
+            await FillNormalBotAsync(GetDifficultyLevel(winStreak, looseStreak), botTeam);
         }
 
         async Task SetDefaultWeapon()
         {
-            var botTeam = GetBotTeam(mapName);
-            if (botTeam == CsTeam.None)
-                return;
             var team = (botTeam == CsTeam.CounterTerrorist) ? "ct" : "t";
 
             await Server.NextFrameAsync(() => Server.ExecuteCommand($"mp_{team}_default_primary {GetDefaultPrimaryWeapon()}"));
