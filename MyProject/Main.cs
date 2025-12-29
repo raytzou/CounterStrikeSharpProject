@@ -129,6 +129,8 @@ public class Main(
         else
             _logger.LogInformation("Server name: {serverName}", hostname.StringValue);
 
+        _logger.LogInformation("Map Start: {mapName}", mapName);
+
         Server.ExecuteCommand("mp_randomspawn 0");
         InitializeFileds();
         ResetDefaultWeapon();
