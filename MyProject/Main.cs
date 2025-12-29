@@ -789,11 +789,7 @@ public class Main(
 
         _bombTimer = AddTimer(1f, () =>
         {
-            var humans = Utility.GetHumanPlayers();
-            foreach (var human in humans)
-            {
-                human.PrintToCenter($"C4 Counter: {c4Timer--}");
-            }
+            Utility.PrintToAllCenter($"C4 Counter: {c4Timer--}");
         }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
 
         return HookResult.Continue;
@@ -1134,8 +1130,6 @@ public class Main(
 
     private void BombEventHandler(string message)
     {
-        var humans = Utility.GetHumanPlayers();
-
         Utility.PrintToAllCenter(message);
         _bombTimer?.Kill();
     }

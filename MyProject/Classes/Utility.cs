@@ -831,8 +831,9 @@ namespace MyProject.Classes
 
         public static void PrintToAllCenter(string message)
         {
-            foreach (var player in Utilities.GetPlayers().Where(p =>
-                IsHumanPlayerValid(p)))
+            var humans = GetHumanPlayers();
+
+            foreach (var player in humans)
             {
                 player.PrintToCenter(message);
             }
