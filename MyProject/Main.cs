@@ -471,6 +471,8 @@ public class Main(
 
     private HookResult RoundStartHandler(EventRoundStart eventRoundStart, GameEventInfo gameEventInfo)
     {
+        KillTimer();
+        _bot.ClearDamageTimer();
         _currentRoundSecond = 0;
         _isRoundEnd = false;
         if (!_warmup)
@@ -524,8 +526,6 @@ public class Main(
         AddTimer(roundStartBehaviorDelayTime, () =>
         {
             var mapName = Server.MapName;
-
-            _bot.ClearDamageTimer();
 
             _ = Task.Run(async () =>
             {
@@ -665,6 +665,7 @@ public class Main(
         _isRoundEnd = true;
         _music.StopRoundMusic();
         KillTimer();
+        _bot.ClearDamageTimer();
 
         if (eventRoundEnd.Winner == (int)GetHumanTeam())
         {
@@ -682,8 +683,6 @@ public class Main(
         if (!_warmup)
         {
             var mapName = Server.MapName;
-
-            _bot.ClearDamageTimer();
 
             _ = Task.Run(async () =>
             {
@@ -704,13 +703,6 @@ public class Main(
         }
 
         return HookResult.Continue;
-
-        void KillTimer()
-        {
-            _weaponCheckTimer?.Kill();
-            _roundTimer?.Kill();
-            _bombTimer?.Kill();
-        }
     }
 
     private HookResult WarmupHandler(EventRoundAnnounceWarmup @event, GameEventInfo info)
@@ -1131,6 +1123,13 @@ public class Main(
     private void BombEventHandler(string message)
     {
         Utility.PrintToAllCenter(message);
+        _bombTimer?.Kill();
+    }
+
+    private void KillTimer()
+    {
+        _weaponCheckTimer?.Kill();
+        _roundTimer?.Kill();
         _bombTimer?.Kill();
     }
 
