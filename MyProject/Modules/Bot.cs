@@ -792,9 +792,9 @@ public class Bot(ILogger<Bot> logger) : IBot
             var midBossSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Boss[0]) == 1;
             if (!midBossSpawn)
             {
-                Utility.AddTimer(0.5f, async () =>
+                Main.Instance.AddTimer(1f, async () =>
                 {
-                    await KickBotAsync();
+                    KickBot();
                     await Server.NextWorldUpdateAsync(() =>
                     {
                         Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Boss[0]}");
@@ -815,9 +815,9 @@ public class Bot(ILogger<Bot> logger) : IBot
             var finalBossSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Boss[1]) == 1;
             if (!finalBossSpawn)
             {
-                Utility.AddTimer(0.5f, async () =>
+                Main.Instance.AddTimer(1f, async () =>
                 {
-                    await KickBotAsync();
+                    KickBot();
                     await Server.NextWorldUpdateAsync(() =>
                     {
                         Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Boss[1]}");
@@ -841,9 +841,9 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             if (!specialBotSpawn)
             {
-                await KickBotAsync();
                 await Server.NextWorldUpdateAsync(() =>
                 {
+                    KickBot();
                     Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[0]}");
                     Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[1]}");
                     Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[2]}");
@@ -860,12 +860,9 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    private static async Task KickBotAsync()
+    private static void KickBot()
     {
-        await Server.NextWorldUpdateAsync(() =>
-        {
-            Server.ExecuteCommand("bot_kick");
-        });
+        Server.ExecuteCommand("bot_kick");
     }
 
     private static async Task KickNormalBotAsync()
