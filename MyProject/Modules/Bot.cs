@@ -102,11 +102,21 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (Main.Instance.RoundCount == Main.Instance.Config.MidBossRound)
             {
                 var midBoss = Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(BotProfile.Boss[0]));
+                if (midBoss is null)
+                {
+                    _logger.LogError("Spawn mid boss failed.");
+                    return;
+                }
                 midBoss!.PlayerPawn.Value!.Health = Main.Instance.Config.MidBossHealth;
             }
             else if (Main.Instance.RoundCount == Main.Instance.Config.FinalBossRound)
             {
                 var finalBoss = Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(BotProfile.Boss[1]));
+                if (finalBoss is null)
+                {
+                    _logger.LogError("Spawn final boss failed");
+                    return;
+                }
                 finalBoss!.PlayerPawn.Value!.Health = Main.Instance.Config.FinalBossHealth;
             }
         }
