@@ -475,77 +475,32 @@ public class Main(
         _bot.ClearDamageTimer();
         _currentRoundSecond = 0;
         _isRoundEnd = false;
-        if (!_warmup)
+        BotRoundStartBehavior();
+
+        if (_warmup) return HookResult.Continue;
+
+        HandleRoundStartMessages();
+        RemoveProtectionFromAllPlayers();
+        ActivateAllWeaponStatuses();
+        StartWeaponCheckTimer();
+        PlayRoundMusic();
+
+        var endGameRound = ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>();
+
+        if (_roundCount == Config.MidBossRound || _roundCount == Config.FinalBossRound)
         {
-            HandleRoundStartMessages();
-            RemoveProtectionFromAllPlayers();
-            ActivateAllWeaponStatuses();
-            StartWeaponCheckTimer();
-
-            var endGameRound = ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>();
-            var freezeTime = ConVar.Find("mp_freezetime")!.GetPrimitiveValue<int>();
-
-            if (_roundCount == endGameRound)
-            {
-                // End Game
-                Server.ExecuteCommand("mp_maxrounds 1");
-                AddTimer(1f, () =>
-                {
-                    _music.PlayEndGameMusic();
-                });
-            }
-            else
-            {
-                AddTimer(freezeTime, () =>
-                {
-                    StartRoundTimer();
-                    _music.PlayRoundMusic();
-                    Server.NextFrame(() =>
-                    {
-                        var roundMusicName = _music.CurrentRoundMusicName;
-                        if (!string.IsNullOrEmpty(roundMusicName))
-                        {
-                            Utility.PrintToChatAllWithColor($"Now is playing: {ChatColors.Lime}{roundMusicName}");
-                        }
-                    });
-                });
-            }
-
-            if (_roundCount == Config.MidBossRound || _roundCount == Config.FinalBossRound)
-            {
-                RemoveBomb();
-                RemoveHostage();
-            }
+            RemoveBomb();
+            RemoveHostage();
         }
 
-        float roundStartBehaviorDelayTime = 2f;
-
-        if (_roundCount != 0)
-            roundStartBehaviorDelayTime = 0f;
-
-        AddTimer(roundStartBehaviorDelayTime, () =>
+        if (_roundCount == endGameRound)
         {
-            var mapName = Server.MapName;
-
-            _ = Task.Run(async () =>
+            // End Game
+            Server.ExecuteCommand("mp_maxrounds 1");
+            AddTimer(1f, () =>
             {
-                try
-                {
-                    await _bot.RoundStartBehavior(mapName);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError("Bot Round Start Behavior error, round: {round} {ex}", _roundCount, ex);
-                }
+                _music.PlayEndGameMusic();
             });
-        });
-
-        foreach (var client in Utilities.GetPlayers())
-        {
-            if (!client.IsBot)
-            {
-                SetClientModel(client);
-            }
         }
 
         return HookResult.Continue;
@@ -657,6 +612,45 @@ public class Main(
                 if (!_isRoundEnd)
                     _currentRoundSecond++;
             }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
+        }
+
+        void BotRoundStartBehavior()
+        {
+            var mapName = Server.MapName;
+
+            Server.NextWorldUpdate(() =>
+            {
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await _bot.RoundStartBehavior(mapName);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Bot Round Start Behavior error at round {round}, map {map}", _roundCount, mapName);
+                    }
+                });
+            });
+        }
+
+        void PlayRoundMusic()
+        {
+            var freezeTime = ConVar.Find("mp_freezetime")!.GetPrimitiveValue<int>();
+
+            AddTimer(freezeTime, () =>
+            {
+                StartRoundTimer();
+                _music.PlayRoundMusic();
+                Server.NextFrame(() =>
+                {
+                    var roundMusicName = _music.CurrentRoundMusicName;
+                    if (!string.IsNullOrEmpty(roundMusicName))
+                    {
+                        Utility.PrintToChatAllWithColor($"Now is playing: {ChatColors.Lime}{roundMusicName}");
+                    }
+                });
+            });
         }
     }
 
