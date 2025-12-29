@@ -73,66 +73,41 @@ public class Bot(ILogger<Bot> logger) : IBot
     public async Task RoundStartBehavior(string mapName)
     {
         await SetBotMoneyToZero();
+        var isBossRound = Main.Instance.RoundCount == Main.Instance.Config.MidBossRound ||
+            Main.Instance.RoundCount == Main.Instance.Config.FinalBossRound;
 
-        if (Main.Instance.RoundCount != Main.Instance.Config.MidBossRound && Main.Instance.RoundCount != Main.Instance.Config.FinalBossRound)
-        {
-            await SetSpecialBotAttribute();
-            await SetSpecialBotModel();
-
-            _respawnTimes = _maxRespawnTimes;
-
-            if (Main.Instance.RoundCount > 1)
-            {
-                await SetSpecialBotWeapon(BotProfile.Special[0], CsItem.AWP); // "[ELITE]EagleEye"
-                await SetSpecialBotWeapon(BotProfile.Special[1], CsItem.M4A1S); // "[ELITE]mimic"
-                await SetSpecialBotWeapon(BotProfile.Special[2], CsItem.P90); // "[EXPERT]Rush" 
-
-                foreach (var bot in Utilities.GetPlayers().Where(player => player.IsBot))
-                {
-                    if (!Utility.IsBotValid(bot)) continue;
-
-                    await PreventBotPickupWeaponAfter3Seconds(bot);
-                }
-            }
-        }
+        if (isBossRound)
+            await HandleBossRound();
         else
-        {
-            _respawnTimes = 0;
-
-            if (Main.Instance.RoundCount == Main.Instance.Config.MidBossRound)
-            {
-                var midBoss = Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(BotProfile.Boss[0]));
-                if (midBoss is null)
-                {
-                    _logger.LogError("Spawn mid boss failed.");
-                    return;
-                }
-                midBoss!.PlayerPawn.Value!.Health = Main.Instance.Config.MidBossHealth;
-            }
-            else if (Main.Instance.RoundCount == Main.Instance.Config.FinalBossRound)
-            {
-                var finalBoss = Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(BotProfile.Boss[1]));
-                if (finalBoss is null)
-                {
-                    _logger.LogError("Spawn final boss failed");
-                    return;
-                }
-                finalBoss!.PlayerPawn.Value!.Health = Main.Instance.Config.FinalBossHealth;
-            }
-        }
+            await HandleNormalRound();
 
         async Task SetSpecialBotWeapon(string botName, CsItem item)
         {
             var bot = Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(botName));
-            var botActiveWeapon = bot!.PlayerPawn.Value!.WeaponServices?.ActiveWeapon.Value?.DesignerName;
-            var itemValue = Utility.GetCsItemEnumValue(item);
+            if (!Utility.IsBotValidAndAlive(bot))
+            {
+                _logger.LogError("Special bot {BotName} not found or invalid when setting weapon", botName);
+                return;
+            }
 
-            await AllowBotPickupWeapon(bot);
-            await RemoveBotWeapon(bot);
-            await GiveBotWeapon(bot, mapName, item);
-            await PreventBotPickupWeaponAfter3Seconds(bot);
+            try
+            {
+                await AllowBotPickupWeapon(bot);
+                await RemoveBotWeapon(bot);
+                await GiveBotWeapon(bot, mapName, item);
+                await PreventBotPickupWeaponAfter3Seconds(bot);
 
-            if (AppSettings.IsDebug)
+                if (AppSettings.IsDebug)
+                {
+                    await VerifyBotWeapon(bot);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to set weapon for special bot {BotName}", botName);
+            }
+
+            async Task VerifyBotWeapon(CCSPlayerController? bot)
             {
                 await Server.NextFrameAsync(() =>
                 {
@@ -169,17 +144,29 @@ public class Bot(ILogger<Bot> logger) : IBot
                 try
                 {
                     var eagleEye = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[0]));
-                    var mimic = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[1]));
-                    var rush = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[2]));
-                    var randomSkin = Utility.WorkshopSkins.ElementAt(Random.Shared.Next(Utility.WorkshopSkins.Count));
+                    if (Utility.IsBotValidAndAlive(eagleEye))
+                        Utility.SetClientModel(eagleEye, Main.Instance.Config.EagleEyeModel);
+                    else
+                        _logger.LogError("Special bot {botName} is invalid or not found when setting model", BotProfile.Special[0]);
 
-                    Utility.SetClientModel(mimic!, randomSkin.Key);
-                    Utility.SetClientModel(eagleEye!, Main.Instance.Config.EagleEyeModel);
-                    Utility.SetClientModel(rush!, Main.Instance.Config.RushModel);
+                    var rush = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[2]));
+                    if (Utility.IsBotValidAndAlive(rush))
+                        Utility.SetClientModel(rush, Main.Instance.Config.RushModel);
+                    else
+                        _logger.LogError("Special bot {botName} is invalid or not found when setting model", BotProfile.Special[2]);
+
+                    var mimic = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[1]));
+                    if (Utility.IsBotValidAndAlive(mimic))
+                    {
+                        var randomSkin = Utility.WorkshopSkins.ElementAt(Random.Shared.Next(Utility.WorkshopSkins.Count));
+                        Utility.SetClientModel(mimic, randomSkin.Key);
+                    }
+                    else
+                        _logger.LogError("Special bot {botName} is invalid or not found when setting model", BotProfile.Special[1]);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning("Special bots not ready yet, skipping model setup: {error}", ex.Message);
+                    _logger.LogWarning(ex, "Unexcepted error when setting special bot model");
                 }
             });
         }
@@ -190,21 +177,102 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 try
                 {
-                    var eagleEye = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[0]));
-                    var mimic = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[1]));
-                    var rush = Utilities.GetPlayerFromSlot(Main.Instance.GetPlayerSlot(BotProfile.Special[2]));
+                    var specialBots = new (string Name, int Score, int? Health)[]
+                    {
+                        (BotProfile.Special[0], 999, null),
+                        (BotProfile.Special[1], 888, null),
+                        (BotProfile.Special[2], 777, Main.Instance.RoundCount > 1 ? 500 : null)
+                    };
 
-                    eagleEye!.Score = 999;
-                    mimic!.Score = 888;
-                    rush!.Score = 777;
-                    if (Main.Instance.RoundCount > 1)
-                        rush!.PlayerPawn.Value!.Health = 250;
+                    foreach (var (name, score, health) in specialBots)
+                    {
+                        try
+                        {
+                            var slot = Main.Instance.GetPlayerSlot(name);
+                            var bot = Utilities.GetPlayerFromSlot(slot);
+
+                            if (!Utility.IsBotValid(bot))
+                            {
+                                _logger.LogError("Special bot {BotName} is invalid", name);
+                                continue;
+                            }
+
+                            bot.Score = score;
+
+                            if (health.HasValue)
+                            {
+                                bot.PlayerPawn.Value!.Health = health.Value;
+                            }
+
+                            if (AppSettings.IsDebug)
+                                _logger.LogInformation("Set attributes for {BotName}: Score={Score}, Health={Health}", name, score, health);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to set attributes for {BotName}", name);
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning("Special bots not ready yet, skipping attribute setup: {error}", ex.Message);
+                    _logger.LogError(ex, "Unexpected error in SetSpecialBotAttribute");
                 }
             });
+        }
+
+        async Task HandleBossRound()
+        {
+            _respawnTimes = 0;
+            var isMidBoss = Main.Instance.RoundCount == Main.Instance.Config.MidBossRound;
+
+            if (isMidBoss)
+            {
+                await Server.NextFrameAsync(() =>
+                {
+                    var midBoss = Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(BotProfile.Boss[0]));
+                    if (!Utility.IsBotValid(midBoss))
+                    {
+                        _logger.LogError("Spawn mid boss failed.");
+                        return;
+                    }
+                    midBoss.PlayerPawn.Value!.Health = Main.Instance.Config.MidBossHealth;
+                });
+            }
+            else
+            {
+                await Server.NextFrameAsync(() =>
+                {
+                    var finalBoss = Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(BotProfile.Boss[1]));
+                    if (!Utility.IsBotValid(finalBoss))
+                    {
+                        _logger.LogError("Spawn final boss failed");
+                        return;
+                    }
+                    finalBoss.PlayerPawn.Value!.Health = Main.Instance.Config.FinalBossHealth;
+                });
+            }
+        }
+
+        async Task HandleNormalRound()
+        {
+            await SetSpecialBotAttribute();
+            await SetSpecialBotModel();
+
+            _respawnTimes = _maxRespawnTimes;
+
+            if (Main.Instance.RoundCount > 1)
+            {
+                await SetSpecialBotWeapon(BotProfile.Special[0], CsItem.AWP); // "[ELITE]EagleEye"
+                await SetSpecialBotWeapon(BotProfile.Special[1], CsItem.M4A1S); // "[ELITE]mimic"
+                await SetSpecialBotWeapon(BotProfile.Special[2], CsItem.P90); // "[EXPERT]Rush" 
+
+                foreach (var bot in Utilities.GetPlayers().Where(player => player.IsBot))
+                {
+                    if (!Utility.IsBotValid(bot)) continue;
+
+                    await PreventBotPickupWeaponAfter3Seconds(bot);
+                }
+            }
         }
     }
 
