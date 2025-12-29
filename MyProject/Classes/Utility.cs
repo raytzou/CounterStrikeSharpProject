@@ -197,16 +197,6 @@ namespace MyProject.Classes
         }
 
         /// <summary>
-        /// It's the same as AddTimer() in BasicPlugin, but I want to use it elsewhere
-        /// </summary>
-        public static CounterStrikeSharp.API.Modules.Timers.Timer AddTimer(float interval, Action callback, TimerFlags? flags = null)
-        {
-            var timer = new CounterStrikeSharp.API.Modules.Timers.Timer(interval, callback, flags ?? 0);
-            _timers.Add(timer);
-            return timer;
-        }
-
-        /// <summary>
         /// Uses reflection to get the <see cref="EnumMemberAttribute"/> value of a CsItem enum.
         /// </summary>
         /// <param name="item">The enum option of <see cref="CsItem"/>.</param>
@@ -859,5 +849,15 @@ namespace MyProject.Classes
         }
 
         public static char GetPlayerTeamChatColor(CCSPlayerController? player) => player is null ? ChatColors.Default : ChatColors.ForPlayer(player);
+
+        /// <summary>
+        /// It's the same as AddTimer() in BasicPlugin, but I want to use it elsewhere
+        /// </summary>
+        private static CounterStrikeSharp.API.Modules.Timers.Timer AddTimer(float interval, Action callback, TimerFlags? flags = null)
+        {
+            var timer = new CounterStrikeSharp.API.Modules.Timers.Timer(interval, callback, flags ?? 0);
+            _timers.Add(timer);
+            return timer;
+        }
     }
 }

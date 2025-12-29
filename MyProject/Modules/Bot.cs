@@ -274,7 +274,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 {
                     await Server.NextFrameAsync(() =>
                     {
-                        Utility.AddTimer(1f, () =>
+                        Main.Instance.AddTimer(1f, () =>
                         {
                             if (Utility.IsBotValid(bot))
                             {
@@ -383,7 +383,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 }
             });
 
-            Utility.AddTimer(2f, () =>
+            Main.Instance.AddTimer(2f, () =>
             {
                 Server.NextFrame(() =>
                 {
@@ -469,7 +469,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 }
             });
 
-            Utility.AddTimer(1.0f, () =>
+            Main.Instance.AddTimer(1.0f, () =>
             {
                 foreach (var position in markedPositions)
                 {
@@ -496,7 +496,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
                 var startTime = Server.CurrentTime;
 
-                var toxicTimer = Utility.AddTimer(1f, () =>
+                var toxicTimer = Main.Instance.AddTimer(1f, () =>
                 {
                     var currentTime = Server.CurrentTime;
                     if (currentTime - startTime >= smokeDuration)
@@ -528,7 +528,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
                 _damageTimers.Add(toxicTimer);
 
-                Utility.AddTimer(smokeDuration, () =>
+                Main.Instance.AddTimer(smokeDuration, () =>
                 {
                     _damageTimers.Remove(toxicTimer);
                     toxicTimer?.Kill();
@@ -576,7 +576,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             });
 
             // Create curse damage timer
-            var cursedTimer = Utility.AddTimer(1f, () =>
+            var cursedTimer = Main.Instance.AddTimer(1f, () =>
             {
                 var currentTime = Server.CurrentTime;
                 if (currentTime - startTime >= curseDuration)
@@ -608,7 +608,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             _damageTimers.Add(cursedTimer);
 
-            Utility.AddTimer(curseDuration, () =>
+            Main.Instance.AddTimer(curseDuration, () =>
             {
                 _damageTimers.Remove(cursedTimer);
                 cursedTimer?.Kill();
@@ -645,7 +645,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 }
             });
 
-            Utility.AddTimer(delayTime, () =>
+            Main.Instance.AddTimer(delayTime, () =>
             {
                 foreach (var position in markedPositions)
                 {
@@ -695,11 +695,11 @@ public class Bot(ILogger<Bot> logger) : IBot
                 smokeProjectile.SmokeColor.Z = 0;
             }
 
-            Utility.AddTimer(0.05f, () =>
+            Main.Instance.AddTimer(0.05f, () =>
             {
                 if (projectile != null && projectile.IsValid)
                 {
-                    Utility.AddTimer(cleanupTime, () =>
+                    Main.Instance.AddTimer(cleanupTime, () =>
                     {
                         if (projectile != null && projectile.IsValid)
                         {
@@ -898,7 +898,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             pawn.HealthShotBoostExpirationTime = 0.0f;
             Utilities.SetStateChanged(pawn, "CCSPlayerPawn", "m_flHealthShotBoostExpirationTime");
 
-            Utility.AddTimer(0.01f, () =>
+            Main.Instance.AddTimer(0.01f, () =>
             {
                 if (pawn == null || !pawn.IsValid) return;
                 pawn.HealthShotBoostExpirationTime = future;
@@ -907,7 +907,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             if (attempt < 3)
             {
-                Utility.AddTimer(0.15f, () =>
+                Main.Instance.AddTimer(0.15f, () =>
                 {
                     if (pawn == null || !pawn.IsValid) return;
 
@@ -976,7 +976,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         // prevent pickup = true
         await Server.NextFrameAsync(() =>
         {
-            Utility.AddTimer(3f, () =>
+            Main.Instance.AddTimer(3f, () =>
             {
                 if (!Utility.IsBotValid(bot))
                     return;

@@ -119,7 +119,7 @@ public class Command(
         _logger.LogInformation("{admin} changed map to {mapName} at {DT}", client?.PlayerName is null ? "console" : client.PlayerName, mapName, DateTime.Now);
         Utility.PrintToChatAllWithColor($"Admin changed map to {mapName}");
 
-        Utility.AddTimer(changeMapTimeBuffer, () =>
+        Main.Instance.AddTimer(changeMapTimeBuffer, () =>
         {
             if (Utility.MapsFromWorkshop.Contains(mapName))
                 Server.ExecuteCommand($"ds_workshop_changelevel {mapName}");
@@ -389,7 +389,7 @@ public class Command(
         float time = 1f;
         CounterStrikeSharp.API.Modules.Timers.Timer? timer = null;
 
-        timer = Utility.AddTimer(time, () =>
+        timer = Main.Instance.AddTimer(time, () =>
         {
             ReviveCallBack(ref time, client, position, timer, weaponStatus);
         }, TimerFlags.REPEAT);
@@ -918,7 +918,7 @@ public class Command(
                 _ => playerCache.Volume
             };
 
-            Utility.AddTimer(0.5f, () =>
+            Main.Instance.AddTimer(0.5f, () =>
             {
                 Utility.PrintToChatWithTeamColor(client, $"{volumeType} volume: {currentVolume}%");
             });
