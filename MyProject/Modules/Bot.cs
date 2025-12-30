@@ -17,6 +17,7 @@ public class Bot(ILogger<Bot> logger) : IBot
     private int _level = 2;
     private int _respawnTimes = 0;
     private int _maxRespawnTimes = 20;
+    private bool _isCurseActive = false;
     private readonly List<CounterStrikeSharp.API.Modules.Timers.Timer> _damageTimers = new();
 
     private static readonly Regex NormalBotNameRegex = new(@"^\[(?<Grade>[^\]]+)\](?<Group>[^#]+)#(?<Num>\d{1,2})$");
@@ -376,12 +377,13 @@ public class Bot(ILogger<Bot> logger) : IBot
 
     public void BossBehavior(CCSPlayerController boss)
     {
+        if (!Utility.IsBotValidAndAlive(boss))
+            return;
         var activeAbilityChance = GetChance();
 
         if (activeAbilityChance <= Main.Instance.Config.BossActiveAbilityChance)
         {
-            var random = new Random();
-            var abilityChoice = random.Next(1, 7); // 1-4 for four different abilities
+            var abilityChoice = Random.Shared.Next(1, 7);
 
             switch (abilityChoice)
             {
@@ -401,15 +403,15 @@ public class Bot(ILogger<Bot> logger) : IBot
                     ToxicSmoke();
                     break;
                 case 6:
-                    Cursed();
+                    if (!_isCurseActive)
+                        Cursed();
                     break;
             }
         }
 
         double GetChance()
         {
-            var random = new Random();
-            return random.NextDouble() * 100; // Returns a value between 0-100
+            return Random.Shared.NextDouble() * 100; // Returns a value between 0-100
         }
 
         void FireTorture()
@@ -509,10 +511,9 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (humanPlayers.Count == 0)
                 return;
 
-            var random = new Random();
             var targetCount = Math.Max(1, humanPlayers.Count / 3);
             var selectedPlayers = humanPlayers
-                .OrderBy(x => random.Next())
+                .OrderBy(x => Random.Shared.Next())
                 .Take(targetCount)
                 .ToList();
 
@@ -522,10 +523,13 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 foreach (var player in selectedPlayers)
                 {
-                    if (!player.IsValid || player.PlayerPawn.Value == null)
+                    if (!Utility.IsHumanValidAndAlive(player))
                         continue;
 
-                    var playerPosition = player.PlayerPawn.Value!.AbsOrigin!;
+                    var playerPosition = player.PlayerPawn.Value!.AbsOrigin;
+                    if (playerPosition is null)
+                        continue;
+
                     var markedPosition = new Vector(
                         playerPosition.X,
                         playerPosition.Y,
@@ -577,7 +581,10 @@ public class Bot(ILogger<Bot> logger) : IBot
                         if (!Utility.IsHumanValidAndAlive(player))
                             continue;
 
-                        var playerPosition = player.PlayerPawn.Value!.AbsOrigin!;
+                        var playerPosition = player.PlayerPawn.Value!.AbsOrigin;
+                        if (playerPosition is null)
+                            continue;
+
                         var distance = CalculateDistance(playerPosition, smokePosition);
 
                         if (distance <= damageRadius)
@@ -621,11 +628,16 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (bossHealth > oneThirdHealth)
                 return;
 
+            _isCurseActive = true;
+
             Utility.PrintToAllCenter("The Boss casts a deadly curse upon all!");
             var humanPlayers = Utility.GetAliveHumans();
 
             if (humanPlayers.Count == 0)
+            {
+                _isCurseActive = false;
                 return;
+            }
 
             const int curseDamage = 2;
             const float curseDuration = 10.0f;
@@ -647,7 +659,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             var cursedTimer = Main.Instance.AddTimer(1f, () =>
             {
                 var currentTime = Server.CurrentTime;
-                if (currentTime - startTime >= curseDuration)
+                if (currentTime - startTime > curseDuration)
                     return;
 
                 var alivePlayers = Utility.GetAliveHumans();
@@ -680,6 +692,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 _damageTimers.Remove(cursedTimer);
                 cursedTimer?.Kill();
+                _isCurseActive = false;
                 Utility.PrintToAllCenter("The curse has been lifted...");
             });
         }
@@ -697,10 +710,13 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 foreach (var player in humanPlayers)
                 {
-                    if (!player.IsValid || player.PlayerPawn.Value == null) // check player is valid at next frame
+                    if (!Utility.IsHumanValidAndAlive(player)) // check player is valid at next frame
                         continue;
 
-                    var playerPosition = player.PlayerPawn.Value!.AbsOrigin!;
+                    var playerPosition = player.PlayerPawn.Value!.AbsOrigin;
+                    if (playerPosition is null)
+                        continue;
+
                     var markedPosition = new Vector(
                         playerPosition.X,
                         playerPosition.Y,
@@ -725,7 +741,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         void CreateProjectileAtPosition<T>(Vector position, CCSPlayerController attacker, float cleanupTime = 3.0f) where T : CBaseCSGrenadeProjectile
         {
             // Early check: ensure attacker is valid before creating projectile
-            if (attacker == null || !attacker.IsValid || attacker.PlayerPawn.Value == null || !attacker.PlayerPawn.Value.IsValid)
+            if (!Utility.IsPlayerValidAndAlive(attacker))
                 return;
 
             var defaultVelocity = new Vector(0, 0, 0);
@@ -746,7 +762,8 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             // Double-check attacker validity before setting ownership properties
             // This handles cases where the attacker becomes invalid between the initial check and this point
-            if (attacker.IsValid)
+            if (Utility.IsPlayerValidAndAlive(attacker) &&
+                attacker.PlayerPawn.Value!.IsValid)
             {
                 projectile.TeamNum = attacker.TeamNum;
                 projectile.Thrower.Raw = attacker.PlayerPawn.Raw;
@@ -787,6 +804,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
 
         _damageTimers.Clear();
+        _isCurseActive = false;
     }
 
     private CsTeam GetBotTeam(string mapName)
