@@ -433,7 +433,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         void Freeze()
         {
             Utility.PrintToAllCenter("The Boss locks the battlefield in ice!");
-            var humanPlayers = Utility.GetAliveHumanPlayers();
+            var humanPlayers = Utility.GetAliveHumans();
 
             if (humanPlayers.Count == 0) return;
 
@@ -443,7 +443,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 foreach (var player in humanPlayers)
                 {
-                    if (!Utility.IsHumanPlayerValidAndAlive(player)) continue;
+                    if (!Utility.IsHumanValidAndAlive(player)) continue;
 
                     player.PlayerPawn.Value!.MoveType = MoveType_t.MOVETYPE_NONE;
                     ApplyScreenOverlay(player.PlayerPawn.Value, 3f);
@@ -457,7 +457,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 {
                     foreach (var player in frozenPlayers)
                     {
-                        if (!Utility.IsHumanPlayerValidAndAlive(player)) continue;
+                        if (!Utility.IsHumanValidAndAlive(player)) continue;
 
                         player.PlayerPawn.Value!.MoveType = MoveType_t.MOVETYPE_WALK;
                     }
@@ -505,7 +505,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         void ToxicSmoke()
         {
             Utility.PrintToAllCenter("The Boss releases toxic clouds!");
-            var humanPlayers = Utility.GetAliveHumanPlayers();
+            var humanPlayers = Utility.GetAliveHumans();
             if (humanPlayers.Count == 0)
                 return;
 
@@ -570,11 +570,11 @@ public class Bot(ILogger<Bot> logger) : IBot
                     if (currentTime - startTime >= smokeDuration)
                         return;
 
-                    var humanPlayers = Utility.GetAliveHumanPlayers();
+                    var humanPlayers = Utility.GetAliveHumans();
 
                     foreach (var player in humanPlayers)
                     {
-                        if (!Utility.IsHumanPlayerValidAndAlive(player))
+                        if (!Utility.IsHumanValidAndAlive(player))
                             continue;
 
                         var playerPosition = player.PlayerPawn.Value!.AbsOrigin!;
@@ -622,7 +622,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 return;
 
             Utility.PrintToAllCenter("The Boss casts a deadly curse upon all!");
-            var humanPlayers = Utility.GetAliveHumanPlayers();
+            var humanPlayers = Utility.GetAliveHumans();
 
             if (humanPlayers.Count == 0)
                 return;
@@ -636,7 +636,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 foreach (var player in humanPlayers)
                 {
-                    if (!Utility.IsHumanPlayerValidAndAlive(player)) continue;
+                    if (!Utility.IsHumanValidAndAlive(player)) continue;
 
                     // Use purple beacon to mark cursed players
                     Utility.DrawBeaconOnPlayer(player, System.Drawing.Color.Purple, 100.0f, curseDuration, 1.0f);
@@ -650,11 +650,11 @@ public class Bot(ILogger<Bot> logger) : IBot
                 if (currentTime - startTime >= curseDuration)
                     return;
 
-                var alivePlayers = Utility.GetAliveHumanPlayers();
+                var alivePlayers = Utility.GetAliveHumans();
 
                 foreach (var player in alivePlayers)
                 {
-                    if (!Utility.IsHumanPlayerValidAndAlive(player))
+                    if (!Utility.IsHumanValidAndAlive(player))
                         continue;
 
                     try
@@ -687,7 +687,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         void CreateTimedProjectileAttack(string message, System.Drawing.Color beaconColor, Action<Vector> createProjectileAction, float delayTime = 3.0f)
         {
             Utility.PrintToAllCenter(message);
-            var humanPlayers = Utility.GetAliveHumanPlayers();
+            var humanPlayers = Utility.GetAliveHumans();
             if (humanPlayers.Count == 0)
                 return;
 

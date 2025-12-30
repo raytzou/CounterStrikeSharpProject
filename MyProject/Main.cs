@@ -339,7 +339,7 @@ public class Main(
     {
         var player = @event.Userid;
 
-        if (!Utility.IsHumanPlayerValid(player))
+        if (!Utility.IsHumanValid(player))
             return HookResult.Continue;
 
         if (!player!.IsBot)
@@ -361,14 +361,14 @@ public class Main(
     private HookResult PlayerJoinTeamHandler(EventPlayerTeam @event, GameEventInfo info)
     {
         var player = @event.Userid;
-        if (!Utility.IsHumanPlayerValid(player))
+        if (!Utility.IsHumanValid(player))
             return HookResult.Continue;
 
         if (_roundCount == 0)
         {
             AddTimer(1f, () =>
             {
-                if (!Utility.IsHumanPlayerValid(player))
+                if (!Utility.IsHumanValid(player))
                     return;
                 _music.PlayWarmupMusic(player);
             });
@@ -410,7 +410,7 @@ public class Main(
         {
             AddTimer(1f, () =>
             {
-                if (!Utility.IsHumanPlayerValid(player))
+                if (!Utility.IsHumanValid(player))
                     return;
                 player.PrintToChat($" {ChatColors.Lime}Welcome to {ChatColors.Purple}{ConVar.Find("hostname")!.StringValue}{ChatColors.Lime}!");
                 player.PrintToChat($" {ChatColors.Lime}Type {ChatColors.Orange}'!help' {ChatColors.Lime}for more information!");
@@ -575,7 +575,7 @@ public class Main(
             var findBomb = false;
             foreach (var player in Utilities.GetPlayers())
             {
-                if (!Utility.IsHumanPlayerValid(player)) continue;
+                if (!Utility.IsHumanValid(player)) continue;
                 if (player.PlayerPawn.Value!.WeaponServices is null) continue;
 
                 foreach (var weapon in player.PlayerPawn.Value.WeaponServices.MyWeapons)
@@ -797,7 +797,7 @@ public class Main(
 
     private HookResult OnPlayerSayCommand(CCSPlayerController? player, CommandInfo commandInfo)
     {
-        if (!Utility.IsHumanPlayerValid(player))
+        if (!Utility.IsHumanValid(player))
             return HookResult.Continue;
 
         var message = commandInfo.GetArg(1);
@@ -847,7 +847,7 @@ public class Main(
 
         void BroadcastLocalizedSaySoundMessage()
         {
-            var humans = Utility.GetHumanPlayers();
+            var humans = Utility.GetHumans();
 
             foreach (var human in humans)
             {
@@ -1026,7 +1026,7 @@ public class Main(
 
     private void SetClientModel(CCSPlayerController client)
     {
-        if (!Utility.IsHumanPlayerValid(client)) return;
+        if (!Utility.IsHumanValid(client)) return;
 
         var playerCache = _playerService.GetPlayerCache(client.SteamID);
 
@@ -1040,7 +1040,7 @@ public class Main(
         {
             AddTimer(0.1f, () =>
             {
-                if (!Utility.IsHumanPlayerValid(client))
+                if (!Utility.IsHumanValid(client))
                 {
                     _logger.LogWarning("Player {steamId} is no longer valid when updating default skin", client.SteamID);
                     return;
@@ -1056,7 +1056,7 @@ public class Main(
 
         AddTimer(0.15f, () =>
         {
-            if (!Utility.IsHumanPlayerValid(client))
+            if (!Utility.IsHumanValid(client))
                 return;
 
             var updatedCache = _playerService.GetPlayerCache(client.SteamID);

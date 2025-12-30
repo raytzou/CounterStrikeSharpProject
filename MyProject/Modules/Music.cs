@@ -43,7 +43,7 @@ namespace MyProject.Modules
 
         public void PlayRoundMusic()
         {
-            var humans = Utility.GetHumanPlayers();
+            var humans = Utility.GetHumans();
             var selectedIndex = _random.Next(Utility.SoundEvent.Round.Count);
             var soundEvents = Utility.SoundEvent.Round.Select(soundEvent => soundEvent.EventName).ToList();
 
@@ -78,7 +78,7 @@ namespace MyProject.Modules
 
         public void PlaySaySound(string soundEventName, float pitch)
         {
-            var humans = Utility.GetHumanPlayers();
+            var humans = Utility.GetHumans();
 
             foreach (var human in humans)
             {
@@ -91,7 +91,7 @@ namespace MyProject.Modules
 
         private void PlayMusicToAllHumans(List<string> sounds)
         {
-            var humans = Utility.GetHumanPlayers();
+            var humans = Utility.GetHumans();
 
             foreach (var player in humans)
             {
@@ -120,7 +120,7 @@ namespace MyProject.Modules
         {
             Server.NextWorldUpdate(() =>
             {
-                if (!Utility.IsHumanPlayerValid(player))
+                if (!Utility.IsHumanValid(player))
                     return;
 
                 Utility.SendSoundEventPackage(player, soundEventId, volume / 100f, pitch);

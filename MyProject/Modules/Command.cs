@@ -542,7 +542,7 @@ public class Command(
         // Update player's sound volume immediately
         Server.NextWorldUpdate(() =>
         {
-            if (!Utility.IsHumanPlayerValid(client))
+            if (!Utility.IsHumanValid(client))
                 return;
 
             playerCache.Volume = volume;
@@ -574,7 +574,7 @@ public class Command(
 
     public void OnBuyCommand(CCSPlayerController client, CommandInfo command, Main thePlugin)
     {
-        if (!Utility.IsHumanPlayerValid(client)) return;
+        if (!Utility.IsHumanValid(client)) return;
 
         var buyTime = ConVar.Find("mp_buytime")!.GetPrimitiveValue<float>();
         if (Main.Instance.RoundSecond >= buyTime)
@@ -682,7 +682,7 @@ public class Command(
 
     public void OnLanguageCommand(CCSPlayerController client, CommandInfo command, string language)
     {
-        if (!Utility.IsHumanPlayerValid(client))
+        if (!Utility.IsHumanValid(client))
             return;
 
         var playerCache = _playerService.GetPlayerCache(client.SteamID);
@@ -717,7 +717,7 @@ public class Command(
 
     public void OnHelpCommand(CCSPlayerController client, CommandInfo command)
     {
-        if (!Utility.IsHumanPlayerValid(client))
+        if (!Utility.IsHumanValid(client))
             return;
 
         var availableCommands = GetAvailableCommandsForPlayer(client)
@@ -894,7 +894,7 @@ public class Command(
         playerCache = null!;
         volume = 0;
 
-        if (!Utility.IsHumanPlayerValid(client))
+        if (!Utility.IsHumanValid(client))
             return false;
 
         var tryGetCache = _playerService.GetPlayerCache(client.SteamID);

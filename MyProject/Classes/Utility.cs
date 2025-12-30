@@ -683,7 +683,7 @@ namespace MyProject.Classes
         /// <param name="removeWeapon">If true, the dropped weapon will be deleted from the game world after 0.1 seconds; if false, the weapon remains on the ground for pickup</param>
         public static void DropWeapon(CCSPlayerController player, string weaponName, bool removeWeapon = false)
         {
-            if (!IsHumanPlayerValid(player)) return;
+            if (!IsHumanValid(player)) return;
 
             var weaponServices = player.PlayerPawn.Value!.WeaponServices;
             if (weaponServices is null) return;
@@ -717,7 +717,7 @@ namespace MyProject.Classes
         /// <param name="weaponEntity">The entity name of the weapon to give (e.g., "weapon_ak47", "weapon_awp", "weapon_glock")</param>
         public static void GiveWeapon(CCSPlayerController player, string weaponEntity)
         {
-            if (!IsHumanPlayerValid(player))
+            if (!IsHumanValid(player))
                 throw new ArgumentNullException("Player is null or invalid");
             if (string.IsNullOrEmpty(weaponEntity))
                 throw new ArgumentException($"Weapon Entity is null or empty");
@@ -783,35 +783,27 @@ namespace MyProject.Classes
             return matches.Count == 1 ? matches[0].EntityName : null;
         }
 
-        public static bool IsHumanPlayerValid([NotNullWhen(true)] CCSPlayerController? player) =>
-            player != null &&
-            player.IsValid &&
-            !player.IsBot &&
-            player.PlayerPawn != null &&
-            player.PlayerPawn.Value != null &&
-            player.PlayerPawn.Value.IsValid;
+        public static bool IsHumanValid([NotNullWhen(true)] CCSPlayerController? player) =>
+            IsPlayerValid(player) &&
+            !player.IsBot;
 
-        public static bool IsHumanPlayerValidAndAlive([NotNullWhen(true)] CCSPlayerController player) =>
-            IsHumanPlayerValid(player) &&
+        public static bool IsHumanValidAndAlive([NotNullWhen(true)] CCSPlayerController player) =>
+            IsHumanValid(player) &&
             player.PlayerPawn.Value!.LifeState == (byte)LifeState_t.LIFE_ALIVE;
 
-        public static List<CCSPlayerController> GetAliveHumanPlayers() =>
+        public static List<CCSPlayerController> GetAliveHumans() =>
             Utilities.GetPlayers()
-                .Where(player => Utility.IsHumanPlayerValidAndAlive(player))
+                .Where(IsHumanValidAndAlive)
                 .ToList();
 
-        public static List<CCSPlayerController> GetHumanPlayers() =>
+        public static List<CCSPlayerController> GetHumans() =>
             Utilities.GetPlayers()
-                .Where(player => IsHumanPlayerValid(player))
+                .Where(IsHumanValid)
                 .ToList();
 
         public static bool IsBotValid([NotNullWhen(true)] CCSPlayerController? bot) =>
-            bot is not null &&
-            bot.IsValid &&
-            bot.IsBot &&
-            bot.PlayerPawn is not null &&
-            bot.PlayerPawn.Value is not null &&
-            bot.PlayerPawn.Value.IsValid;
+            IsPlayerValid(bot) &&
+            bot.IsBot;
 
         public static bool IsBotValidAndAlive([NotNullWhen(true)] CCSPlayerController? bot) =>
             IsBotValid(bot) &&
@@ -831,7 +823,7 @@ namespace MyProject.Classes
 
         public static void PrintToAllCenter(string message)
         {
-            var humans = GetHumanPlayers();
+            var humans = GetHumans();
 
             foreach (var player in humans)
             {
