@@ -351,6 +351,8 @@ public class Main(
                 _position.Add(player.PlayerName, new Position());
             if (!_weaponStatus.ContainsKey(player.PlayerName))
                 _weaponStatus.Add(player.PlayerName, new WeaponStatus());
+
+            Server.PrintToChatAll($" {ChatColors.Purple}{player.PlayerName} {ChatColors.Green}has connected to the server.");
         }
 
         _players[player.PlayerName] = player.Slot;
