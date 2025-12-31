@@ -483,7 +483,6 @@ public class Main(
         RemoveProtectionFromAllPlayers();
         ActivateAllWeaponStatuses();
         StartWeaponCheckTimer();
-        PlayRoundMusic();
 
         var endGameRound = ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>();
 
@@ -502,6 +501,8 @@ public class Main(
                 _music.PlayEndGameMusic();
             });
         }
+        else
+            PlayRoundMusic();
 
         return HookResult.Continue;
 
