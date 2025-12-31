@@ -377,6 +377,8 @@ public class Bot(ILogger<Bot> logger) : IBot
 
     public void BossBehavior(CCSPlayerController boss)
     {
+        if (AppSettings.IsDebug)
+            _logger.LogInformation("BossBehavior Start");
         if (!Utility.IsBotValidAndAlive(boss))
             return;
         var activeAbilityChance = GetChance();
@@ -416,6 +418,8 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void FireTorture()
         {
+            if (AppSettings.IsDebug)
+                _logger.LogInformation("Boss actives FireTorture");
             CreateTimedProjectileAttack(
                 "The Boss ignites all players!",
                 System.Drawing.Color.Red,
@@ -434,6 +438,8 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void Freeze()
         {
+            if (AppSettings.IsDebug)
+                _logger.LogInformation("Boss actives Freeze");
             Utility.PrintToAllCenter("The Boss locks the battlefield in ice!");
             var humanPlayers = Utility.GetAliveHumans();
 
@@ -469,6 +475,8 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void Flashbang()
         {
+            if (AppSettings.IsDebug)
+                _logger.LogInformation("Boss actives Flashbang");
             CreateTimedProjectileAttack(
                 "The Boss blinds the battlefield!",
                 System.Drawing.Color.Transparent,
@@ -488,6 +496,8 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void Explosion()
         {
+            if (AppSettings.IsDebug)
+                _logger.LogInformation("Boss actives Explosion");
             CreateTimedProjectileAttack(
                 "The Boss prepares explosive devastation!",
                 System.Drawing.Color.Orange,
@@ -506,6 +516,8 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void ToxicSmoke()
         {
+            if (AppSettings.IsDebug)
+                _logger.LogInformation("Boss actives ToxicSmoke");
             Utility.PrintToAllCenter("The Boss releases toxic clouds!");
             var humanPlayers = Utility.GetAliveHumans();
             if (humanPlayers.Count == 0)
@@ -535,6 +547,10 @@ public class Bot(ILogger<Bot> logger) : IBot
                         playerPosition.Y,
                         playerPosition.Z
                     );
+
+                    if (AppSettings.IsDebug)
+                        _logger.LogInformation("Toxic Smoke position X: {X} Y: {Y} Z: {Z}", markedPosition.X, markedPosition.Y, markedPosition.Z);
+
                     markedPositions.Add(markedPosition);
 
                     Utility.DrawBeaconOnPlayer(player, System.Drawing.Color.Green, 100.0f, 15.0f, 2.0f);
@@ -562,6 +578,8 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             void CreateToxicDamageZone(Vector smokePosition)
             {
+                if (AppSettings.IsDebug)
+                    _logger.LogInformation("Create Toxic Smoke damage zone");
                 const float damageRadius = 150.0f;
                 const int damagePerSecond = 5;
                 const float smokeDuration = 15.0f;
@@ -589,6 +607,8 @@ public class Bot(ILogger<Bot> logger) : IBot
 
                         if (distance <= damageRadius)
                         {
+                            if (AppSettings.IsDebug)
+                                _logger.LogInformation("{playerName} enters in Toxic Smoke", player.PlayerName);
                             var currentHealth = player.PlayerPawn.Value!.Health;
                             var newHealth = Math.Max(1, currentHealth - damagePerSecond);
 
@@ -621,6 +641,8 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void Cursed()
         {
+            if (AppSettings.IsDebug)
+                _logger.LogInformation("Boss actives Cursed");
             var bossHealth = boss.PlayerPawn.Value!.Health;
             var maxHealth = IsBoss(boss) && boss.PlayerName.Contains(BotProfile.Boss[0]) ? Main.Instance.Config.MidBossHealth : Main.Instance.Config.FinalBossHealth;
             var oneThirdHealth = maxHealth / 3;
@@ -630,7 +652,6 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             _isCurseActive = true;
 
-            Utility.PrintToAllCenter("The Boss casts a deadly curse upon all!");
             var humanPlayers = Utility.GetAliveHumans();
 
             if (humanPlayers.Count == 0)
@@ -638,6 +659,8 @@ public class Bot(ILogger<Bot> logger) : IBot
                 _isCurseActive = false;
                 return;
             }
+
+            Utility.PrintToAllCenter("The Boss casts a deadly curse upon all!");
 
             const int curseDamage = 2;
             const float curseDuration = 10.0f;
@@ -678,10 +701,11 @@ public class Bot(ILogger<Bot> logger) : IBot
                         var color = Color.FromArgb(102, 193, 45, 45);
                         Utility.ColorScreen(player, color, 0.3f, 0.2f);
                     }
-                    catch (ArgumentException)
+                    catch (ArgumentException ex)
                     {
-                        // Player is dead or invalid, ignore error
-                        continue;
+                        if (AppSettings.IsDebug)
+                            _logger.LogWarning("Slap Error, {ExceptionMessage}, playerName {playerName}", ex.Message, player.PlayerName);
+                        // Player is dead or invalid, ignore SlapPlayer error
                     }
                 }
             }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
@@ -699,6 +723,8 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void CreateTimedProjectileAttack(string message, System.Drawing.Color beaconColor, Action<Vector> createProjectileAction, float delayTime = 3.0f)
         {
+            if (AppSettings.IsDebug)
+                _logger.LogInformation("Marked projectile position and draw beacon, {projectAction}", createProjectileAction.Method.Name);
             Utility.PrintToAllCenter(message);
             var humanPlayers = Utility.GetAliveHumans();
             if (humanPlayers.Count == 0)
@@ -722,6 +748,8 @@ public class Bot(ILogger<Bot> logger) : IBot
                         playerPosition.Y,
                         playerPosition.Z
                     );
+                    if (AppSettings.IsDebug)
+                        _logger.LogInformation("Projectile position X: {X}, Y: {Y}, Z: {Z}", markedPosition.X, markedPosition.Y, markedPosition.Z);
                     markedPositions.Add(markedPosition);
 
                     var beaconDuration = (beaconColor == System.Drawing.Color.Green) ? 15.0f : 6.0f;
@@ -740,6 +768,8 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void CreateProjectileAtPosition<T>(Vector position, CCSPlayerController attacker, float cleanupTime = 3.0f) where T : CBaseCSGrenadeProjectile
         {
+            if (AppSettings.IsDebug)
+                _logger.LogInformation("Create projectile {projectType}", typeof(T).Name);
             // Early check: ensure attacker is valid before creating projectile
             if (!Utility.IsPlayerValidAndAlive(attacker))
                 return;
@@ -765,11 +795,17 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (Utility.IsPlayerValidAndAlive(attacker) &&
                 attacker.PlayerPawn.Value!.IsValid)
             {
+                if (AppSettings.IsDebug)
+                {
+                    _logger.LogInformation("Projectile attacker name: {name}", attacker.PlayerName);
+                }
                 projectile.TeamNum = attacker.TeamNum;
                 projectile.Thrower.Raw = attacker.PlayerPawn.Raw;
                 projectile.OriginalThrower.Raw = attacker.PlayerPawn.Raw;
                 projectile.OwnerEntity.Raw = attacker.PlayerPawn.Raw;
             }
+            else if (AppSettings.IsDebug)
+                _logger.LogWarning("Projectile attacker is invaild");
             // If attacker becomes invalid, projectile will have no owner
             // Players can still be damaged, but kills will count as environmental/suicide
 
@@ -779,20 +815,6 @@ public class Bot(ILogger<Bot> logger) : IBot
                 smokeProjectile.SmokeColor.Y = 255;
                 smokeProjectile.SmokeColor.Z = 0;
             }
-
-            Main.Instance.AddTimer(0.05f, () =>
-            {
-                if (projectile != null && projectile.IsValid)
-                {
-                    Main.Instance.AddTimer(cleanupTime, () =>
-                    {
-                        if (projectile != null && projectile.IsValid)
-                        {
-                            projectile.Remove();
-                        }
-                    });
-                }
-            });
         }
     }
 
