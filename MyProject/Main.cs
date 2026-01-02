@@ -280,45 +280,32 @@ public class Main(
                     switch (weaponDesignName)
                     {
                         case "weapon_awp":
-                            SetAmmoAmount(10);
-                            SetReservedAmmoAmount(30);
+                            Utility.SetAmmoAmount(weaponBase, 10);
+                            Utility.SetReservedAmmoAmount(weaponBase, 30);
                             break;
                         case "weapon_m4a1":
                             if (weaponIndex == 60) // m4a1 silencer
                             {
-                                SetAmmoAmount(30);
-                                SetReservedAmmoAmount(90);
+                                Utility.SetAmmoAmount(weaponBase, 30);
+                                Utility.SetReservedAmmoAmount(weaponBase, 90);
                             }
                             break;
                         case "weapon_hkp2000":
                             if (weaponIndex == 61) // USP-S
-                                SetReservedAmmoAmount(100);
+                                Utility.SetReservedAmmoAmount(weaponBase, 100);
                             break;
                         case "weapon_p250":
-                            SetReservedAmmoAmount(52);
+                            Utility.SetReservedAmmoAmount(weaponBase, 52);
                             break;
                         case "weapon_cz75a":
-                            SetReservedAmmoAmount(60);
+                            Utility.SetReservedAmmoAmount(weaponBase, 60);
                             break;
                         case "weapon_deagle":
                             if (weaponIndex == 64) // R8 Revolver
-                                SetReservedAmmoAmount(40);
+                                Utility.SetReservedAmmoAmount(weaponBase, 40);
                             break;
                         default:
                             return;
-                    }
-
-                    void SetAmmoAmount(int amount)
-                    {
-                        weaponBase.VData.MaxClip1 = amount;
-                        weaponBase.VData.DefaultClip1 = amount;
-                        weaponBase.Clip1 = amount;
-                    }
-
-                    void SetReservedAmmoAmount(int amount)
-                    {
-                        weaponBase.VData.PrimaryReserveAmmoMax = amount;
-                        weaponBase.ReserveAmmo[0] = amount;
                     }
                 }
                 catch (Exception ex)
