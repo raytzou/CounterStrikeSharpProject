@@ -228,16 +228,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             if (isMidBoss)
             {
-                await Server.NextFrameAsync(() =>
-                {
-                    var midBoss = Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(BotProfile.Boss[0]));
-                    if (!Utility.IsBotValid(midBoss))
-                    {
-                        _logger.LogError("Spawn mid boss failed.");
-                        return;
-                    }
-                    midBoss.PlayerPawn.Value!.Health = Main.Instance.Config.MidBossHealth;
-                });
+                await SetMidBossHealth();
             }
             else
             {
@@ -274,6 +265,30 @@ public class Bot(ILogger<Bot> logger) : IBot
                     await PreventBotPickupWeaponAfter3Seconds(bot);
                 }
             }
+        }
+
+        bool ValidateMidBoss(out CCSPlayerController? midBoss)
+        {
+            midBoss = Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(BotProfile.Boss[0]));
+            if (!Utility.IsBotValid(midBoss))
+            {
+                _logger.LogError("Spawn mid boss failed.");
+                return false;
+            }
+
+            return true;
+        }
+
+        async Task SetMidBossHealth()
+        {
+            await Server.NextFrameAsync(() =>
+            {
+                bool isMidBossValid = ValidateMidBoss(out var midBoss);
+                if (!isMidBossValid)
+                    return;
+
+                midBoss!.PlayerPawn.Value!.Health = Main.Instance.Config.MidBossHealth;
+            });
         }
     }
 
