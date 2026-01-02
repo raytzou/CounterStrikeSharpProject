@@ -82,12 +82,12 @@ public class Bot(ILogger<Bot> logger) : IBot
         else
             await HandleNormalRound();
 
-        async Task SetSpecialBotWeapon(string botName, CsItem item)
+        async Task SetBotWeapon(string botName, CsItem item)
         {
             var bot = Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(botName));
             if (!Utility.IsBotValidAndAlive(bot))
             {
-                _logger.LogError("Special bot {BotName} not found or invalid when setting weapon", botName);
+                _logger.LogError("Bot {BotName} not found or invalid when setting weapon", botName);
                 return;
             }
 
@@ -105,7 +105,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to set weapon for special bot {BotName}", botName);
+                _logger.LogError(ex, "Failed to set weapon for bot {BotName}", botName);
             }
 
             async Task VerifyBotWeapon(CCSPlayerController? bot)
@@ -117,7 +117,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                         var currentWeapon = bot.PlayerPawn.Value!.WeaponServices?.ActiveWeapon.Value?.DesignerName;
                         if (!Utility.IsWeaponMatch(item, currentWeapon ?? ""))
                         {
-                            _logger.LogWarning("Special bot {BotName} weapon mismatch. Expected: {Expected}, Actual: {Actual}",
+                            _logger.LogWarning("Bot {BotName} weapon mismatch. Expected: {Expected}, Actual: {Actual}",
                                 bot.PlayerName, Utility.GetCsItemEnumValue(item), currentWeapon ?? "None");
                         }
                     }
@@ -225,10 +225,15 @@ public class Bot(ILogger<Bot> logger) : IBot
         {
             _respawnTimes = 0;
             var isMidBoss = Main.Instance.RoundCount == Main.Instance.Config.MidBossRound;
+            
+            const int ammo = 999;
+            const int reservedAmmo = 0;
 
             if (isMidBoss)
             {
                 await SetMidBossHealth();
+                await SetMidBossWeapon();
+                await SetMidBossAmmo();
             }
             else
             {
@@ -243,6 +248,75 @@ public class Bot(ILogger<Bot> logger) : IBot
                     finalBoss.PlayerPawn.Value!.Health = Main.Instance.Config.FinalBossHealth;
                 });
             }
+
+            async Task SetMidBossWeapon()
+            {
+                bool isMidBossValid = ValidateMidBoss(out var midBoss);
+                if (!isMidBossValid)
+                    return;
+
+                try
+                {
+                    await SetBotWeapon(midBoss!.PlayerName, CsItem.UMP45);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Set mid boss weapon error");
+                }
+            }
+
+            async Task SetMidBossAmmo()
+            {
+                await Server.NextWorldUpdateAsync(() =>
+                {
+                    bool isMidBossValid = ValidateMidBoss(out var midBoss);
+                    if (!isMidBossValid)
+                        return;
+
+                    var weaponService = midBoss!.PlayerPawn.Value!.WeaponServices;
+
+                    if (weaponService == null)
+                    {
+                        _logger.LogError("Mid boss weapon service is null during setting boss weapon ammo");
+                        return;
+                    }
+
+                    var midBossWeapon = weaponService.MyWeapons
+                        .FirstOrDefault(weapon =>
+                            weapon is not null &&
+                            weapon.IsValid &&
+                            weapon.Value is not null &&
+                            weapon.Value.IsValid &&
+                            weapon.Value.DesignerName == Utility.GetActualWeaponName(CsItem.UMP45));
+
+                    if (midBossWeapon == null)
+                    {
+                        _logger.LogError("Cannot find the mid boss weapon");
+                        return;
+                    }
+
+                    try
+                    {
+                        var weaponBase = midBossWeapon.Value!.As<CCSWeaponBase>();
+
+                        if (!Utility.IsWeaponBaseValid(weaponBase))
+                        {
+                            _logger.LogError("Converted weapon base is invalid");
+                            return;
+                        }
+
+                        Utility.SetAmmoAmount(weaponBase, ammo);
+                        Utility.SetReservedAmmoAmount(weaponBase, reservedAmmo);
+
+                        if (AppSettings.IsDebug)
+                            _logger.LogInformation("Set mid boss weapon ammo successfully. ammo: {ammo}, reservedAmmo: {reservedAmmo}", ammo, reservedAmmo);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to convert or set weapon ammo");
+                    }
+                });
+            }
         }
 
         async Task HandleNormalRound()
@@ -254,9 +328,9 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             if (Main.Instance.RoundCount > 1)
             {
-                await SetSpecialBotWeapon(BotProfile.Special[0], CsItem.AWP); // "[ELITE]EagleEye"
-                await SetSpecialBotWeapon(BotProfile.Special[1], CsItem.M4A1S); // "[ELITE]mimic"
-                await SetSpecialBotWeapon(BotProfile.Special[2], CsItem.P90); // "[EXPERT]Rush" 
+                await SetBotWeapon(BotProfile.Special[0], CsItem.AWP); // "[ELITE]EagleEye"
+                await SetBotWeapon(BotProfile.Special[1], CsItem.M4A1S); // "[ELITE]mimic"
+                await SetBotWeapon(BotProfile.Special[2], CsItem.P90); // "[EXPERT]Rush" 
 
                 foreach (var bot in Utilities.GetPlayers().Where(player => player.IsBot))
                 {
