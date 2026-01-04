@@ -2,6 +2,7 @@
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Entities.Constants;
 using CounterStrikeSharp.API.Modules.Utils;
+using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.Extensions.Logging;
 using MyProject.Classes;
 using MyProject.Factories;
@@ -224,40 +225,21 @@ public class Bot(ILogger<Bot> logger) : IBot
         async Task HandleBossRound()
         {
             _respawnTimes = 0;
-            var isMidBoss = Main.Instance.RoundCount == Main.Instance.Config.MidBossRound;
-            
-            const int ammo = 999;
-            const int reservedAmmo = 0;
+            var currentRound = Main.Instance.RoundCount;
 
-            if (isMidBoss)
-            {
-                await SetMidBossHealth();
-                await SetMidBossWeapon();
-                await SetMidBossAmmo();
-            }
-            else
-            {
-                await Server.NextFrameAsync(() =>
-                {
-                    var finalBoss = Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(BotProfile.Boss[1]));
-                    if (!Utility.IsBotValid(finalBoss))
-                    {
-                        _logger.LogError("Spawn final boss failed");
-                        return;
-                    }
-                    finalBoss.PlayerPawn.Value!.Health = Main.Instance.Config.FinalBossHealth;
-                });
-            }
+            await SetBossHealth();
+            await SetBossWeapon();
+            await SetBossAmmo();
 
-            async Task SetMidBossWeapon()
+            async Task SetBossWeapon()
             {
-                bool isMidBossValid = ValidateMidBoss(out var midBoss);
-                if (!isMidBossValid)
+                bool isBossValid = ValidateBoss(out var boss);
+                if (!isBossValid)
                     return;
 
                 try
                 {
-                    await SetBotWeapon(midBoss!.PlayerName, CsItem.UMP45);
+                    await SetBotWeapon(boss!.PlayerName, currentRound == Main.Instance.Config.MidBossRound ? CsItem.UMP45 : CsItem.M249);
                 }
                 catch (Exception ex)
                 {
@@ -265,39 +247,39 @@ public class Bot(ILogger<Bot> logger) : IBot
                 }
             }
 
-            async Task SetMidBossAmmo()
+            async Task SetBossAmmo()
             {
                 await Server.NextWorldUpdateAsync(() =>
                 {
-                    bool isMidBossValid = ValidateMidBoss(out var midBoss);
+                    bool isMidBossValid = ValidateBoss(out var boss);
                     if (!isMidBossValid)
                         return;
 
-                    var weaponService = midBoss!.PlayerPawn.Value!.WeaponServices;
+                    var weaponService = boss!.PlayerPawn.Value!.WeaponServices;
 
                     if (weaponService == null)
                     {
-                        _logger.LogError("Mid boss weapon service is null during setting boss weapon ammo");
+                        _logger.LogError("Boss weapon service is null during setting boss weapon ammo");
                         return;
                     }
 
-                    var midBossWeapon = weaponService.MyWeapons
+                    var bossWeapon = weaponService.MyWeapons
                         .FirstOrDefault(weapon =>
                             weapon is not null &&
                             weapon.IsValid &&
                             weapon.Value is not null &&
                             weapon.Value.IsValid &&
-                            weapon.Value.DesignerName == Utility.GetActualWeaponName(CsItem.UMP45));
+                            weapon.Value.DesignerName == Utility.GetActualWeaponName(currentRound == Main.Instance.Config.MidBossRound ? CsItem.UMP45 : CsItem.M249));
 
-                    if (midBossWeapon == null)
+                    if (bossWeapon == null)
                     {
-                        _logger.LogError("Cannot find the mid boss weapon");
+                        _logger.LogError("Cannot find the boss weapon");
                         return;
                     }
 
                     try
                     {
-                        var weaponBase = midBossWeapon.Value!.As<CCSWeaponBase>();
+                        var weaponBase = bossWeapon.Value!.As<CCSWeaponBase>();
 
                         if (!Utility.IsWeaponBaseValid(weaponBase))
                         {
@@ -305,11 +287,14 @@ public class Bot(ILogger<Bot> logger) : IBot
                             return;
                         }
 
+                        const int ammo = 999;
+                        const int reservedAmmo = 0;
+
                         Utility.SetAmmoAmount(weaponBase, ammo);
                         Utility.SetReservedAmmoAmount(weaponBase, reservedAmmo);
 
                         if (AppSettings.IsDebug)
-                            _logger.LogInformation("Set mid boss weapon ammo successfully. ammo: {ammo}, reservedAmmo: {reservedAmmo}", ammo, reservedAmmo);
+                            _logger.LogInformation("Set boss weapon ammo successfully. ammo: {ammo}, reservedAmmo: {reservedAmmo}", ammo, reservedAmmo);
                     }
                     catch (Exception ex)
                     {
@@ -318,27 +303,33 @@ public class Bot(ILogger<Bot> logger) : IBot
                 });
             }
 
-            bool ValidateMidBoss(out CCSPlayerController? midBoss)
+            bool ValidateBoss(out CCSPlayerController? boss)
             {
-                midBoss = Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(BotProfile.Boss[0]));
-                if (!Utility.IsBotValid(midBoss))
+                boss = currentRound == Main.Instance.Config.MidBossRound ?
+                    Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(BotProfile.Boss[0])) :
+                    Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(BotProfile.Boss[1]));
+
+                if (!Utility.IsBotValid(boss))
                 {
-                    _logger.LogError("Spawn mid boss failed.");
+                    var bossType = currentRound == Main.Instance.Config.MidBossRound ? "Mid Boss" : "Final Boss";
+                    _logger.LogError("Spawn {BossType} failed at round {RoundCount}", bossType, currentRound);
                     return false;
                 }
 
                 return true;
             }
 
-            async Task SetMidBossHealth()
+            async Task SetBossHealth()
             {
                 await Server.NextFrameAsync(() =>
                 {
-                    bool isMidBossValid = ValidateMidBoss(out var midBoss);
-                    if (!isMidBossValid)
+                    bool isBossValid = ValidateBoss(out var boss);
+                    if (!isBossValid)
                         return;
 
-                    midBoss!.PlayerPawn.Value!.Health = Main.Instance.Config.MidBossHealth;
+                    boss!.PlayerPawn.Value!.Health = currentRound == Main.Instance.Config.MidBossRound ?
+                        Main.Instance.Config.MidBossHealth :
+                        Main.Instance.Config.FinalBossHealth;
                 });
             }
         }
