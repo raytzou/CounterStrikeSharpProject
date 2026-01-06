@@ -809,6 +809,15 @@ namespace MyProject.Classes
             }
         }
 
+        public static void RemoveHostage()
+        {
+            foreach (var entity in Utilities.FindAllEntitiesByDesignerName<CBaseEntity>("hostage_entity"))
+            {
+                if (!IsEntityValid(entity)) continue;
+                entity.Remove();
+            }
+        }
+
         public static bool IsHumanValid([NotNullWhen(true)] CCSPlayerController? player) =>
             IsPlayerValid(player) &&
             !player.IsBot;

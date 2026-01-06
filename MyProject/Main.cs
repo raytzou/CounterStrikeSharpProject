@@ -491,7 +491,7 @@ public class Main(
         if (_roundCount == Config.MidBossRound || _roundCount == Config.FinalBossRound)
         {
             Utility.RemoveBomb();
-            RemoveHostage();
+            Utility.RemoveHostage();
         }
 
         if (_roundCount == endGameRound)
@@ -570,15 +570,6 @@ public class Main(
                     foreach (var cacheWeapon in pair.Value.Weapons)
                         Server.PrintToChatAll(cacheWeapon);
                 }
-            }
-        }
-
-        void RemoveHostage()
-        {
-            foreach (var entity in Utilities.FindAllEntitiesByDesignerName<CBaseEntity>("hostage_entity"))
-            {
-                if (!Utility.IsEntityValid(entity)) continue;
-                entity.Remove();
             }
         }
 
