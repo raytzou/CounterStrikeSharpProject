@@ -632,6 +632,9 @@ public class Main(
             var bombTaker = bots[randomIndex];
 
             _bot.GiveBotWeapon(bombTaker, CsItem.C4);
+
+            if (AppSettings.IsDebug)
+                _logger.LogInformation("CT bot {PlayerName} received C4", bombTaker.PlayerName);
         }
     }
 
