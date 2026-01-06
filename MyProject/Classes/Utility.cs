@@ -847,6 +847,29 @@ namespace MyProject.Classes
 
         public static char GetPlayerTeamChatColor(CCSPlayerController? player) => player is null ? ChatColors.Default : ChatColors.ForPlayer(player);
 
+        public static void SetAmmoAmount(CCSWeaponBase weaponBase, int amount)
+        {
+            if (!IsWeaponBaseValid(weaponBase))
+                throw new InvalidOperationException("Weapon Base is invalid");
+
+            weaponBase.VData!.MaxClip1 = amount;
+            weaponBase.VData.DefaultClip1 = amount;
+            weaponBase.Clip1 = amount;
+        }
+
+
+        public static void SetReservedAmmoAmount(CCSWeaponBase weaponBase, int amount)
+        {
+            if (!IsWeaponBaseValid(weaponBase))
+                throw new InvalidOperationException("Weapon Base is invalid");
+
+            weaponBase.VData!.PrimaryReserveAmmoMax = amount;
+            weaponBase.ReserveAmmo[0] = amount;
+        }
+
+        public static bool IsWeaponBaseValid([NotNullWhen(true)] CCSWeaponBase weaponBase) =>
+            weaponBase is not null && weaponBase.IsValid && weaponBase.Entity is not null && weaponBase.VData is not null;
+
         /// <summary>
         /// It's the same as AddTimer() in BasicPlugin, but I want to use it elsewhere
         /// </summary>
