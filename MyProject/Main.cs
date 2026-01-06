@@ -579,7 +579,7 @@ public class Main(
                 {
                     try
                     {
-                        await _bot.RoundStartBehavior(mapName);
+                        await _bot.RoundStartBehavior();
                     }
                     catch (Exception ex)
                     {

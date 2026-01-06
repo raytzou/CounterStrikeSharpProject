@@ -21,7 +21,7 @@ namespace MyProject.Modules.Interfaces
 
         Task WarmupEndBehavior(string mapName);
 
-        Task RoundStartBehavior(string mapName);
+        Task RoundStartBehavior();
 
         Task RoundEndBehavior(int winStreak, int looseStreak, string mapName);
 

@@ -2,7 +2,6 @@
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Entities.Constants;
 using CounterStrikeSharp.API.Modules.Utils;
-using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.Extensions.Logging;
 using MyProject.Classes;
 using MyProject.Factories;
@@ -72,7 +71,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             await FillNormalBotAsync(GetDifficultyLevel(0, 0), botTeam);
     }
 
-    public async Task RoundStartBehavior(string mapName)
+    public async Task RoundStartBehavior()
     {
         await SetBotMoneyToZero();
         var isBossRound = Main.Instance.RoundCount == Main.Instance.Config.MidBossRound ||
@@ -96,7 +95,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 await AllowBotPickupWeapon(bot);
                 await RemoveBotWeapon(bot);
-                await GiveBotWeapon(bot, mapName, item);
+                await GiveBotWeapon(bot, item);
                 await PreventBotPickupWeaponAfter3Seconds(bot);
 
                 if (AppSettings.IsDebug)
@@ -1139,23 +1138,17 @@ public class Bot(ILogger<Bot> logger) : IBot
         });
     }
 
-    private async Task GiveBotWeapon(CCSPlayerController bot, string mapName, CsItem? weapon = null)
+    private async Task GiveBotWeapon(CCSPlayerController bot, CsItem weapon)
     {
-        // give bot weapon
         await Server.NextFrameAsync(() =>
         {
-            if (!Utility.IsBotValid(bot))
+            if (!Utility.IsBotValidAndAlive(bot))
                 return;
-
-            var botTeam = GetBotTeam(mapName);
-            if (botTeam == CsTeam.None) return;
-
-            var weaponToGive = weapon ?? (botTeam == CsTeam.CounterTerrorist ? CsItem.M4A1 : CsItem.AK47);
 
             if (bot.PlayerPawn.Value!.WeaponServices == null)
                 throw new NullReferenceException("Bot Weapon Service is null, cannot give bot weapon");
 
-            bot.GiveNamedItem(weaponToGive);
+            bot.GiveNamedItem(weapon);
         });
     }
 
