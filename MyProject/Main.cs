@@ -48,6 +48,7 @@ public class Main(
     private bool _isRoundEnd = false;
     private bool _randomSpawn = false;
     private int _currentRoundSecond = 0;
+    private int _endGameRound = 0;
 
     // module services
     private readonly ICommand _command = commmand;
@@ -473,15 +474,13 @@ public class Main(
         ActivateAllWeaponStatuses();
         StartWeaponCheckTimer();
 
-        var endGameRound = ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>();
-
         if (_roundCount == Config.MidBossRound || _roundCount == Config.FinalBossRound)
         {
             RemoveBomb();
             RemoveHostage();
         }
 
-        if (_roundCount == endGameRound)
+        if (_roundCount == _endGameRound)
         {
             // End Game
             Server.ExecuteCommand("mp_maxrounds 1");
@@ -497,7 +496,7 @@ public class Main(
 
         void HandleRoundStartMessages()
         {
-            if (_roundCount != ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>())
+            if (_roundCount != _endGameRound)
             {
                 Utility.PrintToChatAllWithColor($"Round: {ChatColors.LightRed}{_roundCount}{ChatColors.Grey}/{ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>() - 1}");
                 Utility.PrintToChatAllWithColor($"Difficulty level: {ChatColors.Purple}{_bot.CurrentLevel}{ChatColors.Grey}/{BotProfile.MaxLevel}");
@@ -1006,6 +1005,7 @@ public class Main(
         _weaponStatus.Clear();
         _randomSpawn = false;
         _currentRoundSecond = 0;
+        _endGameRound = ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>();
     }
 
     private static void RemovePlayerProtection(CCSPlayerController? player)
