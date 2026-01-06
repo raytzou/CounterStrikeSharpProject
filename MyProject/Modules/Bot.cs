@@ -34,6 +34,8 @@ public class Bot(ILogger<Bot> logger) : IBot
 
     public bool IsBoss(CCSPlayerController player) => _bosses.Contains(player.PlayerName);
 
+    public bool IsSpecial(CCSPlayerController player) => _specialBots.Contains(player.PlayerName);
+
     public async Task MapStartBehavior(string mapName)
     {
         await StopBotMoving();

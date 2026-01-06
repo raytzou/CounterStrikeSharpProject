@@ -17,7 +17,6 @@ namespace MyProject.Modules.Interfaces
 
         IReadOnlySet<string> Bosses { get; }
 
-
         Task MapStartBehavior(string mapName);
 
         Task WarmupEndBehavior(string mapName);
@@ -29,6 +28,8 @@ namespace MyProject.Modules.Interfaces
         Task RespawnBotAsync(CCSPlayerController bot, string mapName);
 
         bool IsBoss(CCSPlayerController player);
+
+        bool IsSpecial(CCSPlayerController player);
 
         void BossBehavior(CCSPlayerController boss);
 
