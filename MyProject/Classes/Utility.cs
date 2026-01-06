@@ -788,7 +788,7 @@ namespace MyProject.Classes
             var findBomb = false;
             foreach (var player in Utilities.GetPlayers())
             {
-                if (!IsHumanValid(player)) continue;
+                if (!IsHumanValidAndAlive(player)) continue;
                 if (player.PlayerPawn.Value!.WeaponServices is null) continue;
 
                 foreach (var weapon in player.PlayerPawn.Value.WeaponServices.MyWeapons)
