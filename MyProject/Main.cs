@@ -481,6 +481,11 @@ public class Main(
             Utility.RemoveBomb();
             Utility.RemoveHostage();
         }
+        else
+        {
+            ControlBomb();
+        }
+
 
         if (_roundCount == endGameRound)
         {
@@ -607,6 +612,23 @@ public class Main(
                     }
                 });
             });
+        }
+
+        void ControlBomb()
+        {
+            if (GetHumanTeam() != CsTeam.Terrorist || _winStreak <= 1)
+                return;
+
+            Utility.RemoveBomb();
+
+            var bots = Utility.GetAliveBots()
+                .Where(bot => !_bot.IsBoss(bot) && !_bot.IsSpecial(bot))
+                .ToList();
+
+            int randomIndex = Random.Shared.Next(bots.Count);
+            var bombTaker = bots[randomIndex];
+
+            _bot.GiveBotWeapon(bombTaker, CsItem.C4);
         }
     }
 
