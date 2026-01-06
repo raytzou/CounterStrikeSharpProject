@@ -1,4 +1,5 @@
 ﻿using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Modules.Entities.Constants;
 
 namespace MyProject.Modules.Interfaces
 {
@@ -32,5 +33,7 @@ namespace MyProject.Modules.Interfaces
         void BossBehavior(CCSPlayerController boss);
 
         void ClearDamageTimer();
+
+        Task GiveBotWeapon(CCSPlayerController bot, CsItem weapon);
     }
 }

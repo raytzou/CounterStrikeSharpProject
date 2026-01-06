@@ -908,6 +908,23 @@ public class Bot(ILogger<Bot> logger) : IBot
         _isCurseActive = false;
     }
 
+    public async Task GiveBotWeapon(CCSPlayerController bot, CsItem weapon)
+    {
+        await Server.NextFrameAsync(() =>
+        {
+            if (!Utility.IsBotValidAndAlive(bot))
+            {
+                _logger.LogError("Failed to give weapon to bot, {botName} is not valid or bot is not alive", bot.PlayerName);
+                return;
+            }
+
+            if (bot.PlayerPawn.Value!.WeaponServices == null)
+                throw new NullReferenceException("Bot Weapon Service is null, cannot give bot weapon");
+
+            bot.GiveNamedItem(weapon);
+        });
+    }
+
     private CsTeam GetBotTeam(string mapName)
     {
         switch (mapName[..3])
@@ -1135,20 +1152,6 @@ public class Bot(ILogger<Bot> logger) : IBot
                 return;
 
             bot.RemoveWeapons();
-        });
-    }
-
-    private async Task GiveBotWeapon(CCSPlayerController bot, CsItem weapon)
-    {
-        await Server.NextFrameAsync(() =>
-        {
-            if (!Utility.IsBotValidAndAlive(bot))
-                return;
-
-            if (bot.PlayerPawn.Value!.WeaponServices == null)
-                throw new NullReferenceException("Bot Weapon Service is null, cannot give bot weapon");
-
-            bot.GiveNamedItem(weapon);
         });
     }
 
