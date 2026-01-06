@@ -783,6 +783,32 @@ namespace MyProject.Classes
             return matches.Count == 1 ? matches[0].EntityName : null;
         }
 
+        public static void RemoveBomb()
+        {
+            var findBomb = false;
+            foreach (var player in Utilities.GetPlayers())
+            {
+                if (!IsHumanValid(player)) continue;
+                if (player.PlayerPawn.Value!.WeaponServices is null) continue;
+
+                foreach (var weapon in player.PlayerPawn.Value.WeaponServices.MyWeapons)
+                {
+                    if (weapon.Value is null) continue;
+                    if (weapon.Value.DesignerName == GetCsItemEnumValue(CsItem.C4))
+                    {
+                        findBomb = true;
+                        break;
+                    }
+                }
+
+                if (findBomb)
+                {
+                    player.RemoveItemByDesignerName(GetCsItemEnumValue(CsItem.C4));
+                    break;
+                }
+            }
+        }
+
         public static bool IsHumanValid([NotNullWhen(true)] CCSPlayerController? player) =>
             IsPlayerValid(player) &&
             !player.IsBot;
