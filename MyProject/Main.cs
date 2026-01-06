@@ -858,6 +858,26 @@ public class Main(
         }
         #endregion local methods
     }
+
+    private HookResult BombBeginPlantHandler(EventBombBeginplant @event, GameEventInfo info)
+    {
+        var player = @event.Userid;
+        if (!Utility.IsPlayerValid(player))
+            return HookResult.Continue;
+
+        if (!player!.IsBot)
+            return HookResult.Continue;
+
+        if (player.Team == CsTeam.CounterTerrorist)
+        {
+            if (AppSettings.IsDebug)
+                _logger.LogInformation("Prevented CT bot {PlayerName} from planting C4", player.PlayerName);
+
+            return HookResult.Handled;
+        }
+
+        return HookResult.Continue;
+    }
     #endregion hook result
 
     #region commands
@@ -1131,6 +1151,7 @@ public class Main(
         RegisterEventHandler<EventBombPlanted>(BombPlantedHandler);
         RegisterEventHandler<EventBombDefused>(BombDefusedHandler);
         RegisterEventHandler<EventBombExploded>(BombExplodedHandler);
+        RegisterEventHandler<EventBombBeginplant>(BombBeginPlantHandler);
 
         AddCommandListener("say", OnPlayerSayCommand);
         AddCommandListener("say_team", OnPlayerSayCommand);
