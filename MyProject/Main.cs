@@ -625,6 +625,9 @@ public class Main(
                 .Where(bot => !_bot.IsBoss(bot) && !_bot.IsSpecial(bot))
                 .ToList();
 
+            if (bots.Count == 0)
+                return;
+
             int randomIndex = Random.Shared.Next(bots.Count);
             var bombTaker = bots[randomIndex];
 
