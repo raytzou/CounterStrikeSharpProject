@@ -843,6 +843,16 @@ namespace MyProject.Classes
             IsBotValid(bot) &&
             bot.PlayerPawn.Value!.LifeState == (byte)LifeState_t.LIFE_ALIVE;
 
+        public static List<CCSPlayerController> GetBots() =>
+            Utilities.GetPlayers()
+                .Where(IsBotValid)
+                .ToList();
+
+        public static List<CCSPlayerController> GetAliveBots() =>
+            Utilities.GetPlayers()
+                .Where(IsBotValidAndAlive)
+                .ToList();
+
         public static bool IsPlayerValid([NotNullWhen(true)] CCSPlayerController? player) =>
             player != null &&
             player.IsValid &&
