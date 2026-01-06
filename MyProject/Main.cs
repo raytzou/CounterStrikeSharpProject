@@ -474,8 +474,9 @@ public class Main(
         StartWeaponCheckTimer();
 
         var endGameRound = ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>();
+        var isBossRound = _roundCount == Config.MidBossRound || _roundCount == Config.FinalBossRound;
 
-        if (_roundCount == Config.MidBossRound || _roundCount == Config.FinalBossRound)
+        if (isBossRound)
         {
             Utility.RemoveBomb();
             Utility.RemoveHostage();
