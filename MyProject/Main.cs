@@ -48,6 +48,7 @@ public class Main(
     private bool _isRoundEnd = false;
     private bool _randomSpawn = false;
     private int _currentRoundSecond = 0;
+    private int _endGameRound = 0;
 
     // module services
     private readonly ICommand _command = commmand;
@@ -468,13 +469,12 @@ public class Main(
 
         if (_warmup) return HookResult.Continue;
 
+        var isBossRound = _roundCount == Config.MidBossRound || _roundCount == Config.FinalBossRound;
+
         HandleRoundStartMessages();
         RemoveProtectionFromAllPlayers();
         ActivateAllWeaponStatuses();
         StartWeaponCheckTimer();
-
-        var endGameRound = ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>();
-        var isBossRound = _roundCount == Config.MidBossRound || _roundCount == Config.FinalBossRound;
 
         if (isBossRound)
         {
@@ -486,8 +486,7 @@ public class Main(
             ControlBomb();
         }
 
-
-        if (_roundCount == endGameRound)
+        if (_roundCount == _endGameRound)
         {
             // End Game
             Server.ExecuteCommand("mp_maxrounds 1");
@@ -503,11 +502,17 @@ public class Main(
 
         void HandleRoundStartMessages()
         {
-            if (_roundCount != ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>())
+            if (_roundCount != _endGameRound)
             {
                 Utility.PrintToChatAllWithColor($"Round: {ChatColors.LightRed}{_roundCount}{ChatColors.Grey}/{ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>() - 1}");
-                Utility.PrintToChatAllWithColor($"Difficulty level: {ChatColors.Purple}{_bot.CurrentLevel}{ChatColors.Grey}/{BotProfile.MaxLevel}");
-                Utility.PrintToChatAllWithColor($"Bot respawn: {ChatColors.Green}{_bot.MaxRespawnTimes}");
+
+                if (!isBossRound)
+                {
+                    Utility.PrintToChatAllWithColor($"Difficulty level: {ChatColors.Purple}{_bot.CurrentLevel}{ChatColors.Grey}/{BotProfile.MaxLevel}");
+                    Utility.PrintToChatAllWithColor($"Bot respawn: {ChatColors.Green}{_bot.MaxRespawnTimes}");
+                }
+                else
+                    Server.PrintToChatAll($" {ChatColors.Red}***** Boss shows up!! *****");
             }
         }
 
@@ -1020,6 +1025,7 @@ public class Main(
         _weaponStatus.Clear();
         _randomSpawn = false;
         _currentRoundSecond = 0;
+        _endGameRound = ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>();
     }
 
     private static void RemovePlayerProtection(CCSPlayerController? player)
