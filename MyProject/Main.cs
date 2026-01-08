@@ -469,12 +469,14 @@ public class Main(
 
         if (_warmup) return HookResult.Continue;
 
+        var isBossRound = _roundCount == Config.MidBossRound || _roundCount == Config.FinalBossRound;
+
         HandleRoundStartMessages();
         RemoveProtectionFromAllPlayers();
         ActivateAllWeaponStatuses();
         StartWeaponCheckTimer();
 
-        if (_roundCount == Config.MidBossRound || _roundCount == Config.FinalBossRound)
+        if (isBossRound)
         {
             RemoveBomb();
             RemoveHostage();
@@ -499,8 +501,14 @@ public class Main(
             if (_roundCount != _endGameRound)
             {
                 Utility.PrintToChatAllWithColor($"Round: {ChatColors.LightRed}{_roundCount}{ChatColors.Grey}/{ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>() - 1}");
-                Utility.PrintToChatAllWithColor($"Difficulty level: {ChatColors.Purple}{_bot.CurrentLevel}{ChatColors.Grey}/{BotProfile.MaxLevel}");
-                Utility.PrintToChatAllWithColor($"Bot respawn: {ChatColors.Green}{_bot.MaxRespawnTimes}");
+
+                if (!isBossRound)
+                {
+                    Utility.PrintToChatAllWithColor($"Difficulty level: {ChatColors.Purple}{_bot.CurrentLevel}{ChatColors.Grey}/{BotProfile.MaxLevel}");
+                    Utility.PrintToChatAllWithColor($"Bot respawn: {ChatColors.Green}{_bot.MaxRespawnTimes}");
+                }
+                else
+                    Server.PrintToChatAll($" {ChatColors.Red}***** Boss shows up!! *****");
             }
         }
 
