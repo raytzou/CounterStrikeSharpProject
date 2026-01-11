@@ -124,13 +124,6 @@ public class Main(
 
     private void OnMapStart(string mapName)
     {
-        var hostname = ConVar.Find("hostname");
-
-        if (string.IsNullOrEmpty(hostname?.StringValue))
-            _logger.LogWarning("hostname is not be set");
-        else
-            _logger.LogInformation("Server name: {serverName}", hostname.StringValue);
-
         _logger.LogInformation("Map Start: {mapName}", mapName);
 
         Server.ExecuteCommand("mp_randomspawn 0");
