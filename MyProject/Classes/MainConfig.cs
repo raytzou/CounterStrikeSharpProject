@@ -17,5 +17,6 @@ namespace MyProject.Classes
         public int MidBossHealth = 10000;
         public int FinalBossHealth = 15000;
         public int DisplayMenuInterval = 30;
+        public int MaxRounds = 9;
     }
 }

@@ -49,7 +49,6 @@ public class Main(
     private bool _isRoundEnd = false;
     private bool _randomSpawn = false;
     private int _currentRoundSecond = 0;
-    private int _endGameRound = 0;
 
     // module services
     private readonly ICommand _command = commmand;
@@ -405,7 +404,7 @@ public class Main(
             RemoveHostage();
         }
 
-        if (_roundCount == _endGameRound)
+        if (_roundCount == Config.MaxRounds)
         {
             // End Game
             Server.ExecuteCommand("mp_maxrounds 1");
@@ -421,7 +420,7 @@ public class Main(
 
         void HandleRoundStartMessages()
         {
-            if (_roundCount != _endGameRound)
+            if (_roundCount != Config.MaxRounds)
             {
                 Utility.PrintToChatAllWithColor($"Round: {ChatColors.LightRed}{_roundCount}{ChatColors.Grey}/{ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>() - 1}");
 
@@ -1001,6 +1000,7 @@ public class Main(
     private void Initialize(string mapName)
     {
         Server.ExecuteCommand("mp_randomspawn 0");
+        Server.ExecuteCommand($"mp_maxrounds {Config.MaxRounds}");
 
         _roundCount = 0;
         _winStreak = 0;
@@ -1010,7 +1010,6 @@ public class Main(
         _weaponStatus.Clear();
         _randomSpawn = false;
         _currentRoundSecond = 0;
-        _endGameRound = ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>();
 
         SetHumanTeam();
         ResetDefaultWeapon();
