@@ -15,7 +15,6 @@ namespace MyProject.Services
         private readonly ILogger<PlayerService> _logger = logger;
         private readonly ProjectDbContext _dbContext = dbContext;
 
-        public string GetDefaultSkin(ulong steamId) => _dbContext.Players.FirstOrDefault(player => player.SteamId == steamId)?.DefaultSkinModelPath ?? throw new NullReferenceException($"Cannot get the default skin SteamID: {steamId}");
         public Player? GetPlayerCache(ulong steamId) => _playerCache.TryGetValue(steamId, out var cache) ? cache : null;
         public IEnumerable<Player> GetAllCaches() => _playerCache.Values;
 
