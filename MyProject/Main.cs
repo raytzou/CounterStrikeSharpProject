@@ -1102,7 +1102,7 @@ public class Main(
 
     private void SetClientModel(CCSPlayerController client)
     {
-        AddTimer(0.15f, () =>
+        Server.NextWorldUpdate(() =>
         {
             if (!Utility.IsHumanValid(client))
                 return;
