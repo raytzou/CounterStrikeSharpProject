@@ -1112,24 +1112,6 @@ public class Main(
             return;
         }
 
-        if (string.IsNullOrEmpty(playerCache.DefaultSkinModelPath))
-        {
-            AddTimer(0.1f, () =>
-            {
-                if (!Utility.IsHumanValid(client))
-                {
-                    _logger.LogWarning("Player {steamId} is no longer valid when updating default skin", client.SteamID);
-                    return;
-                }
-                var playerOriginalModel = client.PlayerPawn.Value!.CBodyComponent?.SceneNode?.GetSkeletonInstance().ModelState.ModelName;
-
-                if (!string.IsNullOrEmpty(playerOriginalModel))
-                {
-                    _playerService.UpdateDefaultSkin(client.SteamID, playerOriginalModel);
-                }
-            });
-        }
-
         AddTimer(0.15f, () =>
         {
             if (!Utility.IsHumanValid(client))

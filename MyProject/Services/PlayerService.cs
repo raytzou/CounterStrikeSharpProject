@@ -36,7 +36,7 @@ namespace MyProject.Services
                     PlayerName = client.PlayerName,
                     IpAddress = client.IpAddress ?? string.Empty,
                     LastTimeConnect = DateTime.Now,
-                    DefaultSkinModelPath = string.Empty,
+                    DefaultSkinModelPath = Utility.GetPlayerDefaultSkin(client),
                     Volume = 50,
                     SaySoundVolume = 50,
                     Language = LanguageOption.English
@@ -45,6 +45,7 @@ namespace MyProject.Services
             }
             else
             {
+                playerData.DefaultSkinModelPath = Utility.GetPlayerDefaultSkin(client);
                 playerData.LastTimeConnect = DateTime.Now;
                 playerData.PlayerName = client.PlayerName;
                 playerData.IpAddress = client.IpAddress ?? string.Empty;
