@@ -1,6 +1,5 @@
 ﻿using CounterStrikeSharp.API.Core;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using MyProject.Classes;
 using MyProject.Domains;
 using MyProject.Services.Interfaces;
@@ -8,11 +7,9 @@ using MyProject.Services.Interfaces;
 namespace MyProject.Services
 {
     public class PlayerService(
-        ILogger<PlayerService> logger,
         ProjectDbContext dbContext
         ) : IPlayerService
     {
-        private readonly ILogger<PlayerService> _logger = logger;
         private readonly ProjectDbContext _dbContext = dbContext;
 
         public Player? GetPlayerCache(ulong steamId) => _playerCache.TryGetValue(steamId, out var cache) ? cache : null;
