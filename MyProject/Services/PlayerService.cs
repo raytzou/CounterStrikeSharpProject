@@ -55,31 +55,6 @@ namespace MyProject.Services
             _dbContext.SaveChanges();
         }
 
-        public void UpdateDefaultSkin(ulong steamId, string skinPath)
-        {
-            var playerData = _dbContext.Players
-                .FirstOrDefault(x => x.SteamId == steamId);
-            if (playerData is null)
-            {
-                _logger.LogError("Player with SteamID {steamId} not found.", steamId);
-                return;
-            }
-
-            playerData.DefaultSkinModelPath = skinPath;
-
-            if (_playerCache.TryGetValue(steamId, out var cachedPlayer))
-            {
-                cachedPlayer.DefaultSkinModelPath = skinPath;
-            }
-            else
-            {
-                _logger.LogWarning("Player {steamId} not found in cache when updating default skin", steamId);
-            }
-
-            _dbContext.Players.Update(playerData);
-            _dbContext.SaveChanges();
-        }
-
         public void ClearPlayerCache()
         {
             _playerCache.Clear();
