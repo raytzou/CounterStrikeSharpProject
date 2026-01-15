@@ -1102,34 +1102,24 @@ public class Main(
 
     private void SetClientModel(CCSPlayerController client)
     {
-        if (!Utility.IsHumanValid(client)) return;
-
-        var playerCache = _playerService.GetPlayerCache(client.SteamID);
-
-        if (playerCache is null)
-        {
-            _logger.LogWarning("Setting model failed, player cache is not found. ID: {steamID}", client.SteamID);
-            return;
-        }
-
         AddTimer(0.15f, () =>
         {
             if (!Utility.IsHumanValid(client))
                 return;
 
-            var updatedCache = _playerService.GetPlayerCache(client.SteamID);
+            var playerCache = _playerService.GetPlayerCache(client.SteamID);
 
-            if (updatedCache is null)
+            if (playerCache is null)
             {
                 _logger.LogWarning("Player cache not found when setting model for {steamID}", client.SteamID);
                 return;
             }
 
-            var skinName = updatedCache.PlayerSkins.FirstOrDefault(cache => cache.IsActive)?.SkinName ?? string.Empty;
+            var skinName = playerCache.PlayerSkins.FirstOrDefault(cache => cache.IsActive)?.SkinName ?? string.Empty;
             if (!string.IsNullOrEmpty(skinName))
                 Utility.SetClientModel(client, skinName);
-            else if (!string.IsNullOrEmpty(updatedCache.DefaultSkinModelPath))
-                Utility.SetClientModel(client, updatedCache.DefaultSkinModelPath);
+            else if (!string.IsNullOrEmpty(playerCache.DefaultSkinModelPath))
+                Utility.SetClientModel(client, playerCache.DefaultSkinModelPath);
             else
                 _logger.LogWarning("Cannot set model for {steamID}: both custom skin and default skin are empty", client.SteamID);
         });
