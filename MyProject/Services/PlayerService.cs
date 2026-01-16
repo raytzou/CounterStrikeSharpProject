@@ -17,7 +17,7 @@ namespace MyProject.Services
 
         private static readonly Dictionary<ulong, Player> _playerCache = [];
 
-        public void PlayerJoin(CCSPlayerController client)
+        public void PrepareCache(CCSPlayerController client)
         {
             var playerSteamId = client.SteamID;
             var playerData = _dbContext.Players

@@ -256,7 +256,7 @@ public class Main(
         if (!player!.IsBot)
         {
             _logger.LogInformation("{client} has connected at {DT}, IP: {ipAddress}, SteamID: {steamID}", player.PlayerName, DateTime.Now, player.IpAddress, player.SteamID);
-            _playerService.PlayerJoin(player);
+            _playerService.PrepareCache(player);
 
             if (!_position.ContainsKey(player.PlayerName))
                 _position.Add(player.PlayerName, new Position());

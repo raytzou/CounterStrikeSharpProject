@@ -5,7 +5,7 @@ namespace MyProject.Services.Interfaces
 {
     public interface IPlayerService
     {
-        void PlayerJoin(CCSPlayerController client);
+        void PrepareCache(CCSPlayerController client);
         Player? GetPlayerCache(ulong steamId);
         IEnumerable<Player> GetAllCaches();
         void ClearPlayerCache();
