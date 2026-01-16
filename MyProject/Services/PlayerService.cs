@@ -1,4 +1,5 @@
-﻿using CounterStrikeSharp.API.Core;
+﻿using CounterStrikeSharp.API;
+using CounterStrikeSharp.API.Core;
 using Microsoft.EntityFrameworkCore;
 using MyProject.Classes;
 using MyProject.Domains;
@@ -17,38 +18,41 @@ namespace MyProject.Services
 
         private static readonly Dictionary<ulong, Player> _playerCache = [];
 
-        public void PrepareCache(CCSPlayerController client)
+        public async Task PrepareCache(CCSPlayerController client)
         {
-            var playerSteamId = client.SteamID;
-            var playerData = _dbContext.Players
-                .Include(x => x.PlayerSkins)
-                .FirstOrDefault(x => x.SteamId == playerSteamId);
-
-            if (playerData is null)
+            await Server.NextWorldUpdateAsync(() =>
             {
-                playerData = new Player
+                var playerSteamId = client.SteamID;
+                var playerData = _dbContext.Players
+                    .Include(x => x.PlayerSkins)
+                    .FirstOrDefault(x => x.SteamId == playerSteamId);
+
+                if (playerData is null)
                 {
-                    SteamId = playerSteamId,
-                    PlayerName = client.PlayerName,
-                    IpAddress = client.IpAddress ?? string.Empty,
-                    LastTimeConnect = DateTime.Now,
-                    DefaultSkinModelPath = Utility.GetPlayerDefaultSkin(client),
-                    Volume = 50,
-                    SaySoundVolume = 50,
-                    Language = LanguageOption.English
-                };
-                _dbContext.Players.Add(playerData);
-            }
-            else
-            {
-                playerData.DefaultSkinModelPath = Utility.GetPlayerDefaultSkin(client);
-                playerData.LastTimeConnect = DateTime.Now;
-                playerData.PlayerName = client.PlayerName;
-                playerData.IpAddress = client.IpAddress ?? string.Empty;
-            }
+                    playerData = new Player
+                    {
+                        SteamId = playerSteamId,
+                        PlayerName = client.PlayerName,
+                        IpAddress = client.IpAddress ?? string.Empty,
+                        LastTimeConnect = DateTime.Now,
+                        DefaultSkinModelPath = Utility.GetPlayerDefaultSkin(client),
+                        Volume = 50,
+                        SaySoundVolume = 50,
+                        Language = LanguageOption.English
+                    };
+                    _dbContext.Players.Add(playerData);
+                }
+                else
+                {
+                    playerData.DefaultSkinModelPath = Utility.GetPlayerDefaultSkin(client);
+                    playerData.LastTimeConnect = DateTime.Now;
+                    playerData.PlayerName = client.PlayerName;
+                    playerData.IpAddress = client.IpAddress ?? string.Empty;
+                }
 
-            _playerCache[client.SteamID] = playerData;
-            _dbContext.SaveChanges();
+                _playerCache[client.SteamID] = playerData;
+                _dbContext.SaveChanges();
+            });
         }
 
         public void ClearPlayerCache()
