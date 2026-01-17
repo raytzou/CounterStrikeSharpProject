@@ -1249,7 +1249,10 @@ public class Main(
         string targetName = string.Empty;
         int ctr = 0;
 
-        foreach (var playerName in _players.Keys)
+        var allPlayers = Utilities.GetPlayers()
+            .Select(s => s.PlayerName)
+            .ToList();
+        foreach (var playerName in allPlayers)
         {
             if (playerName.Contains(normalizedKeyword, StringComparison.InvariantCultureIgnoreCase))
             {
