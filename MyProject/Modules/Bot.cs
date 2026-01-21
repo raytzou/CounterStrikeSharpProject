@@ -39,8 +39,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         await StopBotMoving();
 
         var botTeam = GetBotTeam(mapName);
-        if (botTeam != CsTeam.None)
-            await AddSpecialOrBoss(botTeam);
+        await AddSpecialOrBoss(botTeam);
 
         _level = 2;
 
@@ -67,12 +66,9 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
 
         var botTeam = GetBotTeam(mapName);
-        if (botTeam != CsTeam.None)
-        {
-            SetDifficultyLevel(0, 0);
-            await FillNormalBotAsync(_level, botTeam);
-            SetMaxRespawnTimes();
-        }
+        SetDifficultyLevel(0, 0);
+        await FillNormalBotAsync(_level, botTeam);
+        SetMaxRespawnTimes();
     }
 
     public async Task RoundStartBehavior(string mapName)
@@ -1149,8 +1145,6 @@ public class Bot(ILogger<Bot> logger) : IBot
                 return;
 
             var botTeam = GetBotTeam(mapName);
-            if (botTeam == CsTeam.None) return;
-
             var weaponToGive = weapon ?? (botTeam == CsTeam.CounterTerrorist ? CsItem.M4A1 : CsItem.AK47);
 
             if (bot.PlayerPawn.Value!.WeaponServices == null)
