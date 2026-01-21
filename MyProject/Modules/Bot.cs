@@ -68,7 +68,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         var botTeam = GetBotTeam(mapName);
         if (botTeam != CsTeam.None)
-            await FillNormalBotAsync(GetDifficultyLevel(0, 0), botTeam);
+            await FillNormalBotAsync(SetDifficultyLevel(0, 0), botTeam);
     }
 
     public async Task RoundStartBehavior(string mapName)
@@ -369,7 +369,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         if (Main.Instance.RoundCount != Main.Instance.Config.MidBossRound && Main.Instance.RoundCount < Main.Instance.Config.FinalBossRound)
         {
-            await FillNormalBotAsync(GetDifficultyLevel(winStreak, looseStreak), botTeam);
+            await FillNormalBotAsync(SetDifficultyLevel(winStreak, looseStreak), botTeam);
         }
 
         async Task SetDefaultWeapon()
@@ -950,7 +950,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         });
     }
 
-    private int GetDifficultyLevel(int winStreak, int looseStreak)
+    private int SetDifficultyLevel(int winStreak, int looseStreak)
     {
         if (winStreak > 1 && _level < 7)
             _level++;
