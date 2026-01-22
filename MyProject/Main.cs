@@ -42,6 +42,7 @@ public class Main(
     private CounterStrikeSharp.API.Modules.Timers.Timer? _weaponCheckTimer = null;
     private CounterStrikeSharp.API.Modules.Timers.Timer? _roundTimer = null;
     private CounterStrikeSharp.API.Modules.Timers.Timer? _bombTimer = null;
+    private CounterStrikeSharp.API.Modules.Timers.Timer? _defusingTimer = null;
     private int _roundCount = 0;
     private bool _warmup = true;
     private int _winStreak = 0;
@@ -716,6 +717,39 @@ public class Main(
         return HookResult.Continue;
     }
 
+    private HookResult BombBegindefuseHandler(EventBombBegindefuse @event, GameEventInfo info)
+    {
+        var hasKit = @event.Haskit;
+        int processLength = 100;
+        float updateTimerInterval = 0.1f;
+        var totalTime = hasKit ? 5f : 10f;
+        var start = Server.CurrentTime;
+
+        _defusingTimer = AddTimer(updateTimerInterval, () =>
+        {
+            var elapsed = Server.CurrentTime - start;
+            var progressRatio = elapsed / totalTime;
+
+            progressRatio = Math.Clamp(progressRatio, 0, 1);
+            var filledCount = Math.Floor(progressRatio * processLength);
+            char[] processBar = new char[processLength];
+
+            for (int i = 0; i < processLength; i++)
+            {
+                if (i < filledCount)
+                    processBar[i] = '|';
+                else
+                    processBar[i] = ' ';
+            }
+
+            var renderHtml = $"C4 Counter: {_c4Timer} <br /> [{new string(processBar)}]"; //TODO: this is bad lol
+
+            Utility.PrintToAllCenterWithHtml(renderHtml);
+        }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
+
+        return HookResult.Continue;
+    }
+
     private HookResult OnPlayerSayCommand(CCSPlayerController? player, CommandInfo commandInfo)
     {
         if (!Utility.IsHumanValid(player))
@@ -1196,6 +1230,7 @@ public class Main(
     {
         Utility.PrintToAllCenter(message);
         _bombTimer?.Kill();
+        _defusingTimer?.Kill();
     }
 
     private void KillTimer()
@@ -1225,6 +1260,7 @@ public class Main(
         RegisterEventHandler<EventBombPlanted>(BombPlantedHandler);
         RegisterEventHandler<EventBombDefused>(BombDefusedHandler);
         RegisterEventHandler<EventBombExploded>(BombExplodedHandler);
+        RegisterEventHandler<EventBombBegindefuse>(BombBegindefuseHandler);
 
         AddCommandListener("say", OnPlayerSayCommand);
         AddCommandListener("say_team", OnPlayerSayCommand);
