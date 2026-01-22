@@ -50,6 +50,8 @@ public class Main(
     private bool _randomSpawn = false;
     private int _currentRoundSecond = 0;
     private int _endGameRound = 0;
+    private int _c4Timer = 0;
+    private int _originalC4Time = 0;
 
     // module services
     private readonly ICommand _command = commmand;
@@ -691,11 +693,10 @@ public class Main(
 
     private HookResult BombPlantedHandler(EventBombPlanted @event, GameEventInfo info)
     {
-        var c4Timer = ConVar.Find("mp_c4timer")!.GetPrimitiveValue<int>();
-
+        _c4Timer = _originalC4Time;
         _bombTimer = AddTimer(1f, () =>
         {
-            Utility.PrintToAllCenter($"C4 Counter: {c4Timer--}");
+            Utility.PrintToAllCenter($"C4 Counter: {_c4Timer--}");
         }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
 
         return HookResult.Continue;
@@ -1011,6 +1012,7 @@ public class Main(
         _randomSpawn = false;
         _currentRoundSecond = 0;
         _endGameRound = ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>();
+        _originalC4Time = ConVar.Find("mp_c4timer")!.GetPrimitiveValue<int>();
 
         SetHumanTeam();
         ResetDefaultWeapon();
