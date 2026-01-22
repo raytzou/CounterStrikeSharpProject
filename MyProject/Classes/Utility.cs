@@ -835,6 +835,16 @@ namespace MyProject.Classes
             }
         }
 
+        public static void PrintToAllCenterWithHtml(string html)
+        {
+            var humans = GetHumans();
+
+            foreach (var player in humans)
+            {
+                player.PrintToCenterHtml(html);
+            }
+        }
+
         public static void PrintToChatAllWithColor(string message)
         {
             Server.PrintToChatAll($" {ChatColors.Yellow}{message}");
