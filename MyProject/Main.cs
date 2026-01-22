@@ -704,14 +704,14 @@ public class Main(
 
     private HookResult BombExplodedHandler(EventBombExploded @event, GameEventInfo info)
     {
-        BombEventHandler("C4 has exploded!");
+        BombEndEventHandler("C4 has exploded!");
 
         return HookResult.Continue;
     }
 
     private HookResult BombDefusedHandler(EventBombDefused @event, GameEventInfo info)
     {
-        BombEventHandler("Bomb has been defuesed");
+        BombEndEventHandler("Bomb has been defuesed");
 
         return HookResult.Continue;
     }
@@ -1192,7 +1192,7 @@ public class Main(
         }
     }
 
-    private void BombEventHandler(string message)
+    private void BombEndEventHandler(string message)
     {
         Utility.PrintToAllCenter(message);
         _bombTimer?.Kill();
