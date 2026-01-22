@@ -954,9 +954,9 @@ public class Bot(ILogger<Bot> logger) : IBot
 
     private void SetDifficultyLevel(int winStreak, int looseStreak)
     {
-        if (winStreak > 1 && _level < 7)
+        if (winStreak >= 1 && _level < 7)
             _level++;
-        else if (looseStreak > 2 && _level > 1)
+        else if (looseStreak >= 2 && _level > 1)
             _level--;
     }
 
