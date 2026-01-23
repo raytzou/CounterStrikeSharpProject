@@ -310,10 +310,7 @@ namespace MyProject.Classes
         public static void DrawBeaconOnPlayer(CCSPlayerController player, Color beamColor, float beamRadius, float beamLifeTime = 2f, float beamWidth = 2f)
         {
             // Parameter validation
-            if (player?.PlayerPawn?.Value == null || !player.IsValid)
-                return;
-
-            if (player.Pawn.Value!.LifeState != (byte)LifeState_t.LIFE_ALIVE)
+            if (!IsPlayerValidAndAlive(player))
                 return;
 
             if (beamLifeTime <= 0 || beamWidth <= 0 || beamRadius <= 0)
@@ -325,26 +322,18 @@ namespace MyProject.Classes
                 player.PlayerPawn.Value!.AbsOrigin!.Z + 35);
 
             const int lineCount = 20;
-            var beamEntities = new List<CBeam>();
+            const float radiusIncrement = 10.0f;
+            const float updateInterval = 0.1f;
 
+            var beamEntities = new List<CBeam>(lineCount);
             float angleStep = (float)(2.0 * Math.PI) / lineCount;
             float currentRadius = 20.0f;
-            float beaconTimerSeconds = 0.0f;
-            bool hasReachedTargetRadius = false;
-
-            // Calculate animation duration based on radius growth
-            const float radiusIncrement = 10.0f;
+            float elapsedTime = 0.0f;
 
             // Create initial beacon circle
             for (int i = 0; i < lineCount; i++)
             {
-                float startAngle = i * angleStep;
-                float endAngle = ((i + 1) % lineCount) * angleStep;
-
-                Vector startPosition = GetAngleOnCircle(startAngle, currentRadius, centerPosition);
-                Vector endPosition = GetAngleOnCircle(endAngle, currentRadius, centerPosition);
-
-                var beam = DrawLaserBetween(startPosition, endPosition, beamColor, beamLifeTime, beamWidth);
+                var beam = CreateBeam(i, currentRadius);
                 if (beam != null)
                 {
                     beamEntities.Add(beam);
@@ -352,141 +341,108 @@ namespace MyProject.Classes
             }
 
             // Animation timer with proper cleanup
-            var animationTimer = AddTimer(0.1f, () =>
+            CounterStrikeSharp.API.Modules.Timers.Timer? animationTimer = null;
+            animationTimer = AddTimer(updateInterval, () =>
             {
-                // Check if player is still valid
-                if (!player.IsValid || player.Pawn.Value?.LifeState != (byte)LifeState_t.LIFE_ALIVE)
+                // Validate player state
+                if (!IsPlayerValidAndAlive(player))
                 {
-                    CleanupBeams();
+                    CleanupBeamsAndTimer();
                     return;
                 }
 
-                // Check if total time exceeded beamLifeTime
-                if (beaconTimerSeconds >= beamLifeTime - 0.1f)
+                elapsedTime += updateInterval;
+
+                // Check if animation duration exceeded
+                if (elapsedTime >= beamLifeTime)
                 {
-                    CleanupBeams();
+                    CleanupBeamsAndTimer();
                     return;
                 }
 
-                // Only update positions if we haven't reached target radius yet
-                if (!hasReachedTargetRadius && currentRadius < beamRadius)
+                // Animate radius growth
+                if (currentRadius < beamRadius)
                 {
-                    // Update beam positions
-                    for (int i = 0; i < Math.Min(beamEntities.Count, lineCount); i++)
-                    {
-                        if (beamEntities[i] == null || !beamEntities[i].IsValid)
-                            continue;
-
-                        float startAngle = i * angleStep;
-                        float endAngle = ((i + 1) % lineCount) * angleStep;
-
-                        Vector startPosition = GetAngleOnCircle(startAngle, currentRadius, centerPosition);
-                        Vector endPosition = GetAngleOnCircle(endAngle, currentRadius, centerPosition);
-
-                        TeleportLaser(beamEntities[i], startPosition, endPosition);
-                    }
-
-                    currentRadius += radiusIncrement;
-
-                    // Check if we've reached or exceeded the target radius
-                    if (currentRadius >= beamRadius)
-                    {
-                        hasReachedTargetRadius = true;
-                        // Set final position to exact target radius
-                        currentRadius = beamRadius;
-
-                        // Final position update
-                        for (int i = 0; i < Math.Min(beamEntities.Count, lineCount); i++)
-                        {
-                            if (beamEntities[i] == null || !beamEntities[i].IsValid)
-                                continue;
-
-                            float startAngle = i * angleStep;
-                            float endAngle = ((i + 1) % lineCount) * angleStep;
-
-                            Vector startPosition = GetAngleOnCircle(startAngle, currentRadius, centerPosition);
-                            Vector endPosition = GetAngleOnCircle(endAngle, currentRadius, centerPosition);
-
-                            TeleportLaser(beamEntities[i], startPosition, endPosition);
-                        }
-                    }
-                }
-
-                beaconTimerSeconds += 0.1f;
-
-                void CleanupBeams()
-                {
-                    foreach (var beam in beamEntities)
-                    {
-                        if (beam != null && beam.IsValid)
-                        {
-                            beam.Remove();
-                        }
-                    }
-                    beamEntities.Clear();
+                    currentRadius = Math.Min(currentRadius + radiusIncrement, beamRadius);
+                    UpdateBeamPositions(currentRadius);
                 }
             }, TimerFlags.REPEAT);
 
             #region Local Methods
-            // Local method: Calculates a point position on a circle at the specified angle
+            // Creates and spawns a beam entity
+            CBeam? CreateBeam(int index, float radius)
+            {
+                float startAngle = index * angleStep;
+                float endAngle = ((index + 1) % lineCount) * angleStep;
+
+                var beam = Utilities.CreateEntityByName<CBeam>("env_beam");
+                if (beam == null)
+                    return null;
+
+                Vector startPos = GetAngleOnCircle(startAngle, radius, centerPosition);
+                Vector endPos = GetAngleOnCircle(endAngle, radius, centerPosition);
+
+                beam.Teleport(startPos);
+                beam.EndPos.X = endPos.X;
+                beam.EndPos.Y = endPos.Y;
+                beam.EndPos.Z = endPos.Z;
+                beam.RenderMode = RenderMode_t.kRenderTransAdd;
+                beam.Render = beamColor;
+                beam.Width = beamWidth;
+                beam.DispatchSpawn();
+
+                return beam;
+            }
+
+            // Updates all beam positions to new radius
+            void UpdateBeamPositions(float radius)
+            {
+                for (int i = 0; i < beamEntities.Count; i++)
+                {
+                    var beam = beamEntities[i];
+                    if (beam == null || !beam.IsValid)
+                        continue;
+
+                    float startAngle = i * angleStep;
+                    float endAngle = ((i + 1) % lineCount) * angleStep;
+
+                    Vector startPos = GetAngleOnCircle(startAngle, radius, centerPosition);
+                    Vector endPos = GetAngleOnCircle(endAngle, radius, centerPosition);
+
+                    beam.Teleport(startPos);
+                    beam.EndPos.X = endPos.X;
+                    beam.EndPos.Y = endPos.Y;
+                    beam.EndPos.Z = endPos.Z;
+
+                    Utilities.SetStateChanged(beam, "CBeam", "m_vecEndPos");
+                }
+            }
+
+            // Cleanup beams and stop timer
+            void CleanupBeamsAndTimer()
+            {
+                foreach (var beam in beamEntities)
+                {
+                    if (beam != null && beam.IsValid)
+                    {
+                        beam.Remove();
+                    }
+                }
+                beamEntities.Clear();
+
+                if (animationTimer != null)
+                {
+                    animationTimer.Kill();
+                    _timers.Remove(animationTimer);
+                }
+            }
+
+            // Calculates a point position on a circle at the specified angle
             static Vector GetAngleOnCircle(float angle, float radius, Vector center)
             {
                 float x = center.X + radius * (float)Math.Cos(angle);
                 float y = center.Y + radius * (float)Math.Sin(angle);
                 return new Vector(x, y, center.Z);
-            }
-
-            // Local method: Draws a laser beam between two points
-            static CBeam? DrawLaserBetween(Vector start, Vector end, Color color, float beamLifeTime, float width)
-            {
-                var beam = Utilities.CreateEntityByName<CBeam>("env_beam");
-                if (beam == null)
-                    return null;
-
-                // Set beam start position
-                beam.Teleport(start);
-
-                // Set beam end position
-                beam.EndPos.X = end.X;
-                beam.EndPos.Y = end.Y;
-                beam.EndPos.Z = end.Z;
-
-                // Set beam properties
-                beam.RenderMode = RenderMode_t.kRenderTransAdd;
-                beam.Render = color;
-                beam.Width = width;
-
-                // Spawn the entity
-                beam.DispatchSpawn();
-
-                // Schedule beam removal after the specified lifetime
-                if (beamLifeTime > 0)
-                {
-                    AddTimer(beamLifeTime, () =>
-                    {
-                        if (beam != null && beam.IsValid)
-                        {
-                            beam.Remove();
-                        }
-                    });
-                }
-
-                return beam;
-            }
-
-            // Local method: Moves a laser beam to new positions
-            static void TeleportLaser(CBeam beam, Vector start, Vector end)
-            {
-                if (beam == null || !beam.IsValid)
-                    return;
-
-                beam.Teleport(start);
-                beam.EndPos.X = end.X;
-                beam.EndPos.Y = end.Y;
-                beam.EndPos.Z = end.Z;
-
-                // Trigger position update
-                Utilities.SetStateChanged(beam, "CBeam", "m_vecEndPos");
             }
             #endregion
         }
