@@ -697,7 +697,8 @@ public class Main(
         _c4Timer = _originalC4Time;
         _bombTimer = AddTimer(1f, () =>
         {
-            Utility.PrintToAllCenter($"C4 Counter: {_c4Timer--}");
+            var c4CounterMessage = GetC4CounterMessage();
+            Utility.PrintToAllCenter(c4CounterMessage);
         }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
 
         return HookResult.Continue;
@@ -742,12 +743,19 @@ public class Main(
                     processBar[i] = ' ';
             }
 
-            var renderHtml = $"C4 Counter: {_c4Timer} <br /> [{new string(processBar)}]"; //TODO: this is bad lol
+            var renderHtml = GetDefuingMessageHtml(processBar);
 
             Utility.PrintToAllCenterWithHtml(renderHtml);
         }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
 
         return HookResult.Continue;
+
+        string GetDefuingMessageHtml(char[] processBar)
+        {
+            var c4CounterMessage = GetC4CounterMessage();
+
+            return $"{c4CounterMessage} <br /> [{new string(processBar)}]";
+        }
     }
 
     private HookResult OnPlayerSayCommand(CCSPlayerController? player, CommandInfo commandInfo)
@@ -1279,6 +1287,11 @@ public class Main(
         {
             _logger.LogError(ex, "Failed to initialize SaySoundHelper");
         }
+    }
+
+    private string GetC4CounterMessage()
+    {
+        return $"C4 Counter: {_c4Timer--}";
     }
 
     public string GetTargetNameByKeyword(string keyword)
