@@ -754,7 +754,7 @@ public class Main(
         {
             var c4CounterMessage = GetC4CounterMessage();
 
-            return $"{c4CounterMessage} <br /> [{new string(processBar)}]";
+            return $"{c4CounterMessage} <br /> Defusing: [{new string(processBar)}]";
         }
     }
 
