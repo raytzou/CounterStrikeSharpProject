@@ -23,7 +23,6 @@ namespace MyProject.Classes
         public static List<(string EntityName, string DisplayName, int Price)> WeaponMenu => _weaponMenu;
 
         private static Music _soundEvent;
-        private readonly static List<CounterStrikeSharp.API.Modules.Timers.Timer> _timers;
         private static List<string> _mapsFromWorkShop;
         private static List<string> _mapsInPhysicalDirectory;
         private static readonly Dictionary<CsItem, string> _enumValue;
@@ -88,7 +87,6 @@ namespace MyProject.Classes
 
         static Utility()
         {
-            _timers = [];
             _enumValue = [];
             _workshopSkins = [];
             _mapsFromWorkShop = [];
@@ -342,7 +340,7 @@ namespace MyProject.Classes
 
             // Animation timer with proper cleanup
             CounterStrikeSharp.API.Modules.Timers.Timer? animationTimer = null;
-            animationTimer = AddTimer(updateInterval, () =>
+            animationTimer = Main.Instance.AddTimer(updateInterval, () =>
             {
                 // Validate player state
                 if (!IsPlayerValidAndAlive(player))
@@ -433,7 +431,6 @@ namespace MyProject.Classes
                 if (animationTimer != null)
                 {
                     animationTimer.Kill();
-                    _timers.Remove(animationTimer);
                 }
             }
 
@@ -524,7 +521,7 @@ namespace MyProject.Classes
                 playerPawn.CommitSuicide(false, true);
 
                 // Restore original score
-                AddTimer(0.1f, () =>
+                Main.Instance.AddTimer(0.1f, () =>
                 {
                     if (player.IsValid)
                     {
@@ -825,15 +822,5 @@ namespace MyProject.Classes
 
         public static bool IsWeaponBaseValid([NotNullWhen(true)] CCSWeaponBase weaponBase) =>
             weaponBase is not null && weaponBase.IsValid && weaponBase.Entity is not null && weaponBase.VData is not null;
-
-        /// <summary>
-        /// It's the same as AddTimer() in BasicPlugin, but I want to use it elsewhere
-        /// </summary>
-        private static CounterStrikeSharp.API.Modules.Timers.Timer AddTimer(float interval, Action callback, TimerFlags? flags = null)
-        {
-            var timer = new CounterStrikeSharp.API.Modules.Timers.Timer(interval, callback, flags ?? 0);
-            _timers.Add(timer);
-            return timer;
-        }
     }
 }
