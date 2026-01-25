@@ -697,6 +697,7 @@ public class Main(
         _c4Timer = _originalC4Time;
         _bombTimer = AddTimer(1f, () =>
         {
+            _c4Timer--;
             var c4CounterMessage = GetC4CounterMessage();
             Utility.PrintToAllCenter(c4CounterMessage);
         }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
@@ -1291,7 +1292,7 @@ public class Main(
 
     private string GetC4CounterMessage()
     {
-        return $"C4 Counter: {_c4Timer--}";
+        return $"C4 Counter: {_c4Timer}";
     }
 
     public string GetTargetNameByKeyword(string keyword)
