@@ -759,6 +759,13 @@ public class Main(
         }
     }
 
+    private HookResult BombAbortdefuseHandler(EventBombAbortdefuse @event, GameEventInfo info)
+    {
+        _defusingTimer?.Kill();
+
+        return HookResult.Continue;
+    }
+
     private HookResult OnPlayerSayCommand(CCSPlayerController? player, CommandInfo commandInfo)
     {
         if (!Utility.IsHumanValid(player))
@@ -1270,6 +1277,7 @@ public class Main(
         RegisterEventHandler<EventBombDefused>(BombDefusedHandler);
         RegisterEventHandler<EventBombExploded>(BombExplodedHandler);
         RegisterEventHandler<EventBombBegindefuse>(BombBegindefuseHandler);
+        RegisterEventHandler<EventBombAbortdefuse>(BombAbortdefuseHandler);
 
         AddCommandListener("say", OnPlayerSayCommand);
         AddCommandListener("say_team", OnPlayerSayCommand);
