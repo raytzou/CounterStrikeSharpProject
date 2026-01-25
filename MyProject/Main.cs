@@ -722,8 +722,8 @@ public class Main(
     private HookResult BombBegindefuseHandler(EventBombBegindefuse @event, GameEventInfo info)
     {
         var hasKit = @event.Haskit;
-        int processLength = 100;
-        float updateTimerInterval = 0.1f;
+        int processLength = 15;
+        float updateTimerInterval = 0.01f;
         var totalTime = hasKit ? 5f : 10f;
         var start = Server.CurrentTime;
 
@@ -738,10 +738,10 @@ public class Main(
 
             for (int i = 0; i < processLength; i++)
             {
-                if (i < filledCount)
+                if (i <= filledCount)
                     processBar[i] = '|';
                 else
-                    processBar[i] = ' ';
+                    processBar[i] = '_';
             }
 
             var renderHtml = GetDefuingMessageHtml(processBar);
