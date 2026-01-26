@@ -18,6 +18,7 @@ public class Bot(ILogger<Bot> logger) : IBot
     private int _respawnTimes = 0;
     private int _maxRespawnTimes = 20;
     private bool _isCurseActive = false;
+    private bool _isBossGuardBreak;
     private readonly List<CounterStrikeSharp.API.Modules.Timers.Timer> _damageTimers = new();
 
     private static readonly Regex NormalBotNameRegex = new(@"^\[(?<Grade>[^\]]+)\](?<Group>[^#]+)#(?<Num>\d{1,2})$");
@@ -303,22 +304,6 @@ public class Bot(ILogger<Bot> logger) : IBot
                 });
             }
 
-            bool ValidateBoss(out CCSPlayerController? boss)
-            {
-                boss = currentRound == Main.Instance.Config.MidBossRound ?
-                    Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(BotProfile.Boss[0])) :
-                    Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(BotProfile.Boss[1]));
-
-                if (!Utility.IsBotValid(boss))
-                {
-                    var bossType = currentRound == Main.Instance.Config.MidBossRound ? "Mid Boss" : "Final Boss";
-                    _logger.LogError("Spawn {BossType} failed at round {RoundCount}", bossType, currentRound);
-                    return false;
-                }
-
-                return true;
-            }
-
             async Task SetBossHealth()
             {
                 await Server.NextFrameAsync(() =>
@@ -330,20 +315,6 @@ public class Bot(ILogger<Bot> logger) : IBot
                     boss!.PlayerPawn.Value!.Health = currentRound == Main.Instance.Config.MidBossRound ?
                         Main.Instance.Config.MidBossHealth :
                         Main.Instance.Config.FinalBossHealth;
-                });
-            }
-
-            async Task SetBossArmor()
-            {
-                await Server.NextFrameAsync(() =>
-                {
-                    bool isBossValid = ValidateBoss(out var boss);
-                    if (!isBossValid)
-                        return;
-
-                    boss!.PlayerPawn.Value!.ArmorValue = currentRound == Main.Instance.Config.MidBossRound ?
-                        Main.Instance.Config.MidBossArmor :
-                        Main.Instance.Config.FinalBossArmor;
                 });
             }
         }
@@ -1012,6 +983,65 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
+    public async Task BossArmorDetection(CCSPlayerController boss)
+    {
+        await Server.NextFrameAsync(() =>
+        {
+            if (!Utility.IsBotValidAndAlive(boss))
+                return;
+
+            if (boss.PlayerPawn.Value!.ArmorValue > 0)
+                return;
+
+            if (_isBossGuardBreak) return;
+
+            _isBossGuardBreak = true;
+            Utility.PrintToAllCenter("Boss GUARD BREAK!");
+            SetBossMovement(false);
+
+            const float guardBreakTime = 3f;
+            var guardBreakTimer = Main.Instance.AddTimer(guardBreakTime, () =>
+            {
+                _isBossGuardBreak = false;
+                if (!Utility.IsBotValidAndAlive(boss))
+                    return;
+
+                SetBossMovement(true);
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await SetBossArmor(); // TODO: remove Task.Run and use fire-and-forget
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to restore boss armor after guard break");
+                    }
+                });
+            });
+
+            _damageTimers.Add(guardBreakTimer);
+
+            Main.Instance.AddTimer(guardBreakTime, () =>
+            {
+                _damageTimers.Remove(guardBreakTimer);
+                guardBreakTimer?.Kill();
+            });
+        });
+
+        void SetBossMovement(bool canMove)
+        {
+            boss.MoveType = canMove ? MoveType_t.MOVETYPE_WALK : MoveType_t.MOVETYPE_NONE;
+
+            if (!canMove)
+            {
+                boss.PlayerPawn.Value!.AbsVelocity.X = 0; //TODO: check if this works or not, make sure Boss can't move and velocity is zero
+                boss.PlayerPawn.Value!.AbsVelocity.Y = 0;
+                boss.PlayerPawn.Value!.AbsVelocity.Z = 0;
+            }
+        }
+    }
+
     public void ClearDamageTimer()
     {
         foreach (var timer in _damageTimers)
@@ -1021,6 +1051,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         _damageTimers.Clear();
         _isCurseActive = false;
+        _isBossGuardBreak = false;
     }
 
     private CsTeam GetBotTeam(string mapName)
@@ -1292,5 +1323,37 @@ public class Bot(ILogger<Bot> logger) : IBot
                 bot.PlayerPawn.Value!.WeaponServices.PreventWeaponPickup = true;
             });
         });
+    }
+
+    private async Task SetBossArmor()
+    {
+        await Server.NextFrameAsync(() =>
+        {
+            var currentRound = Main.Instance.RoundCount;
+            bool isBossValid = ValidateBoss(out var boss);
+            if (!isBossValid)
+                return;
+
+            boss!.PlayerPawn.Value!.ArmorValue = currentRound == Main.Instance.Config.MidBossRound ?
+                Main.Instance.Config.MidBossArmor :
+                Main.Instance.Config.FinalBossArmor;
+        });
+    }
+
+    private bool ValidateBoss(out CCSPlayerController? boss)
+    {
+        var currentRound = Main.Instance.RoundCount;
+        boss = currentRound == Main.Instance.Config.MidBossRound ?
+            Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(BotProfile.Boss[0])) :
+            Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(BotProfile.Boss[1]));
+
+        if (!Utility.IsBotValid(boss))
+        {
+            var bossType = currentRound == Main.Instance.Config.MidBossRound ? "Mid Boss" : "Final Boss";
+            _logger.LogError("Spawn {BossType} failed at round {RoundCount}", bossType, currentRound);
+            return false;
+        }
+
+        return true;
     }
 }

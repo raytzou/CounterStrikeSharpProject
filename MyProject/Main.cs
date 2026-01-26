@@ -676,7 +676,7 @@ public class Main(
     {
         var victim = @event.Userid;
         var attacker = @event.Attacker;
-        if (victim is null || !victim.IsValid || attacker is null || !attacker.IsValid)
+        if (!Utility.IsPlayerValid(victim) || !Utility.IsPlayerValid(attacker))
             return HookResult.Continue;
 
         // Prevent boss from being damaged by their own abilities
@@ -684,7 +684,21 @@ public class Main(
             return HookResult.Handled;
 
         if (_bot.IsBoss(victim))
+        {
             _bot.BossBehavior(victim);
+
+            try
+            {
+                _ = Task.Run(async () =>
+                {
+                    await _bot.BossArmorDetection(victim); // TODO: remove Task.Run and use fire-and-forget
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Boss Armor Detection error");
+            }
+        }
 
         return HookResult.Continue;
     }
