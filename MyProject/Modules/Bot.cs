@@ -711,14 +711,6 @@ public class Bot(ILogger<Bot> logger) : IBot
                     toxicTimer?.Kill();
                 });
             }
-
-            float CalculateDistance(Vector pos1, Vector pos2)
-            {
-                var dx = pos1.X - pos2.X;
-                var dy = pos1.Y - pos2.Y;
-                var dz = pos1.Z - pos2.Z;
-                return (float)Math.Sqrt(dx * dx + dy * dy + dz * dz);
-            }
         }
 
         void Cursed()
@@ -805,17 +797,88 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void Invincible()
         {
-            throw new NotImplementedException();
+            if (!Utility.IsBotValidAndAlive(boss))
+                return;
             if (AppSettings.IsDebug)
                 _logger.LogInformation("Boss actives Invincible");
 
-            Utility.PrintToAllCenter("");
+            Utility.PrintToAllCenter("Boss actives invincible barrier protection!");
 
-            // 1. Boss can't move
-            // 2. Boss is invincible for 5 seconds
-            // 3. Draw beacon on Boss in larger circle, beacon disappears after invincible effect finished
-            // 4. If player is in the beacon circle, player will get damaged 5HP every second (stop bullying boss plz)
-            // 5. Boss can move after invincible effect finished
+            boss.MoveType = MoveType_t.MOVETYPE_NONE;
+            boss.PlayerPawn.Value!.AbsVelocity.X = 0; //TODO: check if this works or not, make sure Boss can't move and velocity is zero
+            boss.PlayerPawn.Value!.AbsVelocity.Y = 0;
+            boss.PlayerPawn.Value!.AbsVelocity.Z = 0;
+            boss.PlayerPawn.Value!.TakesDamage = false;
+            Utility.DrawBeaconOnPlayer(boss, Color.Gray, 200f, 5f, 5f);
+
+            if (AppSettings.IsDebug)
+                _logger.LogInformation("Invincible barrier damage zone");
+
+            const float damageRadius = 200.0f;
+            const int damagePerSecond = 5;
+            const float invincibleDuration = 5.0f;
+
+            var startTime = Server.CurrentTime;
+
+            var invincibleTimer = Main.Instance.AddTimer(1f, () =>
+            {
+                if (!Utility.IsBotValidAndAlive(boss))
+                {
+                    _logger.LogWarning("Boss became invalid during Invincible ability");
+                    return;
+                }
+
+                var currentTime = Server.CurrentTime;
+                if (currentTime - startTime > invincibleDuration)
+                    return;
+
+                var humanPlayers = Utility.GetAliveHumans();
+                var bossPos = boss.PlayerPawn.Value!.AbsOrigin;
+
+                if (bossPos is null)
+                {
+                    _logger.LogWarning("Boss position is null when using invincible ability");
+                    return;
+                }
+
+                foreach (var player in humanPlayers)
+                {
+                    if (!Utility.IsHumanValidAndAlive(player))
+                        continue;
+
+                    var playerPosition = player.PlayerPawn.Value!.AbsOrigin;
+                    if (playerPosition is null)
+                        continue;
+
+                    var distance = CalculateDistance(playerPosition, bossPos);
+
+                    if (distance <= damageRadius)
+                    {
+                        if (AppSettings.IsDebug)
+                            _logger.LogInformation("{playerName} enters in Protection Barrier", player.PlayerName);
+                        var currentHealth = player.PlayerPawn.Value!.Health;
+                        var newHealth = Math.Max(1, currentHealth - damagePerSecond);
+
+                        player.PlayerPawn.Value!.Health = newHealth;
+                        Utilities.SetStateChanged(player.PlayerPawn.Value!, "CBaseEntity", "m_iHealth");
+                        player.PrintToCenter($"Damage: -{damagePerSecond} HP");
+
+                        ApplyScreenOverlay(player.PlayerPawn.Value, 1f);
+                    }
+                }
+            }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
+
+            _damageTimers.Add(invincibleTimer);
+
+            Main.Instance.AddTimer(invincibleDuration, () =>
+            {
+                _damageTimers.Remove(invincibleTimer);
+                invincibleTimer?.Kill();
+                if (!Utility.IsBotValidAndAlive(boss))
+                    return;
+                boss.MoveType = MoveType_t.MOVETYPE_WALK;
+                boss.PlayerPawn.Value!.TakesDamage = true;
+            });
         }
 
         void CreateTimedProjectileAttack(string message, System.Drawing.Color beaconColor, Action<Vector> createProjectileAction, float delayTime = 3.0f)
@@ -912,6 +975,14 @@ public class Bot(ILogger<Bot> logger) : IBot
                 smokeProjectile.SmokeColor.Y = 255;
                 smokeProjectile.SmokeColor.Z = 0;
             }
+        }
+
+        float CalculateDistance(Vector pos1, Vector pos2)
+        {
+            var dx = pos1.X - pos2.X;
+            var dy = pos1.Y - pos2.Y;
+            var dz = pos1.Z - pos2.Z;
+            return (float)Math.Sqrt(dx * dx + dy * dy + dz * dz);
         }
     }
 
