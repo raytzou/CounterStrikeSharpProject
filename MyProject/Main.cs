@@ -722,7 +722,7 @@ public class Main(
     private HookResult BombBegindefuseHandler(EventBombBegindefuse @event, GameEventInfo info)
     {
         var hasKit = @event.Haskit;
-        int processLength = 15;
+        int processLength = 20;
         float updateTimerInterval = 0.01f;
         var totalTime = hasKit ? 5f : 10f;
         var start = Server.CurrentTime;
@@ -744,18 +744,22 @@ public class Main(
                     processBar[i] = '_';
             }
 
-            var renderHtml = GetDefuingMessageHtml(processBar);
+            var renderHtml = GetDefusingMessageHtml(processBar);
 
             Utility.PrintToAllCenterWithHtml(renderHtml);
         }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
 
         return HookResult.Continue;
 
-        string GetDefuingMessageHtml(char[] processBar)
+        string GetDefusingMessageHtml(char[] processBar)
         {
-            var c4CounterMessage = GetC4CounterMessage();
+            var elapsed = Server.CurrentTime - start;
+            var remainingTime = Math.Max(0, totalTime - elapsed);
+            var seconds = (int)remainingTime;
+            var milliseconds = (int)((remainingTime % 1.0) * 100);
+            var defusingMessage = $"Defusing: {seconds}.{milliseconds:D2}";
 
-            return $"{c4CounterMessage} <br /> Defusing: [{new string(processBar)}]";
+            return $"{defusingMessage} <br /> [{new string(processBar)}]";
         }
     }
 
