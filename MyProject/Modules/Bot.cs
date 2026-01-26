@@ -806,73 +806,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             SetBossInvincible(true);
             Utility.DrawBeaconOnPlayer(boss, Color.Gray, 200f, 5f, 5f);
-
-            if (AppSettings.IsDebug)
-                _logger.LogInformation("Invincible barrier damage zone");
-
-            const float damageRadius = 200.0f;
-            const int damagePerSecond = 5;
-            const float invincibleDuration = 5.0f;
-
-            var startTime = Server.CurrentTime;
-
-            var invincibleTimer = Main.Instance.AddTimer(1f, () =>
-            {
-                if (!Utility.IsBotValidAndAlive(boss))
-                {
-                    _logger.LogWarning("Boss became invalid during Invincible ability");
-                    return;
-                }
-
-                var currentTime = Server.CurrentTime;
-                if (currentTime - startTime > invincibleDuration)
-                    return;
-
-                var humanPlayers = Utility.GetAliveHumans();
-                var bossPos = boss.PlayerPawn.Value!.AbsOrigin;
-
-                if (bossPos is null)
-                {
-                    _logger.LogWarning("Boss position is null when using invincible ability");
-                    return;
-                }
-
-                foreach (var player in humanPlayers)
-                {
-                    if (!Utility.IsHumanValidAndAlive(player))
-                        continue;
-
-                    var playerPosition = player.PlayerPawn.Value!.AbsOrigin;
-                    if (playerPosition is null)
-                        continue;
-
-                    var distance = CalculateDistance(playerPosition, bossPos);
-
-                    if (distance <= damageRadius)
-                    {
-                        if (AppSettings.IsDebug)
-                            _logger.LogInformation("{playerName} enters in Protection Barrier", player.PlayerName);
-                        var currentHealth = player.PlayerPawn.Value!.Health;
-                        var newHealth = Math.Max(1, currentHealth - damagePerSecond);
-
-                        player.PlayerPawn.Value!.Health = newHealth;
-                        Utilities.SetStateChanged(player.PlayerPawn.Value!, "CBaseEntity", "m_iHealth");
-                        player.PrintToCenter($"Damage: -{damagePerSecond} HP");
-
-                        ApplyScreenOverlay(player.PlayerPawn.Value, 1f);
-                    }
-                }
-            }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
-
-            _damageTimers.Add(invincibleTimer);
-
-            Main.Instance.AddTimer(invincibleDuration, () =>
-            {
-                _damageTimers.Remove(invincibleTimer);
-                invincibleTimer?.Kill();
-                if (Utility.IsBotValidAndAlive(boss))
-                    SetBossInvincible(false);
-            });
+            CreateInvincibleBarrier();
 
             void SetBossInvincible(bool isInvincible)
             {
@@ -885,6 +819,76 @@ public class Bot(ILogger<Bot> logger) : IBot
                     boss.PlayerPawn.Value!.AbsVelocity.Y = 0;
                     boss.PlayerPawn.Value!.AbsVelocity.Z = 0;
                 }
+            }
+
+            void CreateInvincibleBarrier()
+            {
+                if (AppSettings.IsDebug)
+                    _logger.LogInformation("Invincible barrier damage zone");
+
+                const float damageRadius = 200.0f;
+                const int damagePerSecond = 5;
+                const float invincibleDuration = 5.0f;
+
+                var startTime = Server.CurrentTime;
+
+                var invincibleTimer = Main.Instance.AddTimer(1f, () =>
+                {
+                    if (!Utility.IsBotValidAndAlive(boss))
+                    {
+                        _logger.LogWarning("Boss became invalid during Invincible ability");
+                        return;
+                    }
+
+                    var currentTime = Server.CurrentTime;
+                    if (currentTime - startTime > invincibleDuration)
+                        return;
+
+                    var humanPlayers = Utility.GetAliveHumans();
+                    var bossPos = boss.PlayerPawn.Value!.AbsOrigin;
+
+                    if (bossPos is null)
+                    {
+                        _logger.LogWarning("Boss position is null when using invincible ability");
+                        return;
+                    }
+
+                    foreach (var player in humanPlayers)
+                    {
+                        if (!Utility.IsHumanValidAndAlive(player))
+                            continue;
+
+                        var playerPosition = player.PlayerPawn.Value!.AbsOrigin;
+                        if (playerPosition is null)
+                            continue;
+
+                        var distance = CalculateDistance(playerPosition, bossPos);
+
+                        if (distance <= damageRadius)
+                        {
+                            if (AppSettings.IsDebug)
+                                _logger.LogInformation("{playerName} enters in Protection Barrier", player.PlayerName);
+                            var currentHealth = player.PlayerPawn.Value!.Health;
+                            var newHealth = Math.Max(1, currentHealth - damagePerSecond);
+
+                            player.PlayerPawn.Value!.Health = newHealth;
+                            Utilities.SetStateChanged(player.PlayerPawn.Value!, "CBaseEntity", "m_iHealth");
+                            player.PrintToCenter($"Damage: -{damagePerSecond} HP");
+
+                            ApplyScreenOverlay(player.PlayerPawn.Value, 1f);
+                        }
+                    }
+                }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
+
+                _damageTimers.Add(invincibleTimer);
+
+                Main.Instance.AddTimer(invincibleDuration, () =>
+                {
+                    _damageTimers.Remove(invincibleTimer);
+                    invincibleTimer?.Kill();
+                    if (Utility.IsBotValidAndAlive(boss))
+                        SetBossInvincible(false);
+                });
             }
         }
 
