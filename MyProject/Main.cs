@@ -51,7 +51,7 @@ public class Main(
     private bool _randomSpawn = false;
     private int _currentRoundSecond = 0;
     private int _endGameRound = 0;
-    private int _c4Timer = 0;
+    private int _c4Counter = 0;
     private int _originalC4Time = 0;
 
     // module services
@@ -694,10 +694,10 @@ public class Main(
 
     private HookResult BombPlantedHandler(EventBombPlanted @event, GameEventInfo info)
     {
-        _c4Timer = _originalC4Time;
+        _c4Counter = _originalC4Time;
         _bombTimer = AddTimer(1f, () =>
         {
-            _c4Timer--;
+            _c4Counter--;
             var c4CounterMessage = GetC4CounterMessage();
             Utility.PrintToAllCenter(c4CounterMessage);
         }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
@@ -1301,7 +1301,7 @@ public class Main(
 
     private string GetC4CounterMessage()
     {
-        return $"C4 Counter: {_c4Timer}";
+        return $"C4 Counter: {_c4Counter}";
     }
 
     public string GetTargetNameByKeyword(string keyword)
