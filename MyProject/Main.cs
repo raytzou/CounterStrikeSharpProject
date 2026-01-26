@@ -1254,6 +1254,7 @@ public class Main(
         _weaponCheckTimer?.Kill();
         _roundTimer?.Kill();
         _bombTimer?.Kill();
+        _defusingTimer?.Kill();
     }
 
     private void Reigsters()
