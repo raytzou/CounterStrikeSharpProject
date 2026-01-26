@@ -227,6 +227,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             var currentRound = Main.Instance.RoundCount;
 
             await SetBossHealth();
+            await SetBossArmor();
             await SetBossWeapon();
             await SetBossAmmo();
 
@@ -329,6 +330,20 @@ public class Bot(ILogger<Bot> logger) : IBot
                     boss!.PlayerPawn.Value!.Health = currentRound == Main.Instance.Config.MidBossRound ?
                         Main.Instance.Config.MidBossHealth :
                         Main.Instance.Config.FinalBossHealth;
+                });
+            }
+
+            async Task SetBossArmor()
+            {
+                await Server.NextFrameAsync(() =>
+                {
+                    bool isBossValid = ValidateBoss(out var boss);
+                    if (!isBossValid)
+                        return;
+
+                    boss!.PlayerPawn.Value!.ArmorValue = currentRound == Main.Instance.Config.MidBossRound ?
+                        Main.Instance.Config.MidBossArmor :
+                        Main.Instance.Config.FinalBossArmor;
                 });
             }
         }
