@@ -464,7 +464,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         if (activeAbilityChance <= Main.Instance.Config.BossActiveAbilityChance)
         {
-            var abilityChoice = Random.Shared.Next(1, 7);
+            var abilityChoice = Random.Shared.Next(1, 8);
 
             switch (abilityChoice)
             {
@@ -486,6 +486,9 @@ public class Bot(ILogger<Bot> logger) : IBot
                 case 6:
                     if (!_isCurseActive)
                         Cursed();
+                    break;
+                case 7:
+                    Invincible();
                     break;
             }
         }
@@ -798,6 +801,21 @@ public class Bot(ILogger<Bot> logger) : IBot
                 _isCurseActive = false;
                 Utility.PrintToAllCenter("The curse has been lifted...");
             });
+        }
+
+        void Invincible()
+        {
+            throw new NotImplementedException();
+            if (AppSettings.IsDebug)
+                _logger.LogInformation("Boss actives Invincible");
+
+            Utility.PrintToAllCenter("");
+
+            // 1. Boss can't move
+            // 2. Boss is invincible for 5 seconds
+            // 3. Draw beacon on Boss in larger circle, beacon disappears after invincible effect finished
+            // 4. If player is in the beacon circle, player will get damaged 5HP every second (stop bullying boss plz)
+            // 5. Boss can move after invincible effect finished
         }
 
         void CreateTimedProjectileAttack(string message, System.Drawing.Color beaconColor, Action<Vector> createProjectileAction, float delayTime = 3.0f)
