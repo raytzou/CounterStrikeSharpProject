@@ -804,11 +804,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             Utility.PrintToAllCenter("Boss actives invincible barrier protection!");
 
-            boss.MoveType = MoveType_t.MOVETYPE_NONE;
-            boss.PlayerPawn.Value!.AbsVelocity.X = 0; //TODO: check if this works or not, make sure Boss can't move and velocity is zero
-            boss.PlayerPawn.Value!.AbsVelocity.Y = 0;
-            boss.PlayerPawn.Value!.AbsVelocity.Z = 0;
-            boss.PlayerPawn.Value!.TakesDamage = false;
+            SetBossInvincible(true);
             Utility.DrawBeaconOnPlayer(boss, Color.Gray, 200f, 5f, 5f);
 
             if (AppSettings.IsDebug)
@@ -874,11 +870,22 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 _damageTimers.Remove(invincibleTimer);
                 invincibleTimer?.Kill();
-                if (!Utility.IsBotValidAndAlive(boss))
-                    return;
-                boss.MoveType = MoveType_t.MOVETYPE_WALK;
-                boss.PlayerPawn.Value!.TakesDamage = true;
+                if (Utility.IsBotValidAndAlive(boss))
+                    SetBossInvincible(false);
             });
+
+            void SetBossInvincible(bool isInvincible)
+            {
+                boss.MoveType = isInvincible ? MoveType_t.MOVETYPE_NONE : MoveType_t.MOVETYPE_WALK;
+                boss.PlayerPawn.Value!.TakesDamage = isInvincible;
+
+                if (isInvincible)
+                {
+                    boss.PlayerPawn.Value!.AbsVelocity.X = 0; //TODO: check if this works or not, make sure Boss can't move and velocity is zero
+                    boss.PlayerPawn.Value!.AbsVelocity.Y = 0;
+                    boss.PlayerPawn.Value!.AbsVelocity.Z = 0;
+                }
+            }
         }
 
         void CreateTimedProjectileAttack(string message, System.Drawing.Color beaconColor, Action<Vector> createProjectileAction, float delayTime = 3.0f)
