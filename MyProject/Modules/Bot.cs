@@ -998,6 +998,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             _isBossGuardBreak = true;
             Utility.PrintToAllCenter("Boss GUARD BREAK!");
             SetBossMovement(false);
+            SetBotHelmet(boss, false);
 
             const float guardBreakTime = 3f;
             var guardBreakTimer = Main.Instance.AddTimer(guardBreakTime, () =>
@@ -1327,7 +1328,28 @@ public class Bot(ILogger<Bot> logger) : IBot
             boss!.PlayerPawn.Value!.ArmorValue = currentRound == Main.Instance.Config.MidBossRound ?
                 Main.Instance.Config.MidBossArmor :
                 Main.Instance.Config.FinalBossArmor;
+
+            SetBotHelmet(boss, true);
         });
+    }
+
+    private void SetBotHelmet(CCSPlayerController bot, bool equip)
+    {
+        if (!Utility.IsBotValidAndAlive(bot))
+        {
+            _logger.LogWarning("Bot {botName} is invalid when setting helmet", bot.PlayerName);
+            return;
+        }
+
+        var bossItemServices = bot.PlayerPawn.Value!.ItemServices?.As<CCSPlayer_ItemServices>();
+        if (bossItemServices is null)
+        {
+            _logger.LogWarning("Bot {botName} ItemServices is null when setting helmet", bot.PlayerName);
+            return;
+        }
+
+        bossItemServices.HasHelmet = equip;
+        Utilities.SetStateChanged(bot.PlayerPawn.Value!, "CCSPlayerPawn", "m_pItemServices");
     }
 
     private bool ValidateBoss(out CCSPlayerController? boss)
