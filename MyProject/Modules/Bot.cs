@@ -1007,17 +1007,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                     return;
 
                 SetBossMovement(true);
-                _ = Task.Run(async () =>
-                {
-                    try
-                    {
-                        await SetBossArmor(); // TODO: remove Task.Run and use fire-and-forget
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Failed to restore boss armor after guard break");
-                    }
-                });
+                _ = SetBossArmor();
             });
 
             _damageTimers.Add(guardBreakTimer);

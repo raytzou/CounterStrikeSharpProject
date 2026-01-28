@@ -686,18 +686,7 @@ public class Main(
         if (_bot.IsBoss(victim))
         {
             _bot.BossBehavior(victim);
-
-            try
-            {
-                _ = Task.Run(async () =>
-                {
-                    await _bot.BossArmorDetection(victim); // TODO: remove Task.Run and use fire-and-forget
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Boss Armor Detection error");
-            }
+            _bot.BossArmorDetection(victim);
         }
 
         return HookResult.Continue;
