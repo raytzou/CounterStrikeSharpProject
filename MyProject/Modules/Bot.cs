@@ -29,6 +29,7 @@ public class Bot(ILogger<Bot> logger) : IBot
     private int _maxRespawnTimes = 20;
     private bool _isCurseActive = false;
     private readonly List<CounterStrikeSharp.API.Modules.Timers.Timer> _damageTimers = new();
+    private float _lastAbilityTime = 0f;
 
     private static readonly Regex NormalBotNameRegex = new(@"^\[(?<Grade>[^\]]+)\](?<Group>[^#]+)#(?<Num>\d{1,2})$");
     private static readonly HashSet<string> _specialBots = BotProfile.Special.Values.ToHashSet();
@@ -470,51 +471,59 @@ public class Bot(ILogger<Bot> logger) : IBot
             _logger.LogInformation("BossBehavior Start");
         if (!Utility.IsBotValidAndAlive(boss))
             return;
-        var activeAbilityChance = GetChance();
 
-        if (activeAbilityChance <= Main.Instance.Config.BossActiveAbilityChance)
+        // Cooldown check
+        var currentTime = Server.CurrentTime;
+        if (currentTime - _lastAbilityTime < Main.Instance.Config.BossAbilityCooldown)
         {
-            var availableAbilities = new List<BossAbilities>
-            {
-                BossAbilities.FireTorture,
-                BossAbilities.Freeze,
-                BossAbilities.Flashbang,
-                BossAbilities.Explosion,
-                BossAbilities.ToxicSmoke,
-            };
-
-            if (CanUseCursed())
-                availableAbilities.Add(BossAbilities.Cursed);
-
-            var abilityChoice = availableAbilities[Random.Shared.Next(availableAbilities.Count)];
-
-            switch (abilityChoice)
-            {
-                case BossAbilities.FireTorture:
-                    FireTorture();
-                    break;
-                case BossAbilities.Freeze:
-                    Freeze();
-                    break;
-                case BossAbilities.Flashbang:
-                    Flashbang();
-                    break;
-                case BossAbilities.Explosion:
-                    Explosion();
-                    break;
-                case BossAbilities.ToxicSmoke:
-                    ToxicSmoke();
-                    break;
-                case BossAbilities.Cursed:
-                    Cursed();
-                    break;
-            }
+            if (AppSettings.IsDebug)
+                _logger.LogInformation("Boss ability on cooldown. Time remaining: {TimeRemaining:F2}s",
+                    Main.Instance.Config.BossAbilityCooldown - (currentTime - _lastAbilityTime));
+            return;
         }
 
-        double GetChance()
+        var availableAbilities = new List<BossAbilities>
         {
-            return Random.Shared.NextDouble() * 100; // Returns a value between 0-100
+            BossAbilities.FireTorture,
+            BossAbilities.Freeze,
+            BossAbilities.Flashbang,
+            BossAbilities.Explosion,
+            BossAbilities.ToxicSmoke,
+        };
+
+        if (CanUseCursed())
+            availableAbilities.Add(BossAbilities.Cursed);
+
+        var abilityChoice = availableAbilities[Random.Shared.Next(availableAbilities.Count)];
+
+        switch (abilityChoice)
+        {
+            case BossAbilities.FireTorture:
+                FireTorture();
+                break;
+            case BossAbilities.Freeze:
+                Freeze();
+                break;
+            case BossAbilities.Flashbang:
+                Flashbang();
+                break;
+            case BossAbilities.Explosion:
+                Explosion();
+                break;
+            case BossAbilities.ToxicSmoke:
+                ToxicSmoke();
+                break;
+            case BossAbilities.Cursed:
+                Cursed();
+                break;
         }
+
+        // Update last ability time after successful activation
+        _lastAbilityTime = currentTime;
+        
+        if (AppSettings.IsDebug)
+            _logger.LogInformation("Boss activated ability: {Ability}. Next available at: {NextTime:F2}s",
+                abilityChoice, currentTime + Main.Instance.Config.BossAbilityCooldown);
 
         void FireTorture()
         {
@@ -953,6 +962,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         _damageTimers.Clear();
         _isCurseActive = false;
+        _lastAbilityTime = 0f;
     }
 
     private CsTeam GetBotTeam(string mapName)

@@ -13,7 +13,7 @@ namespace MyProject.Classes
         public int FinalBossRound = 8;
         public string EagleEyeModel = "[???]Nano Girl";
         public string RushModel = "[Resident Evil 2]Hunk";
-        public double BossActiveAbilityChance = 20;
+        public float BossAbilityCooldown = 3f;
         public int MidBossHealth = 10000;
         public int FinalBossHealth = 15000;
         public int DisplayMenuInterval = 30;
