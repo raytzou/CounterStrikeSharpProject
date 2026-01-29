@@ -723,7 +723,7 @@ public class Main(
     {
         var hasKit = @event.Haskit;
         int processLength = 20;
-        float updateTimerInterval = 0.01f;
+        float updateTimerInterval = 0.1f;
         var totalTime = hasKit ? 5f : 10f;
         var start = Server.CurrentTime;
 
