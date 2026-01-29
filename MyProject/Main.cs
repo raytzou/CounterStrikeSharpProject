@@ -695,6 +695,7 @@ public class Main(
     private HookResult BombPlantedHandler(EventBombPlanted @event, GameEventInfo info)
     {
         _c4Counter = _originalC4Time;
+        _bombTimer?.Kill();
         _bombTimer = AddTimer(1f, () =>
         {
             _c4Counter--;
@@ -727,6 +728,7 @@ public class Main(
         var totalTime = hasKit ? 5f : 10f;
         var start = Server.CurrentTime;
 
+        _defusingTimer?.Kill();
         _defusingTimer = AddTimer(updateTimerInterval, () =>
         {
             var elapsed = Server.CurrentTime - start;
