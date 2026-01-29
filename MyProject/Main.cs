@@ -739,9 +739,9 @@ public class Main(
             for (int i = 0; i < processLength; i++)
             {
                 if (i <= filledCount)
-                    processBar[i] = '|';
+                    processBar[i] = '█';
                 else
-                    processBar[i] = '_';
+                    processBar[i] = '░';
             }
 
             var renderHtml = GetDefusingMessageHtml(processBar);
