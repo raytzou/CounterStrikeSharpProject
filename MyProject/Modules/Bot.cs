@@ -826,11 +826,10 @@ public class Bot(ILogger<Bot> logger) : IBot
             var bossHealth = boss.PlayerPawn.Value!.Health;
             var maxHealth = IsBoss(boss) && boss.PlayerName.Contains(BotProfile.Boss[0]) ? Main.Instance.Config.MidBossHealth : Main.Instance.Config.FinalBossHealth;
             var oneThirdHealth = maxHealth / 3;
+            
+            var islowHealth = bossHealth <= oneThirdHealth;
 
-            if (bossHealth > oneThirdHealth)
-                return false;
-
-            return true;
+            return islowHealth;
         }
 
         void CreateTimedProjectileAttack(string message, System.Drawing.Color beaconColor, Action<Vector> createProjectileAction, float delayTime = 3.0f)
