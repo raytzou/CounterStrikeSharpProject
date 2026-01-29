@@ -740,6 +740,13 @@ public class Main(
 
             for (int i = 0; i < progressLength; i++)
             {
+                // NOTE:
+                // I intentionally use '<=' here as a UI compensation.
+                // In practice, the final render tick often never happens because
+                // the defuse timer is killed by bomb_defused / abort events before
+                // progressRatio reaches exactly 1.0.
+                // This ensures the progress bar visually reaches 100% before termination.
+                // (Purely visual, no gameplay impact.)
                 if (i <= filledCount)
                     progressBar[i] = '█';
                 else
