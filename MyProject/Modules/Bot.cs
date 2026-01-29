@@ -30,6 +30,7 @@ public class Bot(ILogger<Bot> logger) : IBot
     private bool _isCurseActive = false;
     private readonly List<CounterStrikeSharp.API.Modules.Timers.Timer> _damageTimers = new();
     private float _lastAbilityTime = 0f;
+    private readonly HashSet<BossAbilities> _activeAbilities = new();
 
     private static readonly Regex NormalBotNameRegex = new(@"^\[(?<Grade>[^\]]+)\](?<Group>[^#]+)#(?<Num>\d{1,2})$");
     private static readonly HashSet<string> _specialBots = BotProfile.Special.Values.ToHashSet();
@@ -482,6 +483,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             return;
         }
 
+        // Build list of available abilities (not currently active)
         var availableAbilities = new List<BossAbilities>
         {
             BossAbilities.FireTorture,
@@ -493,6 +495,19 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         if (CanUseCursed())
             availableAbilities.Add(BossAbilities.Cursed);
+
+        // Filter out abilities that are currently active
+        availableAbilities = availableAbilities
+            .Where(ability => !_activeAbilities.Contains(ability))
+            .ToList();
+
+        // If no abilities available, don't activate anything
+        if (availableAbilities.Count == 0)
+        {
+            if (AppSettings.IsDebug)
+                _logger.LogInformation("All boss abilities are currently active. Active count: {Count}", _activeAbilities.Count);
+            return;
+        }
 
         var abilityChoice = availableAbilities[Random.Shared.Next(availableAbilities.Count)];
 
@@ -529,11 +544,24 @@ public class Bot(ILogger<Bot> logger) : IBot
         {
             if (AppSettings.IsDebug)
                 _logger.LogInformation("Boss actives FireTorture");
+            
+            // Mark as active
+            _activeAbilities.Add(BossAbilities.FireTorture);
+            
             CreateTimedProjectileAttack(
                 "The Boss ignites all players!",
                 System.Drawing.Color.Red,
                 CreateMolotovAtPosition
             );
+
+            // Remove from active after estimated duration (3s preparation + 7s burn)
+            const float duration = 10f;
+            Main.Instance.AddTimer(duration, () =>
+            {
+                _activeAbilities.Remove(BossAbilities.FireTorture);
+                if (AppSettings.IsDebug)
+                    _logger.LogInformation("FireTorture ability ended");
+            });
 
             void CreateMolotovAtPosition(Vector position)
             {
@@ -549,10 +577,18 @@ public class Bot(ILogger<Bot> logger) : IBot
         {
             if (AppSettings.IsDebug)
                 _logger.LogInformation("Boss actives Freeze");
+            
+            // Mark as active
+            _activeAbilities.Add(BossAbilities.Freeze);
+            
             Utility.PrintToAllCenter("The Boss locks the battlefield in ice!");
             var humanPlayers = Utility.GetAliveHumans();
 
-            if (humanPlayers.Count == 0) return;
+            if (humanPlayers.Count == 0)
+            {
+                _activeAbilities.Remove(BossAbilities.Freeze);
+                return;
+            }
 
             var frozenPlayers = new List<CCSPlayerController>();
 
@@ -579,6 +615,11 @@ public class Bot(ILogger<Bot> logger) : IBot
                         player.PlayerPawn.Value!.MoveType = MoveType_t.MOVETYPE_WALK;
                     }
                 });
+                
+                // Remove from active after freeze ends
+                _activeAbilities.Remove(BossAbilities.Freeze);
+                if (AppSettings.IsDebug)
+                    _logger.LogInformation("Freeze ability ended");
             });
         }
 
@@ -586,12 +627,25 @@ public class Bot(ILogger<Bot> logger) : IBot
         {
             if (AppSettings.IsDebug)
                 _logger.LogInformation("Boss actives Flashbang");
+            
+            // Mark as active
+            _activeAbilities.Add(BossAbilities.Flashbang);
+            
             CreateTimedProjectileAttack(
                 "The Boss blinds the battlefield!",
                 System.Drawing.Color.Transparent,
                 CreateFlashbangAtPosition,
                 0f
             );
+
+            // Remove from active after estimated flash duration (instant + ~3s effect)
+            const float duration = 3f;
+            Main.Instance.AddTimer(duration, () =>
+            {
+                _activeAbilities.Remove(BossAbilities.Flashbang);
+                if (AppSettings.IsDebug)
+                    _logger.LogInformation("Flashbang ability ended");
+            });
 
             void CreateFlashbangAtPosition(Vector position)
             {
@@ -607,11 +661,24 @@ public class Bot(ILogger<Bot> logger) : IBot
         {
             if (AppSettings.IsDebug)
                 _logger.LogInformation("Boss actives Explosion");
+            
+            // Mark as active
+            _activeAbilities.Add(BossAbilities.Explosion);
+            
             CreateTimedProjectileAttack(
                 "The Boss prepares explosive devastation!",
                 System.Drawing.Color.Orange,
                 CreateGrenadeAtPosition
             );
+
+            // Remove from active after estimated duration (3s preparation + 3s explosion)
+            const float duration = 6f;
+            Main.Instance.AddTimer(duration, () =>
+            {
+                _activeAbilities.Remove(BossAbilities.Explosion);
+                if (AppSettings.IsDebug)
+                    _logger.LogInformation("Explosion ability ended");
+            });
 
             void CreateGrenadeAtPosition(Vector position)
             {
@@ -627,10 +694,17 @@ public class Bot(ILogger<Bot> logger) : IBot
         {
             if (AppSettings.IsDebug)
                 _logger.LogInformation("Boss actives ToxicSmoke");
+            
+            // Mark as active
+            _activeAbilities.Add(BossAbilities.ToxicSmoke);
+            
             Utility.PrintToAllCenter("The Boss releases toxic clouds!");
             var humanPlayers = Utility.GetAliveHumans();
             if (humanPlayers.Count == 0)
+            {
+                _activeAbilities.Remove(BossAbilities.ToxicSmoke);
                 return;
+            }
 
             var targetCount = Math.Max(1, humanPlayers.Count / 3);
             var selectedPlayers = humanPlayers
@@ -736,6 +810,9 @@ public class Bot(ILogger<Bot> logger) : IBot
                 {
                     _damageTimers.Remove(toxicTimer);
                     toxicTimer?.Kill();
+                    _activeAbilities.Remove(BossAbilities.ToxicSmoke);
+                    if (AppSettings.IsDebug)
+                        _logger.LogInformation("ToxicSmoke ability ended");
                 });
             }
 
@@ -754,12 +831,14 @@ public class Bot(ILogger<Bot> logger) : IBot
                 _logger.LogInformation("Boss actives Cursed");
 
             _isCurseActive = true;
+            _activeAbilities.Add(BossAbilities.Cursed);
 
             var humanPlayers = Utility.GetAliveHumans();
 
             if (humanPlayers.Count == 0)
             {
                 _isCurseActive = false;
+                _activeAbilities.Remove(BossAbilities.Cursed);
                 return;
             }
 
@@ -820,7 +899,10 @@ public class Bot(ILogger<Bot> logger) : IBot
                 _damageTimers.Remove(cursedTimer);
                 cursedTimer?.Kill();
                 _isCurseActive = false;
+                _activeAbilities.Remove(BossAbilities.Cursed);
                 Utility.PrintToAllCenter("The curse has been lifted...");
+                if (AppSettings.IsDebug)
+                    _logger.LogInformation("Cursed ability ended");
             });
         }
 
@@ -963,6 +1045,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         _damageTimers.Clear();
         _isCurseActive = false;
         _lastAbilityTime = 0f;
+        _activeAbilities.Clear();
     }
 
     private CsTeam GetBotTeam(string mapName)
