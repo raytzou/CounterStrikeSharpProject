@@ -747,10 +747,7 @@ public class Main(
                 // progressRatio reaches exactly 1.0.
                 // This ensures the progress bar visually reaches 100% before termination.
                 // (Purely visual, no gameplay impact.)
-                if (i <= filledCount)
-                    progressBar[i] = '█';
-                else
-                    progressBar[i] = '░';
+                progressBar[i] = i <= filledCount ? '█' : '░';
             }
 
             var renderHtml = GetDefusingMessageHtml(progressBar);
