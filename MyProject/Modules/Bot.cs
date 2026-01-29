@@ -820,6 +820,9 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (_isCurseActive)
                 return false;
 
+            if (Main.Instance.RoundCount != Main.Instance.Config.FinalBossRound)
+                return false;
+
             var bossHealth = boss.PlayerPawn.Value!.Health;
             var maxHealth = IsBoss(boss) && boss.PlayerName.Contains(BotProfile.Boss[0]) ? Main.Instance.Config.MidBossHealth : Main.Instance.Config.FinalBossHealth;
             var oneThirdHealth = maxHealth / 3;
