@@ -722,7 +722,7 @@ public class Main(
     private HookResult BombBegindefuseHandler(EventBombBegindefuse @event, GameEventInfo info)
     {
         var hasKit = @event.Haskit;
-        int processLength = 20;
+        int progressLength = 20;
         float updateTimerInterval = 0.1f;
         var totalTime = hasKit ? 5f : 10f;
         var start = Server.CurrentTime;
@@ -733,25 +733,25 @@ public class Main(
             var progressRatio = elapsed / totalTime;
 
             progressRatio = Math.Clamp(progressRatio, 0, 1);
-            var filledCount = Math.Floor(progressRatio * processLength);
-            char[] processBar = new char[processLength];
+            var filledCount = Math.Floor(progressRatio * progressLength);
+            char[] progressBar = new char[progressLength];
 
-            for (int i = 0; i < processLength; i++)
+            for (int i = 0; i < progressLength; i++)
             {
                 if (i <= filledCount)
-                    processBar[i] = '█';
+                    progressBar[i] = '█';
                 else
-                    processBar[i] = '░';
+                    progressBar[i] = '░';
             }
 
-            var renderHtml = GetDefusingMessageHtml(processBar);
+            var renderHtml = GetDefusingMessageHtml(progressBar);
 
             Utility.PrintToAllCenterWithHtml(renderHtml);
         }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
 
         return HookResult.Continue;
 
-        string GetDefusingMessageHtml(char[] processBar)
+        string GetDefusingMessageHtml(char[] progressBar)
         {
             var elapsed = Server.CurrentTime - start;
             var remainingTime = Math.Max(0, totalTime - elapsed);
@@ -759,7 +759,7 @@ public class Main(
             var milliseconds = (int)((remainingTime % 1.0) * 100);
             var defusingMessage = $"Defusing: {seconds}.{milliseconds:D2}";
 
-            return $"{defusingMessage} <br /> [{new string(processBar)}]";
+            return $"{defusingMessage} <br /> [{new string(progressBar)}]";
         }
     }
 
