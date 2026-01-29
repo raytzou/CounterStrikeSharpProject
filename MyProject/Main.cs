@@ -714,7 +714,7 @@ public class Main(
 
     private HookResult BombDefusedHandler(EventBombDefused @event, GameEventInfo info)
     {
-        BombEndEventHandler("Bomb has been defuesed");
+        BombEndEventHandler("Bomb has been defused");
 
         return HookResult.Continue;
     }
