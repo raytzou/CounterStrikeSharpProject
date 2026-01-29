@@ -827,10 +827,10 @@ public class Bot(ILogger<Bot> logger) : IBot
             var maxHealth = IsBoss(boss) && boss.PlayerName.Contains(BotProfile.Boss[0]) ? Main.Instance.Config.MidBossHealth : Main.Instance.Config.FinalBossHealth;
             var oneThirdHealth = maxHealth / 3;
 
-            var islowHealth = bossHealth <= oneThirdHealth;
+            var isLowHealth = bossHealth <= oneThirdHealth;
             var isPanicking = CheckPanicTimer();
 
-            return islowHealth || isPanicking;
+            return isLowHealth || isPanicking;
 
             bool CheckPanicTimer()
             {
