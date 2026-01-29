@@ -826,10 +826,25 @@ public class Bot(ILogger<Bot> logger) : IBot
             var bossHealth = boss.PlayerPawn.Value!.Health;
             var maxHealth = IsBoss(boss) && boss.PlayerName.Contains(BotProfile.Boss[0]) ? Main.Instance.Config.MidBossHealth : Main.Instance.Config.FinalBossHealth;
             var oneThirdHealth = maxHealth / 3;
-            
-            var islowHealth = bossHealth <= oneThirdHealth;
 
-            return islowHealth;
+            var islowHealth = bossHealth <= oneThirdHealth;
+            var isPanicking = CheckPanicTimer();
+
+            return islowHealth || isPanicking;
+
+            bool CheckPanicTimer()
+            {
+                var panicTimer = boss.PlayerPawn.Value.Bot?.PanicTimer;
+
+                if (panicTimer is null)
+                {
+                    _logger.LogWarning("Boss's PanicTimer is null");
+                    return false;
+                }
+
+                return panicTimer.Duration > 0 &&
+                    Server.CurrentTime < panicTimer.Timestamp + panicTimer.Duration;
+            }
         }
 
         void CreateTimedProjectileAttack(string message, System.Drawing.Color beaconColor, Action<Vector> createProjectileAction, float delayTime = 3.0f)
