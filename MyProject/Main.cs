@@ -927,6 +927,22 @@ public class Main(
 
         return HookResult.Continue;
     }
+
+    private HookResult PlayerBlindHandler(EventPlayerBlind @event, GameEventInfo info)
+    {
+        var player = @event.Userid;
+        if (!Utility.IsPlayerValid(player))
+            return HookResult.Continue;
+
+        var attacker = @event.Attacker;
+        if (!Utility.IsPlayerValid(attacker))
+            return HookResult.Continue;
+
+        if (attacker.TeamNum == player.TeamNum && attacker.UserId != player.UserId)
+            player.PlayerPawn.Value!.BlindUntilTime = Server.CurrentTime;
+
+        return HookResult.Continue;
+    }
     #endregion hook result
 
     #region commands
@@ -1289,6 +1305,7 @@ public class Main(
         RegisterEventHandler<EventBombExploded>(BombExplodedHandler);
         RegisterEventHandler<EventBombBegindefuse>(BombBegindefuseHandler);
         RegisterEventHandler<EventBombAbortdefuse>(BombAbortdefuseHandler);
+        RegisterEventHandler<EventPlayerBlind>(PlayerBlindHandler);
 
         AddCommandListener("say", OnPlayerSayCommand);
         AddCommandListener("say_team", OnPlayerSayCommand);
