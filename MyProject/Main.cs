@@ -42,6 +42,7 @@ public class Main(
     private CounterStrikeSharp.API.Modules.Timers.Timer? _weaponCheckTimer = null;
     private CounterStrikeSharp.API.Modules.Timers.Timer? _roundTimer = null;
     private CounterStrikeSharp.API.Modules.Timers.Timer? _bombTimer = null;
+    private CounterStrikeSharp.API.Modules.Timers.Timer? _defusingTimer = null;
     private int _roundCount = 0;
     private bool _warmup = true;
     private int _winStreak = 0;
@@ -49,6 +50,8 @@ public class Main(
     private bool _isRoundEnd = false;
     private bool _randomSpawn = false;
     private int _currentRoundSecond = 0;
+    private int _c4Counter = 0;
+    private int _originalC4Time = 0;
 
     // module services
     private readonly ICommand _command = commmand;
@@ -690,11 +693,13 @@ public class Main(
 
     private HookResult BombPlantedHandler(EventBombPlanted @event, GameEventInfo info)
     {
-        var c4Timer = ConVar.Find("mp_c4timer")!.GetPrimitiveValue<int>();
-
+        _c4Counter = _originalC4Time;
+        _bombTimer?.Kill();
         _bombTimer = AddTimer(1f, () =>
         {
-            Utility.PrintToAllCenter($"C4 Counter: {c4Timer--}");
+            _c4Counter--;
+            var c4CounterMessage = GetC4CounterMessage();
+            Utility.PrintToAllCenter(c4CounterMessage);
         }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
 
         return HookResult.Continue;
@@ -702,14 +707,70 @@ public class Main(
 
     private HookResult BombExplodedHandler(EventBombExploded @event, GameEventInfo info)
     {
-        BombEventHandler("C4 has exploded!");
+        BombEndEventHandler("C4 has exploded!");
 
         return HookResult.Continue;
     }
 
     private HookResult BombDefusedHandler(EventBombDefused @event, GameEventInfo info)
     {
-        BombEventHandler("Bomb has been defuesed");
+        BombEndEventHandler("Bomb has been defused");
+
+        return HookResult.Continue;
+    }
+
+    private HookResult BombBegindefuseHandler(EventBombBegindefuse @event, GameEventInfo info)
+    {
+        var hasKit = @event.Haskit;
+        int progressLength = 20;
+        float updateTimerInterval = 0.1f;
+        var totalTime = hasKit ? 5f : 10f;
+        var start = Server.CurrentTime;
+
+        _defusingTimer?.Kill();
+        _defusingTimer = AddTimer(updateTimerInterval, () =>
+        {
+            var elapsed = Server.CurrentTime - start;
+            var progressRatio = elapsed / totalTime;
+
+            progressRatio = Math.Clamp(progressRatio, 0, 1);
+            var filledCount = Math.Floor(progressRatio * progressLength);
+            char[] progressBar = new char[progressLength];
+
+            for (int i = 0; i < progressLength; i++)
+            {
+                // NOTE:
+                // I intentionally use '<=' here as a UI compensation.
+                // In practice, the final render tick often never happens because
+                // the defuse timer is killed by bomb_defused / abort events before
+                // progressRatio reaches exactly 1.0.
+                // This ensures the progress bar visually reaches 100% before termination.
+                // (Purely visual, no gameplay impact.)
+                progressBar[i] = i <= filledCount ? '█' : '░';
+            }
+
+            var renderHtml = GetDefusingMessageHtml(progressBar);
+
+            Utility.PrintToAllCenterWithHtml(renderHtml);
+        }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
+
+        return HookResult.Continue;
+
+        string GetDefusingMessageHtml(char[] progressBar)
+        {
+            var elapsed = Server.CurrentTime - start;
+            var remainingTime = Math.Max(0, totalTime - elapsed);
+            var seconds = (int)remainingTime;
+            var milliseconds = (int)((remainingTime % 1.0) * 100);
+            var defusingMessage = $"Defusing: {seconds}.{milliseconds:D2}";
+
+            return $"{defusingMessage} <br /> [{new string(progressBar)}]";
+        }
+    }
+
+    private HookResult BombAbortdefuseHandler(EventBombAbortdefuse @event, GameEventInfo info)
+    {
+        _defusingTimer?.Kill();
 
         return HookResult.Continue;
     }
@@ -865,6 +926,22 @@ public class Main(
 
         return HookResult.Continue;
     }
+
+    private HookResult PlayerBlindHandler(EventPlayerBlind @event, GameEventInfo info)
+    {
+        var player = @event.Userid;
+        if (!Utility.IsPlayerValid(player))
+            return HookResult.Continue;
+
+        var attacker = @event.Attacker;
+        if (!Utility.IsPlayerValid(attacker))
+            return HookResult.Continue;
+
+        if (attacker.TeamNum == player.TeamNum && attacker.UserId != player.UserId)
+            player.PlayerPawn.Value!.BlindUntilTime = Server.CurrentTime;
+
+        return HookResult.Continue;
+    }
     #endregion hook result
 
     #region commands
@@ -1010,6 +1087,7 @@ public class Main(
         _weaponStatus.Clear();
         _randomSpawn = false;
         _currentRoundSecond = 0;
+        _originalC4Time = ConVar.Find("mp_c4timer")!.GetPrimitiveValue<int>();
 
         SetHumanTeam();
         ResetDefaultWeapon();
@@ -1189,10 +1267,11 @@ public class Main(
         }
     }
 
-    private void BombEventHandler(string message)
+    private void BombEndEventHandler(string message)
     {
         Utility.PrintToAllCenter(message);
         _bombTimer?.Kill();
+        _defusingTimer?.Kill();
     }
 
     private void KillTimer()
@@ -1200,6 +1279,7 @@ public class Main(
         _weaponCheckTimer?.Kill();
         _roundTimer?.Kill();
         _bombTimer?.Kill();
+        _defusingTimer?.Kill();
     }
 
     private void Reigsters()
@@ -1222,6 +1302,9 @@ public class Main(
         RegisterEventHandler<EventBombPlanted>(BombPlantedHandler);
         RegisterEventHandler<EventBombDefused>(BombDefusedHandler);
         RegisterEventHandler<EventBombExploded>(BombExplodedHandler);
+        RegisterEventHandler<EventBombBegindefuse>(BombBegindefuseHandler);
+        RegisterEventHandler<EventBombAbortdefuse>(BombAbortdefuseHandler);
+        RegisterEventHandler<EventPlayerBlind>(PlayerBlindHandler);
 
         AddCommandListener("say", OnPlayerSayCommand);
         AddCommandListener("say_team", OnPlayerSayCommand);
@@ -1240,6 +1323,11 @@ public class Main(
         {
             _logger.LogError(ex, "Failed to initialize SaySoundHelper");
         }
+    }
+
+    private string GetC4CounterMessage()
+    {
+        return $"C4 Counter: {_c4Counter}";
     }
 
     public string GetTargetNameByKeyword(string keyword)
