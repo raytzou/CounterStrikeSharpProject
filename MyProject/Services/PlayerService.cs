@@ -57,6 +57,11 @@ namespace MyProject.Services
             });
         }
 
+        public void ClearPlayerCache(ulong steamId)
+        {
+            _playerCache.Remove(steamId);
+        }
+
         public void ClearPlayerCaches()
         {
             _playerCache.Clear();

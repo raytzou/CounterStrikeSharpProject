@@ -663,7 +663,10 @@ public class Main(
             _logger.LogInformation("{client} has disconnected at {DT}", player.PlayerName, DateTime.Now);
             var playerCache = _playerService.GetPlayerCache(player.SteamID);
             if (playerCache != null)
+            {
                 _playerService.SaveCacheToDB(playerCache);
+                _playerService.ClearPlayerCache(player.SteamID);
+            }
         }
 
         if (_position.ContainsKey(player.PlayerName))
