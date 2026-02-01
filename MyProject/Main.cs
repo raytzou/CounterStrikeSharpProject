@@ -326,6 +326,7 @@ public class Main(
                 Server.NextWorldUpdate(() =>
                 {
                     var defaultSkin = GetPlayerDefaultSkin();
+                    if (defaultSkin == null) return;
                     playerCache.DefaultSkinModelPath = defaultSkin;
                 });
             }
@@ -356,18 +357,45 @@ public class Main(
             });
         }
 
-        string GetPlayerDefaultSkin()
+        string? GetPlayerDefaultSkin()
         {
             if (!Utility.IsPlayerValid(player))
-                throw new InvalidOperationException("Player is invalid while getting default skin.");
+            {
+                _logger.LogWarning("Player is invalid while getting default skin.");
+                return null;
+            }
 
             var playerPawn = player.PlayerPawn.Value!;
-            var bodyComponent = playerPawn.CBodyComponent
-                ?? throw new InvalidOperationException("BodyComponent is null while getting default skin");
-            var sceneNode = bodyComponent.SceneNode
-                ?? throw new InvalidOperationException("SceneNode is null while getting default skin");
+            var bodyComponent = playerPawn.CBodyComponent;
+            if (bodyComponent == null)
+            {
+                _logger.LogWarning("BodyComponent is null while getting default skin");
+                return null;
+            }
 
-            return sceneNode.GetSkeletonInstance().ModelState.ModelName;
+            var sceneNode = bodyComponent.SceneNode;
+            if (sceneNode == null)
+            {
+                _logger.LogWarning("SceneNode is null while getting default skin");
+                return null;
+            }
+
+            try
+            {
+                CSkeletonInstance? skeletonInstance = null;
+                skeletonInstance = sceneNode.GetSkeletonInstance();
+                return skeletonInstance.ModelState.ModelName;
+            }
+            catch (InvalidOperationException)
+            {
+                _logger.LogWarning("Get default skin error, GameSceneNode points to null");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexcepted error while getting default skin");
+                return null;
+            }
         }
     }
 
