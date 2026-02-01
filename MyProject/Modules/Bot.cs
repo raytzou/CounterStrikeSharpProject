@@ -39,8 +39,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         await StopBotMoving();
 
         var botTeam = GetBotTeam(mapName);
-        if (botTeam != CsTeam.None)
-            await AddSpecialOrBoss(botTeam);
+        await AddSpecialOrBoss(botTeam);
 
         _level = 2;
 
@@ -67,8 +66,9 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
 
         var botTeam = GetBotTeam(mapName);
-        if (botTeam != CsTeam.None)
-            await FillNormalBotAsync(GetDifficultyLevel(0, 0), botTeam);
+        SetDifficultyLevel(0, 0);
+        SetMaxRespawnTimes();
+        await FillNormalBotAsync(_level, botTeam);
     }
 
     public async Task RoundStartBehavior(string mapName)
@@ -369,7 +369,9 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         if (Main.Instance.RoundCount != Main.Instance.Config.MidBossRound && Main.Instance.RoundCount < Main.Instance.Config.FinalBossRound)
         {
-            await FillNormalBotAsync(GetDifficultyLevel(winStreak, looseStreak), botTeam);
+            SetDifficultyLevel(winStreak, looseStreak);
+            await FillNormalBotAsync(_level, botTeam);
+            SetMaxRespawnTimes();
         }
 
         async Task SetDefaultWeapon()
@@ -950,21 +952,17 @@ public class Bot(ILogger<Bot> logger) : IBot
         });
     }
 
-    private int GetDifficultyLevel(int winStreak, int looseStreak)
+    private void SetDifficultyLevel(int winStreak, int looseStreak)
     {
-        if (winStreak > 1 && _level < 7)
+        if (winStreak >= 1 && _level < 7)
             _level++;
-        else if (looseStreak > 2 && _level > 1)
+        else if (looseStreak >= 2 && _level > 1)
             _level--;
+    }
 
-        SetMaxRespawnTimes(_level);
-
-        return _level;
-
-        void SetMaxRespawnTimes(int level)
-        {
-            _maxRespawnTimes = (level < 3) ? 100 : (level == 4) ? 120 : 150;
-        }
+    private void SetMaxRespawnTimes()
+    {
+        _maxRespawnTimes = (_level < 3) ? 100 : (_level == 4) ? 120 : 150;
     }
 
     private async Task AddSpecialOrBoss(CsTeam botTeam)
@@ -1147,8 +1145,6 @@ public class Bot(ILogger<Bot> logger) : IBot
                 return;
 
             var botTeam = GetBotTeam(mapName);
-            if (botTeam == CsTeam.None) return;
-
             var weaponToGive = weapon ?? (botTeam == CsTeam.CounterTerrorist ? CsItem.M4A1 : CsItem.AK47);
 
             if (bot.PlayerPawn.Value!.WeaponServices == null)
