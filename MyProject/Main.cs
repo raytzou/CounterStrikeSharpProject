@@ -278,17 +278,7 @@ public class Main(
 
         if (_playerService.GetPlayerCache(player.SteamID) is null)
         {
-            try
-            {
-                _ = Task.Run(async () =>
-                {
-                    await _playerService.PrepareCache(player);
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Prepare player cache error: {playerName}", player.PlayerName);
-            }
+            _playerService.PrepareCache(player);
         }
 
         if (_roundCount == 0)
