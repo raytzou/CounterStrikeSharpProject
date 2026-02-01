@@ -312,7 +312,27 @@ public class Main(
         if (!player.IsBot)
         {
             _weaponStatus[player.PlayerName].IsTracking = true;
-            SetClientModel(player);
+
+            var playerCache = _playerService.GetPlayerCache(player.SteamID);
+            if (playerCache == null)
+            {
+                _logger.LogWarning("Player {playerName} {steamId} cache is null!", player.PlayerName, player.SteamID);
+                Utility.PrintToChatWithTeamColor(player, "Player cache error! please reconnect to the server!");
+                return HookResult.Continue;
+            }
+
+            if (string.IsNullOrEmpty(playerCache.DefaultSkinModelPath))
+            {
+                Server.NextWorldUpdate(() =>
+                {
+                    var defaultSkin = GetPlayerDefaultSkin();
+                    playerCache.DefaultSkinModelPath = defaultSkin;
+                });
+            }
+            Server.NextWorldUpdate(() =>
+            {
+                SetClientModel(player);
+            });
         }
 
         return HookResult.Continue;
@@ -334,6 +354,20 @@ public class Main(
                 player.PrintToChat($" {ChatColors.Lime}If you have any problem, feel free to contact the admin!");
                 player.PrintToChat($" {ChatColors.Lime}Hope you enjoy here ^^");
             });
+        }
+
+        string GetPlayerDefaultSkin()
+        {
+            if (!Utility.IsPlayerValid(player))
+                throw new InvalidOperationException("Player is invalid while getting default skin.");
+
+            var playerPawn = player.PlayerPawn.Value!;
+            var bodyComponent = playerPawn.CBodyComponent
+                ?? throw new InvalidOperationException("BodyComponent is null while getting default skin");
+            var sceneNode = bodyComponent.SceneNode
+                ?? throw new InvalidOperationException("SceneNode is null while getting default skin");
+
+            return sceneNode.GetSkeletonInstance().ModelState.ModelName;
         }
     }
 

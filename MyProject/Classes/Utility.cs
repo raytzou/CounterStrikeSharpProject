@@ -783,20 +783,6 @@ namespace MyProject.Classes
             return matches.Count == 1 ? matches[0].EntityName : null;
         }
 
-        public static string GetPlayerDefaultSkin(CCSPlayerController? player)
-        {
-            if (!IsPlayerValid(player))
-                throw new InvalidOperationException("Player is invalid while getting default skin.");
-
-            var playerPawn = player.PlayerPawn.Value!;
-            var bodyComponent = playerPawn.CBodyComponent
-                ?? throw new InvalidOperationException("BodyComponent is null while getting default skin");
-            var sceneNode = bodyComponent.SceneNode
-                ?? throw new InvalidOperationException("SceneNode is null while getting default skin");
-
-            return sceneNode.GetSkeletonInstance().ModelState.ModelName;
-        }
-
         public static bool IsHumanValid([NotNullWhen(true)] CCSPlayerController? player) =>
             IsPlayerValid(player) &&
             !player.IsBot;
