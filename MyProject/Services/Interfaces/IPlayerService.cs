@@ -5,12 +5,11 @@ namespace MyProject.Services.Interfaces
 {
     public interface IPlayerService
     {
-        void PlayerJoin(CCSPlayerController client);
-        void UpdateDefaultSkin(ulong steamId, string skinPath);
-        string GetDefaultSkin(ulong steamId);
+        void PrepareCache(CCSPlayerController client);
         Player? GetPlayerCache(ulong steamId);
         IEnumerable<Player> GetAllCaches();
-        void ClearPlayerCache();
+        void ClearPlayerCaches();
+        void ClearPlayerCache(ulong steamId);
         void ResetPlayerSkinFromCache(Player playerCache);
         void UpdateCache(Player player);
         void SaveCacheToDB(Player player);
