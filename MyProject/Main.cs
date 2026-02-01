@@ -317,7 +317,7 @@ public class Main(
             if (playerCache == null)
             {
                 _logger.LogWarning("Player {playerName} {steamId} cache is null!", player.PlayerName, player.SteamID);
-                Utility.PrintToChatWithTeamColor(player, "Player cache error! please reconnect to the server!");
+                Utility.PrintToChatWithTeamColor(player, "Player cache error! Please reconnect to the server!");
                 return HookResult.Continue;
             }
 
