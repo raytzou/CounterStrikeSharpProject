@@ -71,7 +71,7 @@ namespace MyProject.Services
 
         public void ResetPlayerSkinFromCache(Player playerCache)
         {
-            foreach (var skin in playerCache.PlayerSkins.Where(s => s.IsActive))
+            foreach (var skin in playerCache.PlayerSkins.Where(s => s.IsActive).ToList())
             {
                 skin.IsActive = false;
             }
