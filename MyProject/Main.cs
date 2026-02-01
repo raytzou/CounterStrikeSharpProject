@@ -253,6 +253,11 @@ public class Main(
         if (!Utility.IsHumanValid(player))
             return HookResult.Continue;
 
+        if (_playerService.GetPlayerCache(player.SteamID) is null)
+        {
+            _playerService.PrepareCache(player);
+        }
+
         if (!player!.IsBot)
         {
             _logger.LogInformation("{client} has connected at {DT}, IP: {ipAddress}, SteamID: {steamID}", player.PlayerName, DateTime.Now, player.IpAddress, player.SteamID);
@@ -275,11 +280,6 @@ public class Main(
         var player = @event.Userid;
         if (!Utility.IsHumanValid(player))
             return HookResult.Continue;
-
-        if (_playerService.GetPlayerCache(player.SteamID) is null)
-        {
-            _playerService.PrepareCache(player);
-        }
 
         if (_roundCount == 0)
         {
