@@ -609,7 +609,7 @@ public class Main(
                     }
                 }
 
-                var hpBonus = (int)Math.Round((health - 100.0) / 100.0 * 100);
+                var hpBonus = health - 100;
                 if (hpBonus > 0)
                 {
                     Utility.PrintToChatAllWithColor(
