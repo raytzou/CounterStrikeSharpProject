@@ -57,7 +57,7 @@ namespace MyProject.Services
             });
         }
 
-        public void ClearPlayerCache()
+        public void ClearPlayerCaches()
         {
             _playerCache.Clear();
         }

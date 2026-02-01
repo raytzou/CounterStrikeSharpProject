@@ -127,7 +127,7 @@ public class Main(
         _logger.LogInformation("Map Start: {mapName}", mapName);
 
         Initialize(mapName);
-        _playerService.ClearPlayerCache();
+        _playerService.ClearPlayerCaches();
 
         _ = Task.Run(async () =>
         {

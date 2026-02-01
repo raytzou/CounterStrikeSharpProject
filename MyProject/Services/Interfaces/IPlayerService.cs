@@ -8,7 +8,7 @@ namespace MyProject.Services.Interfaces
         void PrepareCache(CCSPlayerController client);
         Player? GetPlayerCache(ulong steamId);
         IEnumerable<Player> GetAllCaches();
-        void ClearPlayerCache();
+        void ClearPlayerCaches();
         void ResetPlayerSkinFromCache(Player playerCache);
         void UpdateCache(Player player);
         void SaveCacheToDB(Player player);
