@@ -400,6 +400,7 @@ public class Main(
         RemoveProtectionFromAllPlayers();
         ActivateAllWeaponStatuses();
         StartWeaponCheckTimer();
+        SetPlayerHealth();
 
         if (isBossRound)
         {
@@ -574,6 +575,96 @@ public class Main(
                     }
                 });
             });
+        }
+
+        void SetPlayerHealth()
+        {
+            Server.NextWorldUpdate(() =>
+            {
+                var players = Utility.GetHumans();
+                var botLevel = _bot.CurrentLevel;
+                var playerCount = players.Count;
+
+                if (playerCount == 0)
+                    return;
+
+                var (health, maxHealth, armor) = CalculatePlayerStats(playerCount, botLevel);
+
+                foreach (var player in players.Where(Utility.IsHumanValidAndAlive))
+                {
+                    var playerPawn = player.PlayerPawn.Value!;
+
+                    playerPawn.Health = health;
+                    playerPawn.MaxHealth = maxHealth;
+                    playerPawn.ArmorValue = armor;
+
+                    Utilities.SetStateChanged(playerPawn, "CBaseEntity", "m_iHealth");
+                    Utilities.SetStateChanged(playerPawn, "CBaseEntity", "m_ArmorValue");
+
+                    if (AppSettings.IsDebug)
+                    {
+                        _logger.LogInformation(
+                            "Player {name}: HP={hp}/{maxHp}, Armor={armor}, Players={count}, BotLevel={level}",
+                            player.PlayerName, health, maxHealth, armor, playerCount, botLevel);
+                    }
+                }
+
+                var hpBonus = health - 100;
+                if (hpBonus > 0)
+                {
+                    Utility.PrintToChatAllWithColor(
+                        $"Player Health Bonus: {ChatColors.Green}+{hpBonus}%{ChatColors.Default} (HP: {health}/{maxHealth})");
+                }
+                else if (hpBonus < 0)
+                {
+                    Utility.PrintToChatAllWithColor(
+                        $"Player Health Penalty: {ChatColors.Red}{hpBonus}%{ChatColors.Default} (HP: {health}/{maxHealth})");
+                }
+            });
+
+            (int health, int maxHealth, int armor) CalculatePlayerStats(int playerCount, int botLevel)
+            {
+                const int baseHealth = 100;
+                const int baseArmor = 100;
+
+                double playerMultiplier = playerCount switch
+                {
+                    1 => 2.0,
+                    2 => 1.6,
+                    3 => 1.3,
+                    4 => 1.1,
+                    5 => 1.0,
+                    6 => 0.95,
+                    _ => 0.90
+                };
+
+                double difficultyMultiplier = botLevel switch
+                {
+                    1 => 1.15,
+                    2 => 1.10,
+                    3 => 1.05,
+                    4 => 1.00,
+                    5 => 0.95,
+                    6 => 0.90,
+                    7 => 0.85,
+                    8 => 0.80,
+                    _ => 1.00
+                };
+
+                double healthMultiplier = playerMultiplier * difficultyMultiplier;
+                int calculatedHealth = (int)Math.Round(baseHealth * healthMultiplier);
+
+                int finalHealth = Math.Clamp(calculatedHealth, 70, 250);
+                int finalMaxHealth = Math.Max(finalHealth, baseHealth);
+                int finalArmor = botLevel switch
+                {
+                    >= 7 => baseArmor + 50,
+                    >= 4 => baseArmor,
+                    _ => 50
+                };
+
+                return (finalHealth, finalMaxHealth, finalArmor);
+            }
         }
     }
 
