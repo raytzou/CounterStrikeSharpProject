@@ -425,7 +425,8 @@ public class Main(
         {
             if (_roundCount != Config.MaxRounds)
             {
-                Utility.PrintToChatAllWithColor($"Round: {ChatColors.LightRed}{_roundCount}{ChatColors.Grey}/{ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>() - 1}");
+                var playableRounds = Config.MaxRounds - 1;
+                Utility.PrintToChatAllWithColor($"Round: {ChatColors.LightRed}{_roundCount}{ChatColors.Grey}/{playableRounds}");
 
                 if (!isBossRound)
                 {
