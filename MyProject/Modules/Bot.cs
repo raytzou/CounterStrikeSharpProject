@@ -67,8 +67,8 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         var botTeam = GetBotTeam(mapName);
         SetDifficultyLevel(0, 0);
-        await FillNormalBotAsync(_level, botTeam);
         SetMaxRespawnTimes();
+        await FillNormalBotAsync(_level, botTeam);
     }
 
     public async Task RoundStartBehavior(string mapName)
