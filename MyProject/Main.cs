@@ -587,11 +587,8 @@ public class Main(
 
                 var (health, maxHealth, armor) = CalculatePlayerStats(playerCount, botLevel);
 
-                foreach (var player in players)
+                foreach (var player in players.Where(Utility.IsHumanValidAndAlive))
                 {
-                    if (!Utility.IsHumanValidAndAlive(player))
-                        continue;
-
                     var playerPawn = player.PlayerPawn.Value!;
 
                     playerPawn.Health = health;
