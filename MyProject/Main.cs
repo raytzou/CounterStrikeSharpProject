@@ -1185,10 +1185,12 @@ public class Main(
             }
 
             var skinName = playerCache.PlayerSkins.FirstOrDefault(cache => cache.IsActive)?.SkinName;
-            if (string.IsNullOrEmpty(skinName))
+            if (!string.IsNullOrEmpty(skinName))
+                Utility.SetClientModel(client, skinName);
+            else if (!string.IsNullOrEmpty(playerCache.DefaultSkinModelPath))
                 Utility.SetClientModel(client, playerCache.DefaultSkinModelPath);
             else
-                Utility.SetClientModel(client, skinName);
+                _logger.LogWarning("Cannot set model for {steamID}: both custom skin and default skin are empty", client.SteamID);
         });
     }
 
