@@ -23,7 +23,7 @@ namespace MyProject.Services
             Server.NextFrame(() =>
             {
                 using var dbContext = _dbContextFactory.CreateDbContext();
-                
+
                 var playerSteamId = client.SteamID;
                 var playerData = dbContext.Players
                     .Include(x => x.PlayerSkins)
@@ -37,7 +37,7 @@ namespace MyProject.Services
                         PlayerName = client.PlayerName,
                         IpAddress = client.IpAddress ?? string.Empty,
                         LastTimeConnect = DateTime.Now,
-                        DefaultSkinModelPath = Utility.GetPlayerDefaultSkin(client),
+                        DefaultSkinModelPath = string.Empty,
                         Volume = 50,
                         SaySoundVolume = 50,
                         Language = LanguageOption.English
@@ -46,7 +46,7 @@ namespace MyProject.Services
                 }
                 else
                 {
-                    playerData.DefaultSkinModelPath = Utility.GetPlayerDefaultSkin(client);
+                    playerData.DefaultSkinModelPath = string.Empty;
                     playerData.LastTimeConnect = DateTime.Now;
                     playerData.PlayerName = client.PlayerName;
                     playerData.IpAddress = client.IpAddress ?? string.Empty;
@@ -89,12 +89,12 @@ namespace MyProject.Services
                 return;
 
             using var dbContext = _dbContextFactory.CreateDbContext();
-            
+
             foreach (var player in _playerCache.Values)
             {
                 dbContext.Players.Update(player);
             }
-            
+
             dbContext.SaveChanges();
         }
     }
