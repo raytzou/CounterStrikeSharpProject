@@ -129,7 +129,7 @@ public class Main(
         _logger.LogInformation("Map Start: {mapName}", mapName);
 
         Initialize(mapName);
-        _playerService.ClearPlayerCache();
+        _playerService.ClearPlayerCaches();
 
         _ = Task.Run(async () =>
         {
@@ -255,10 +255,14 @@ public class Main(
         if (!Utility.IsHumanValid(player))
             return HookResult.Continue;
 
+        if (_playerService.GetPlayerCache(player.SteamID) is null)
+        {
+            _playerService.PrepareCache(player);
+        }
+
         if (!player!.IsBot)
         {
             _logger.LogInformation("{client} has connected at {DT}, IP: {ipAddress}, SteamID: {steamID}", player.PlayerName, DateTime.Now, player.IpAddress, player.SteamID);
-            _playerService.PlayerJoin(player);
 
             if (!_position.ContainsKey(player.PlayerName))
                 _position.Add(player.PlayerName, new Position());
@@ -310,6 +314,24 @@ public class Main(
         if (!player.IsBot)
         {
             _weaponStatus[player.PlayerName].IsTracking = true;
+
+            var playerCache = _playerService.GetPlayerCache(player.SteamID);
+            if (playerCache == null)
+            {
+                _logger.LogWarning("Player {playerName} {steamId} cache is null!", player.PlayerName, player.SteamID);
+                Utility.PrintToChatWithTeamColor(player, "Player cache error! Please reconnect to the server!");
+                return HookResult.Continue;
+            }
+
+            if (string.IsNullOrEmpty(playerCache.DefaultSkinModelPath))
+            {
+                Server.NextWorldUpdate(() =>
+                {
+                    var defaultSkin = GetPlayerDefaultSkin();
+                    if (defaultSkin == null) return;
+                    playerCache.DefaultSkinModelPath = defaultSkin;
+                });
+            }
             SetClientModel(player);
         }
 
@@ -332,6 +354,47 @@ public class Main(
                 player.PrintToChat($" {ChatColors.Lime}If you have any problem, feel free to contact the admin!");
                 player.PrintToChat($" {ChatColors.Lime}Hope you enjoy here ^^");
             });
+        }
+
+        string? GetPlayerDefaultSkin()
+        {
+            if (!Utility.IsPlayerValid(player))
+            {
+                _logger.LogWarning("Player is invalid while getting default skin.");
+                return null;
+            }
+
+            var playerPawn = player.PlayerPawn.Value!;
+            var bodyComponent = playerPawn.CBodyComponent;
+            if (bodyComponent == null)
+            {
+                _logger.LogWarning("BodyComponent is null while getting default skin");
+                return null;
+            }
+
+            var sceneNode = bodyComponent.SceneNode;
+            if (sceneNode == null)
+            {
+                _logger.LogWarning("SceneNode is null while getting default skin");
+                return null;
+            }
+
+            try
+            {
+                CSkeletonInstance? skeletonInstance = null;
+                skeletonInstance = sceneNode.GetSkeletonInstance();
+                return skeletonInstance.ModelState.ModelName;
+            }
+            catch (InvalidOperationException)
+            {
+                _logger.LogWarning("Get default skin error, GameSceneNode points to null");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexcepted error while getting default skin");
+                return null;
+            }
         }
     }
 
@@ -753,7 +816,10 @@ public class Main(
             _logger.LogInformation("{client} has disconnected at {DT}", player.PlayerName, DateTime.Now);
             var playerCache = _playerService.GetPlayerCache(player.SteamID);
             if (playerCache != null)
+            {
                 _playerService.SaveCacheToDB(playerCache);
+                _playerService.ClearPlayerCache(player.SteamID);
+            }
         }
 
         if (_position.ContainsKey(player.PlayerName))
@@ -1271,52 +1337,24 @@ public class Main(
 
     private void SetClientModel(CCSPlayerController client)
     {
-        if (!Utility.IsHumanValid(client)) return;
-
-        var playerCache = _playerService.GetPlayerCache(client.SteamID);
-
-        if (playerCache is null)
-        {
-            _logger.LogWarning("Setting model failed, player cache is not found. ID: {steamID}", client.SteamID);
-            return;
-        }
-
-        if (string.IsNullOrEmpty(playerCache.DefaultSkinModelPath))
-        {
-            AddTimer(0.1f, () =>
-            {
-                if (!Utility.IsHumanValid(client))
-                {
-                    _logger.LogWarning("Player {steamId} is no longer valid when updating default skin", client.SteamID);
-                    return;
-                }
-                var playerOriginalModel = client.PlayerPawn.Value!.CBodyComponent?.SceneNode?.GetSkeletonInstance().ModelState.ModelName;
-
-                if (!string.IsNullOrEmpty(playerOriginalModel))
-                {
-                    _playerService.UpdateDefaultSkin(client.SteamID, playerOriginalModel);
-                }
-            });
-        }
-
-        AddTimer(0.15f, () =>
+        Server.NextWorldUpdate(() =>
         {
             if (!Utility.IsHumanValid(client))
                 return;
 
-            var updatedCache = _playerService.GetPlayerCache(client.SteamID);
+            var playerCache = _playerService.GetPlayerCache(client.SteamID);
 
-            if (updatedCache is null)
+            if (playerCache is null)
             {
                 _logger.LogWarning("Player cache not found when setting model for {steamID}", client.SteamID);
                 return;
             }
 
-            var skinName = updatedCache.PlayerSkins.FirstOrDefault(cache => cache.IsActive)?.SkinName ?? string.Empty;
+            var skinName = playerCache.PlayerSkins.FirstOrDefault(cache => cache.IsActive)?.SkinName;
             if (!string.IsNullOrEmpty(skinName))
                 Utility.SetClientModel(client, skinName);
-            else if (!string.IsNullOrEmpty(updatedCache.DefaultSkinModelPath))
-                Utility.SetClientModel(client, updatedCache.DefaultSkinModelPath);
+            else if (!string.IsNullOrEmpty(playerCache.DefaultSkinModelPath))
+                Utility.SetClientModel(client, playerCache.DefaultSkinModelPath);
             else
                 _logger.LogWarning("Cannot set model for {steamID}: both custom skin and default skin are empty", client.SteamID);
         });
