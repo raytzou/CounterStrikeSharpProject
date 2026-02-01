@@ -8,22 +8,24 @@ using MyProject.Services.Interfaces;
 namespace MyProject.Services
 {
     public class PlayerService(
-        ProjectDbContext dbContext
+        IDbContextFactory<ProjectDbContext> dbContextFactory
         ) : IPlayerService
     {
-        private readonly ProjectDbContext _dbContext = dbContext;
+        private readonly IDbContextFactory<ProjectDbContext> _dbContextFactory = dbContextFactory;
 
         public Player? GetPlayerCache(ulong steamId) => _playerCache.TryGetValue(steamId, out var cache) ? cache : null;
         public IEnumerable<Player> GetAllCaches() => _playerCache.Values;
 
         private static readonly Dictionary<ulong, Player> _playerCache = [];
 
-        public async Task PrepareCache(CCSPlayerController client)
+        public void PrepareCache(CCSPlayerController client)
         {
-            await Server.NextWorldUpdateAsync(() =>
+            Server.NextFrame(() =>
             {
+                using var dbContext = _dbContextFactory.CreateDbContext();
+                
                 var playerSteamId = client.SteamID;
-                var playerData = _dbContext.Players
+                var playerData = dbContext.Players
                     .Include(x => x.PlayerSkins)
                     .FirstOrDefault(x => x.SteamId == playerSteamId);
 
@@ -40,7 +42,7 @@ namespace MyProject.Services
                         SaySoundVolume = 50,
                         Language = LanguageOption.English
                     };
-                    _dbContext.Players.Add(playerData);
+                    dbContext.Players.Add(playerData);
                 }
                 else
                 {
@@ -51,7 +53,7 @@ namespace MyProject.Services
                 }
 
                 _playerCache[client.SteamID] = playerData;
-                _dbContext.SaveChanges();
+                dbContext.SaveChanges();
             });
         }
 
@@ -76,13 +78,24 @@ namespace MyProject.Services
 
         public void SaveCacheToDB(Player player)
         {
-            _dbContext.Players.Update(player);
-            _dbContext.SaveChanges();
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            dbContext.Players.Update(player);
+            dbContext.SaveChanges();
         }
 
         public void SaveAllCachesToDB()
         {
-            _dbContext.SaveChanges();
+            if (_playerCache.Count == 0)
+                return;
+
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            
+            foreach (var player in _playerCache.Values)
+            {
+                dbContext.Players.Update(player);
+            }
+            
+            dbContext.SaveChanges();
         }
     }
 }
