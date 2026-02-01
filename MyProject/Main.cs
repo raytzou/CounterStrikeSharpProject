@@ -330,10 +330,7 @@ public class Main(
                     playerCache.DefaultSkinModelPath = defaultSkin;
                 });
             }
-            Server.NextWorldUpdate(() =>
-            {
-                SetClientModel(player);
-            });
+            SetClientModel(player);
         }
 
         return HookResult.Continue;
