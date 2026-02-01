@@ -1,5 +1,4 @@
-﻿using CounterStrikeSharp.API;
-using CounterStrikeSharp.API.Core;
+﻿using CounterStrikeSharp.API.Core;
 using Microsoft.EntityFrameworkCore;
 using MyProject.Classes;
 using MyProject.Domains;
@@ -20,44 +19,44 @@ namespace MyProject.Services
 
         public void PrepareCache(CCSPlayerController client)
         {
-            Server.NextFrame(() =>
+            if (!Utility.IsHumanValid(client))
+                return;
+
+            using var dbContext = _dbContextFactory.CreateDbContext();
+
+            var playerSteamId = client.SteamID;
+            var playerData = dbContext.Players
+                .Include(x => x.PlayerSkins)
+                .FirstOrDefault(x => x.SteamId == playerSteamId);
+
+            if (playerData is null)
             {
-                using var dbContext = _dbContextFactory.CreateDbContext();
-
-                var playerSteamId = client.SteamID;
-                var playerData = dbContext.Players
-                    .Include(x => x.PlayerSkins)
-                    .FirstOrDefault(x => x.SteamId == playerSteamId);
-
-                if (playerData is null)
+                playerData = new Player
                 {
-                    playerData = new Player
-                    {
-                        SteamId = playerSteamId,
-                        PlayerName = client.PlayerName,
-                        IpAddress = client.IpAddress ?? string.Empty,
-                        LastTimeConnect = DateTime.Now,
-                        // DefaultSkinModelPath will be populated on first spawn from game scene node
-                        DefaultSkinModelPath = string.Empty,
-                        Volume = 50,
-                        SaySoundVolume = 50,
-                        Language = LanguageOption.English
-                    };
-                    dbContext.Players.Add(playerData);
-                }
-                else
-                {
-                    // Clear DefaultSkinModelPath to force refresh from game scene node on spawn
-                    // The persisted DB value is not critical and will be updated on disconnect
-                    playerData.DefaultSkinModelPath = string.Empty;
-                    playerData.LastTimeConnect = DateTime.Now;
-                    playerData.PlayerName = client.PlayerName;
-                    playerData.IpAddress = client.IpAddress ?? string.Empty;
-                }
+                    SteamId = playerSteamId,
+                    PlayerName = client.PlayerName,
+                    IpAddress = client.IpAddress ?? string.Empty,
+                    LastTimeConnect = DateTime.Now,
+                    // DefaultSkinModelPath will be populated on first spawn from game scene node
+                    DefaultSkinModelPath = string.Empty,
+                    Volume = 50,
+                    SaySoundVolume = 50,
+                    Language = LanguageOption.English
+                };
+                dbContext.Players.Add(playerData);
+            }
+            else
+            {
+                // Clear DefaultSkinModelPath to force refresh from game scene node on spawn
+                // The persisted DB value is not critical and will be updated on disconnect
+                playerData.DefaultSkinModelPath = string.Empty;
+                playerData.LastTimeConnect = DateTime.Now;
+                playerData.PlayerName = client.PlayerName;
+                playerData.IpAddress = client.IpAddress ?? string.Empty;
+            }
 
-                _playerCache[client.SteamID] = playerData;
-                dbContext.SaveChanges();
-            });
+            _playerCache[client.SteamID] = playerData;
+            dbContext.SaveChanges();
         }
 
         public void ClearPlayerCache(ulong steamId)
