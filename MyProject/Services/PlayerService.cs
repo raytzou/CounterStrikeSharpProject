@@ -37,6 +37,7 @@ namespace MyProject.Services
                         PlayerName = client.PlayerName,
                         IpAddress = client.IpAddress ?? string.Empty,
                         LastTimeConnect = DateTime.Now,
+                        // DefaultSkinModelPath will be populated on first spawn from game scene node
                         DefaultSkinModelPath = string.Empty,
                         Volume = 50,
                         SaySoundVolume = 50,
@@ -46,6 +47,8 @@ namespace MyProject.Services
                 }
                 else
                 {
+                    // Clear DefaultSkinModelPath to force refresh from game scene node on spawn
+                    // The persisted DB value is not critical and will be updated on disconnect
                     playerData.DefaultSkinModelPath = string.Empty;
                     playerData.LastTimeConnect = DateTime.Now;
                     playerData.PlayerName = client.PlayerName;
