@@ -486,7 +486,7 @@ namespace MyProject.Classes
             }
 
             // Apply random knockback (simulate slap effect)
-            if (playerPawn.AbsVelocity != null && randomKnokback)
+            if (playerPawn.AbsVelocity != null && randomKnockback)
             {
                 var currentVelocity = playerPawn.AbsVelocity;
                 var random = new Random();
