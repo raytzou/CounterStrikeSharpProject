@@ -1061,14 +1061,6 @@ public class Bot(ILogger<Bot> logger) : IBot
                 SetBossMovement(true);
                 _ = SetBossArmor();
             });
-
-            _damageTimers.Add(guardBreakTimer);
-
-            Main.Instance.AddTimer(guardBreakTime, () =>
-            {
-                _damageTimers.Remove(guardBreakTimer);
-                guardBreakTimer?.Kill();
-            });
         });
 
         void SetBossMovement(bool canMove)
