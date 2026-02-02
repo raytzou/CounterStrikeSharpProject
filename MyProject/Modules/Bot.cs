@@ -832,7 +832,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                     _logger.LogInformation("Invincible barrier damage zone");
 
                 const float damageRadius = 200.0f;
-                const int damagePerSecond = 5;
+                const int damagePerSecond = 20;
                 const float invincibleDuration = 5.0f;
 
                 var startTime = Server.CurrentTime;
