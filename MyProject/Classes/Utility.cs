@@ -450,7 +450,7 @@ namespace MyProject.Classes
         /// <param name="player">Target player controller</param>
         /// <param name="damage">Damage to deal, default is 0</param>
         /// <param name="playSound">Whether to play sound effects, default is true</param>
-        public static void SlapPlayer(CCSPlayerController player, int damage = 0, bool playSound = true, bool randomKnokback = true)
+        public static void SlapPlayer(CCSPlayerController player, int damage = 0, bool playSound = true, bool randomKnockback = true)
         {
             // Validate player
             if (player?.PlayerPawn?.Value == null || !player.IsValid)
