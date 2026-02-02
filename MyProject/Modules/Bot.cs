@@ -1404,7 +1404,6 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
 
         bossItemServices.HasHelmet = equip;
-        Utilities.SetStateChanged(bot.PlayerPawn.Value!, "CCSPlayerPawn", "m_pItemServices");
     }
 
     private bool ValidateBoss(out CCSPlayerController? boss)
