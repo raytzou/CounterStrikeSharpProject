@@ -1039,9 +1039,9 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    public async Task BossArmorDetection(CCSPlayerController boss)
+    public void BossArmorDetection(CCSPlayerController boss)
     {
-        await Server.NextFrameAsync(() =>
+        Server.NextFrame(() =>
         {
             if (AppSettings.IsDebug)
                 Server.PrintToChatAll($"boss armor: {boss.PlayerPawn.Value!.ArmorValue}");
