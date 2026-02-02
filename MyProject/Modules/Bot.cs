@@ -1056,6 +1056,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             const float guardBreakTime = 3f;
             var guardBreakTimer = Main.Instance.AddTimer(guardBreakTime, () =>
             {
+                Utility.PrintToAllCenter("Boss Guard has recovered!");
                 _isBossGuardBreak = false;
                 if (!Utility.IsBotValidAndAlive(boss))
                     return;
