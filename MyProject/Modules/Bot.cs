@@ -20,7 +20,8 @@ public class Bot(ILogger<Bot> logger) : IBot
         Flashbang,
         Explosion,
         ToxicSmoke,
-        Cursed
+        Cursed,
+        Invincible
     }
 
     private readonly ILogger<Bot> _logger = logger;
@@ -469,6 +470,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 BossAbilities.Flashbang,
                 BossAbilities.Explosion,
                 BossAbilities.ToxicSmoke,
+                BossAbilities.Invincible
             };
 
             if (CanUseCursed())
@@ -496,7 +498,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 case BossAbilities.Cursed:
                     Cursed();
                     break;
-                case 7:
+                case BossAbilities.Invincible:
                     Invincible();
                     break;
             }
