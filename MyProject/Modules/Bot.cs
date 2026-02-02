@@ -815,15 +815,19 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             void SetBossInvincible(bool isInvincible)
             {
-                boss.MoveType = isInvincible ? MoveType_t.MOVETYPE_NONE : MoveType_t.MOVETYPE_WALK;
-                boss.PlayerPawn.Value!.TakesDamage = !isInvincible;
-
-                if (isInvincible)
+                if (!Utility.IsBotValidAndAlive(boss))
                 {
-                    boss.PlayerPawn.Value!.AbsVelocity.X = 0; //TODO: check if this works or not, make sure Boss can't move and velocity is zero
-                    boss.PlayerPawn.Value!.AbsVelocity.Y = 0;
-                    boss.PlayerPawn.Value!.AbsVelocity.Z = 0;
+                    _logger.LogWarning("Boss is invalid or not alive when setting invincible");
+                    return;
                 }
+
+                var bossPawn = boss.PlayerPawn.Value!;
+
+                bossPawn.MoveType = isInvincible ? MoveType_t.MOVETYPE_NONE : MoveType_t.MOVETYPE_WALK;
+                bossPawn.ActualMoveType = isInvincible ? MoveType_t.MOVETYPE_NONE : MoveType_t.MOVETYPE_WALK;
+                bossPawn.TakesDamage = !isInvincible;
+
+                Utilities.SetStateChanged(bossPawn, "CBaseEntity", "m_MoveType");
             }
 
             void CreateInvincibleBarrier()
@@ -1068,14 +1072,18 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         void SetBossMovement(bool canMove)
         {
-            boss.MoveType = canMove ? MoveType_t.MOVETYPE_WALK : MoveType_t.MOVETYPE_NONE;
-
-            if (!canMove)
+            if (!Utility.IsBotValidAndAlive(boss))
             {
-                boss.PlayerPawn.Value!.AbsVelocity.X = 0; //TODO: check if this works or not, make sure Boss can't move and velocity is zero
-                boss.PlayerPawn.Value!.AbsVelocity.Y = 0;
-                boss.PlayerPawn.Value!.AbsVelocity.Z = 0;
+                _logger.LogWarning("Boss is invalid or not alive when setting movement");
+                return;
             }
+
+            var bossPawn = boss.PlayerPawn.Value;
+
+            bossPawn.MoveType = canMove ? MoveType_t.MOVETYPE_WALK : MoveType_t.MOVETYPE_NONE;
+            bossPawn.ActualMoveType = canMove ? MoveType_t.MOVETYPE_WALK : MoveType_t.MOVETYPE_NONE;
+
+            Utilities.SetStateChanged(bossPawn, "CBaseEntity", "m_MoveType");
         }
     }
 
