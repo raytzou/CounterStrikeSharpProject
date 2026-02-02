@@ -893,6 +893,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                     invincibleTimer?.Kill();
                     if (Utility.IsBotValidAndAlive(boss))
                         SetBossInvincible(false);
+                    Utility.PrintToAllCenter("Boss invincible ability ends!");
                 });
             }
         }
