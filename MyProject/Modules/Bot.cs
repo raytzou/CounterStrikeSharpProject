@@ -1362,9 +1362,16 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (!isBossValid)
                 return;
 
-            boss!.PlayerPawn.Value!.ArmorValue = currentRound == Main.Instance.Config.MidBossRound ?
-                Main.Instance.Config.MidBossArmor :
-                Main.Instance.Config.FinalBossArmor;
+            if (AppSettings.IsDebug)
+            {
+                boss!.PlayerPawn.Value!.ArmorValue = 50;
+            }
+            else
+            {
+                boss!.PlayerPawn.Value!.ArmorValue = currentRound == Main.Instance.Config.MidBossRound ?
+                    Main.Instance.Config.MidBossArmor :
+                    Main.Instance.Config.FinalBossArmor;
+            }
 
             // Workaround: Force network state sync for ArmorValue and HasHelmet
             // ArmorValue is not a networked property and won't sync automatically.
