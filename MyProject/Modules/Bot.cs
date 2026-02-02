@@ -816,7 +816,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             void SetBossInvincible(bool isInvincible)
             {
                 boss.MoveType = isInvincible ? MoveType_t.MOVETYPE_NONE : MoveType_t.MOVETYPE_WALK;
-                boss.PlayerPawn.Value!.TakesDamage = isInvincible;
+                boss.PlayerPawn.Value!.TakesDamage = !isInvincible;
 
                 if (isInvincible)
                 {
