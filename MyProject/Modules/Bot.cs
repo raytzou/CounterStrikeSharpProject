@@ -1367,6 +1367,12 @@ public class Bot(ILogger<Bot> logger) : IBot
                 Main.Instance.Config.FinalBossArmor;
 
             SetBotHelmet(boss, true);
+
+            if (AppSettings.IsDebug)
+            {
+                _logger.LogInformation("Boss armor: {armorValue}", boss!.PlayerPawn.Value!.ArmorValue);
+                _logger.LogInformation("Boss has helmet: {bossHelmetBool}", boss.PlayerPawn.Value!.ItemServices?.As<CCSPlayer_ItemServices>().HasHelmet);
+            }
         });
     }
 
