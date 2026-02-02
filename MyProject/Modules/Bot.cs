@@ -461,47 +461,47 @@ public class Bot(ILogger<Bot> logger) : IBot
             return;
         var activeAbilityChance = GetChance();
 
-        if (activeAbilityChance <= Main.Instance.Config.BossActiveAbilityChance)
+        if (activeAbilityChance > Main.Instance.Config.BossActiveAbilityChance)
+            return;
+
+        var availableAbilities = new List<BossAbilities>
         {
-            var availableAbilities = new List<BossAbilities>
-            {
-                BossAbilities.FireTorture,
-                BossAbilities.Freeze,
-                BossAbilities.Flashbang,
-                BossAbilities.Explosion,
-                BossAbilities.ToxicSmoke,
-                BossAbilities.Invincible
-            };
+            BossAbilities.FireTorture,
+            BossAbilities.Freeze,
+            BossAbilities.Flashbang,
+            BossAbilities.Explosion,
+            BossAbilities.ToxicSmoke,
+            BossAbilities.Invincible
+        };
 
-            if (CanUseCursed())
-                availableAbilities.Add(BossAbilities.Cursed);
+        if (CanUseCursed())
+            availableAbilities.Add(BossAbilities.Cursed);
 
-            var abilityChoice = availableAbilities[Random.Shared.Next(availableAbilities.Count)];
+        var abilityChoice = availableAbilities[Random.Shared.Next(availableAbilities.Count)];
 
-            switch (abilityChoice)
-            {
-                case BossAbilities.FireTorture:
-                    FireTorture();
-                    break;
-                case BossAbilities.Freeze:
-                    Freeze();
-                    break;
-                case BossAbilities.Flashbang:
-                    Flashbang();
-                    break;
-                case BossAbilities.Explosion:
-                    Explosion();
-                    break;
-                case BossAbilities.ToxicSmoke:
-                    ToxicSmoke();
-                    break;
-                case BossAbilities.Cursed:
-                    Cursed();
-                    break;
-                case BossAbilities.Invincible:
-                    Invincible();
-                    break;
-            }
+        switch (abilityChoice)
+        {
+            case BossAbilities.FireTorture:
+                FireTorture();
+                break;
+            case BossAbilities.Freeze:
+                Freeze();
+                break;
+            case BossAbilities.Flashbang:
+                Flashbang();
+                break;
+            case BossAbilities.Explosion:
+                Explosion();
+                break;
+            case BossAbilities.ToxicSmoke:
+                ToxicSmoke();
+                break;
+            case BossAbilities.Cursed:
+                Cursed();
+                break;
+            case BossAbilities.Invincible:
+                Invincible();
+                break;
         }
 
         double GetChance()
