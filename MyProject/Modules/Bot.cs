@@ -13,6 +13,16 @@ namespace MyProject.Modules;
 
 public class Bot(ILogger<Bot> logger) : IBot
 {
+    private enum BossAbilities
+    {
+        FireTorture,
+        Freeze,
+        Flashbang,
+        Explosion,
+        ToxicSmoke,
+        Cursed
+    }
+
     private readonly ILogger<Bot> _logger = logger;
     private int _level = 2;
     private int _respawnTimes = 0;
@@ -466,28 +476,39 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         if (activeAbilityChance <= Main.Instance.Config.BossActiveAbilityChance)
         {
-            var abilityChoice = Random.Shared.Next(1, 7);
+            var availableAbilities = new List<BossAbilities>
+            {
+                BossAbilities.FireTorture,
+                BossAbilities.Freeze,
+                BossAbilities.Flashbang,
+                BossAbilities.Explosion,
+                BossAbilities.ToxicSmoke,
+            };
+
+            if (CanUseCursed())
+                availableAbilities.Add(BossAbilities.Cursed);
+
+            var abilityChoice = availableAbilities[Random.Shared.Next(availableAbilities.Count)];
 
             switch (abilityChoice)
             {
-                case 1:
+                case BossAbilities.FireTorture:
                     FireTorture();
                     break;
-                case 2:
+                case BossAbilities.Freeze:
                     Freeze();
                     break;
-                case 3:
+                case BossAbilities.Flashbang:
                     Flashbang();
                     break;
-                case 4:
+                case BossAbilities.Explosion:
                     Explosion();
                     break;
-                case 5:
+                case BossAbilities.ToxicSmoke:
                     ToxicSmoke();
                     break;
-                case 6:
-                    if (!_isCurseActive)
-                        Cursed();
+                case BossAbilities.Cursed:
+                    Cursed();
                     break;
             }
         }
@@ -724,12 +745,6 @@ public class Bot(ILogger<Bot> logger) : IBot
         {
             if (AppSettings.IsDebug)
                 _logger.LogInformation("Boss actives Cursed");
-            var bossHealth = boss.PlayerPawn.Value!.Health;
-            var maxHealth = IsBoss(boss) && boss.PlayerName.Contains(BotProfile.Boss[0]) ? Main.Instance.Config.MidBossHealth : Main.Instance.Config.FinalBossHealth;
-            var oneThirdHealth = maxHealth / 3;
-
-            if (bossHealth > oneThirdHealth)
-                return;
 
             _isCurseActive = true;
 
@@ -800,6 +815,38 @@ public class Bot(ILogger<Bot> logger) : IBot
                 _isCurseActive = false;
                 Utility.PrintToAllCenter("The curse has been lifted...");
             });
+        }
+
+        bool CanUseCursed()
+        {
+            if (_isCurseActive)
+                return false;
+
+            if (Main.Instance.RoundCount != Main.Instance.Config.FinalBossRound)
+                return false;
+
+            var bossHealth = boss.PlayerPawn.Value!.Health;
+            var maxHealth = Main.Instance.Config.FinalBossHealth;
+            var oneThirdHealth = maxHealth / 3;
+
+            var isLowHealth = bossHealth <= oneThirdHealth;
+            var isPanicking = CheckPanicTimer();
+
+            return isLowHealth || isPanicking;
+
+            bool CheckPanicTimer()
+            {
+                var panicTimer = boss.PlayerPawn.Value.Bot?.PanicTimer;
+
+                if (panicTimer is null)
+                {
+                    _logger.LogWarning("Boss's PanicTimer is null");
+                    return false;
+                }
+
+                return panicTimer.Duration > 0 &&
+                    Server.CurrentTime < panicTimer.Timestamp + panicTimer.Duration;
+            }
         }
 
         void CreateTimedProjectileAttack(string message, System.Drawing.Color beaconColor, Action<Vector> createProjectileAction, float delayTime = 3.0f)
