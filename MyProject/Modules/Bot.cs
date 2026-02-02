@@ -1053,8 +1053,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             SetBossMovement(false);
             SetBotHelmet(boss, false);
 
-            const float guardBreakTime = 3f;
-            var guardBreakTimer = Main.Instance.AddTimer(guardBreakTime, () =>
+            var guardBreakTimer = Main.Instance.AddTimer(Main.Instance.Config.BossGuardBreakTime, () =>
             {
                 Utility.PrintToAllCenter("Boss Guard has recovered!");
                 _isBossGuardBreak = false;

@@ -20,5 +20,6 @@ namespace MyProject.Classes
         public int FinalBossArmor = 5000;
         public int DisplayMenuInterval = 30;
         public int MaxRounds = 9; // End-game trigger round (mp_maxrounds - 1), not total playable rounds
+        public float BossGuardBreakTime = 10;
     }
 }
