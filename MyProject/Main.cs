@@ -42,6 +42,7 @@ public class Main(
     private CounterStrikeSharp.API.Modules.Timers.Timer? _weaponCheckTimer = null;
     private CounterStrikeSharp.API.Modules.Timers.Timer? _roundTimer = null;
     private CounterStrikeSharp.API.Modules.Timers.Timer? _bombTimer = null;
+    private CounterStrikeSharp.API.Modules.Timers.Timer? _defusingTimer = null;
     private int _roundCount = 0;
     private bool _warmup = true;
     private int _winStreak = 0;
@@ -49,7 +50,8 @@ public class Main(
     private bool _isRoundEnd = false;
     private bool _randomSpawn = false;
     private int _currentRoundSecond = 0;
-    private int _endGameRound = 0;
+    private int _c4Counter = 0;
+    private int _originalC4Time = 0;
 
     // module services
     private readonly ICommand _command = commmand;
@@ -127,7 +129,7 @@ public class Main(
         _logger.LogInformation("Map Start: {mapName}", mapName);
 
         Initialize(mapName);
-        _playerService.ClearPlayerCache();
+        _playerService.ClearPlayerCaches();
 
         _ = Task.Run(async () =>
         {
@@ -253,10 +255,14 @@ public class Main(
         if (!Utility.IsHumanValid(player))
             return HookResult.Continue;
 
+        if (_playerService.GetPlayerCache(player.SteamID) is null)
+        {
+            _playerService.PrepareCache(player);
+        }
+
         if (!player!.IsBot)
         {
             _logger.LogInformation("{client} has connected at {DT}, IP: {ipAddress}, SteamID: {steamID}", player.PlayerName, DateTime.Now, player.IpAddress, player.SteamID);
-            _playerService.PlayerJoin(player);
 
             if (!_position.ContainsKey(player.PlayerName))
                 _position.Add(player.PlayerName, new Position());
@@ -308,6 +314,24 @@ public class Main(
         if (!player.IsBot)
         {
             _weaponStatus[player.PlayerName].IsTracking = true;
+
+            var playerCache = _playerService.GetPlayerCache(player.SteamID);
+            if (playerCache == null)
+            {
+                _logger.LogWarning("Player {playerName} {steamId} cache is null!", player.PlayerName, player.SteamID);
+                Utility.PrintToChatWithTeamColor(player, "Player cache error! Please reconnect to the server!");
+                return HookResult.Continue;
+            }
+
+            if (string.IsNullOrEmpty(playerCache.DefaultSkinModelPath))
+            {
+                Server.NextWorldUpdate(() =>
+                {
+                    var defaultSkin = GetPlayerDefaultSkin();
+                    if (defaultSkin == null) return;
+                    playerCache.DefaultSkinModelPath = defaultSkin;
+                });
+            }
             SetClientModel(player);
         }
 
@@ -330,6 +354,47 @@ public class Main(
                 player.PrintToChat($" {ChatColors.Lime}If you have any problem, feel free to contact the admin!");
                 player.PrintToChat($" {ChatColors.Lime}Hope you enjoy here ^^");
             });
+        }
+
+        string? GetPlayerDefaultSkin()
+        {
+            if (!Utility.IsPlayerValid(player))
+            {
+                _logger.LogWarning("Player is invalid while getting default skin.");
+                return null;
+            }
+
+            var playerPawn = player.PlayerPawn.Value!;
+            var bodyComponent = playerPawn.CBodyComponent;
+            if (bodyComponent == null)
+            {
+                _logger.LogWarning("BodyComponent is null while getting default skin");
+                return null;
+            }
+
+            var sceneNode = bodyComponent.SceneNode;
+            if (sceneNode == null)
+            {
+                _logger.LogWarning("SceneNode is null while getting default skin");
+                return null;
+            }
+
+            try
+            {
+                CSkeletonInstance? skeletonInstance = null;
+                skeletonInstance = sceneNode.GetSkeletonInstance();
+                return skeletonInstance.ModelState.ModelName;
+            }
+            catch (InvalidOperationException)
+            {
+                _logger.LogWarning("Get default skin error, GameSceneNode points to null");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexcepted error while getting default skin");
+                return null;
+            }
         }
     }
 
@@ -398,6 +463,7 @@ public class Main(
         RemoveProtectionFromAllPlayers();
         ActivateAllWeaponStatuses();
         StartWeaponCheckTimer();
+        SetPlayerHealth();
 
         if (isBossRound)
         {
@@ -405,7 +471,7 @@ public class Main(
             RemoveHostage();
         }
 
-        if (_roundCount == _endGameRound)
+        if (_roundCount == Config.MaxRounds)
         {
             // End Game
             Server.ExecuteCommand("mp_maxrounds 1");
@@ -421,9 +487,10 @@ public class Main(
 
         void HandleRoundStartMessages()
         {
-            if (_roundCount != _endGameRound)
+            if (_roundCount != Config.MaxRounds)
             {
-                Utility.PrintToChatAllWithColor($"Round: {ChatColors.LightRed}{_roundCount}{ChatColors.Grey}/{ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>() - 1}");
+                var playableRounds = Config.MaxRounds - 1;
+                Utility.PrintToChatAllWithColor($"Round: {ChatColors.LightRed}{_roundCount}{ChatColors.Grey}/{playableRounds}");
 
                 if (!isBossRound)
                 {
@@ -572,6 +639,96 @@ public class Main(
                 });
             });
         }
+
+        void SetPlayerHealth()
+        {
+            Server.NextWorldUpdate(() =>
+            {
+                var players = Utility.GetHumans();
+                var botLevel = _bot.CurrentLevel;
+                var playerCount = players.Count;
+
+                if (playerCount == 0)
+                    return;
+
+                var (health, maxHealth, armor) = CalculatePlayerStats(playerCount, botLevel);
+
+                foreach (var player in players.Where(Utility.IsHumanValidAndAlive))
+                {
+                    var playerPawn = player.PlayerPawn.Value!;
+
+                    playerPawn.Health = health;
+                    playerPawn.MaxHealth = maxHealth;
+                    playerPawn.ArmorValue = armor;
+
+                    Utilities.SetStateChanged(playerPawn, "CBaseEntity", "m_iHealth");
+                    Utilities.SetStateChanged(playerPawn, "CBaseEntity", "m_ArmorValue");
+
+                    if (AppSettings.IsDebug)
+                    {
+                        _logger.LogInformation(
+                            "Player {name}: HP={hp}/{maxHp}, Armor={armor}, Players={count}, BotLevel={level}",
+                            player.PlayerName, health, maxHealth, armor, playerCount, botLevel);
+                    }
+                }
+
+                var hpBonus = health - 100;
+                if (hpBonus > 0)
+                {
+                    Utility.PrintToChatAllWithColor(
+                        $"Player Health Bonus: {ChatColors.Green}+{hpBonus}%{ChatColors.Default} (HP: {health}/{maxHealth})");
+                }
+                else if (hpBonus < 0)
+                {
+                    Utility.PrintToChatAllWithColor(
+                        $"Player Health Penalty: {ChatColors.Red}{hpBonus}%{ChatColors.Default} (HP: {health}/{maxHealth})");
+                }
+            });
+
+            (int health, int maxHealth, int armor) CalculatePlayerStats(int playerCount, int botLevel)
+            {
+                const int baseHealth = 100;
+                const int baseArmor = 100;
+
+                double playerMultiplier = playerCount switch
+                {
+                    1 => 2.0,
+                    2 => 1.6,
+                    3 => 1.3,
+                    4 => 1.1,
+                    5 => 1.0,
+                    6 => 0.95,
+                    _ => 0.90
+                };
+
+                double difficultyMultiplier = botLevel switch
+                {
+                    1 => 1.15,
+                    2 => 1.10,
+                    3 => 1.05,
+                    4 => 1.00,
+                    5 => 0.95,
+                    6 => 0.90,
+                    7 => 0.85,
+                    8 => 0.80,
+                    _ => 1.00
+                };
+
+                double healthMultiplier = playerMultiplier * difficultyMultiplier;
+                int calculatedHealth = (int)Math.Round(baseHealth * healthMultiplier);
+
+                int finalHealth = Math.Clamp(calculatedHealth, 70, 250);
+                int finalMaxHealth = Math.Max(finalHealth, baseHealth);
+                int finalArmor = botLevel switch
+                {
+                    >= 7 => baseArmor + 50,
+                    >= 4 => baseArmor,
+                    _ => 50
+                };
+
+                return (finalHealth, finalMaxHealth, finalArmor);
+            }
+        }
     }
 
     private HookResult RoundEndHandler(EventRoundEnd eventRoundEnd, GameEventInfo gameEventInfo)
@@ -659,7 +816,10 @@ public class Main(
             _logger.LogInformation("{client} has disconnected at {DT}", player.PlayerName, DateTime.Now);
             var playerCache = _playerService.GetPlayerCache(player.SteamID);
             if (playerCache != null)
+            {
                 _playerService.SaveCacheToDB(playerCache);
+                _playerService.ClearPlayerCache(player.SteamID);
+            }
         }
 
         if (_position.ContainsKey(player.PlayerName))
@@ -694,11 +854,13 @@ public class Main(
 
     private HookResult BombPlantedHandler(EventBombPlanted @event, GameEventInfo info)
     {
-        var c4Timer = ConVar.Find("mp_c4timer")!.GetPrimitiveValue<int>();
-
+        _c4Counter = _originalC4Time;
+        _bombTimer?.Kill();
         _bombTimer = AddTimer(1f, () =>
         {
-            Utility.PrintToAllCenter($"C4 Counter: {c4Timer--}");
+            _c4Counter--;
+            var c4CounterMessage = GetC4CounterMessage();
+            Utility.PrintToAllCenter(c4CounterMessage);
         }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
 
         return HookResult.Continue;
@@ -706,14 +868,70 @@ public class Main(
 
     private HookResult BombExplodedHandler(EventBombExploded @event, GameEventInfo info)
     {
-        BombEventHandler("C4 has exploded!");
+        BombEndEventHandler("C4 has exploded!");
 
         return HookResult.Continue;
     }
 
     private HookResult BombDefusedHandler(EventBombDefused @event, GameEventInfo info)
     {
-        BombEventHandler("Bomb has been defuesed");
+        BombEndEventHandler("Bomb has been defused");
+
+        return HookResult.Continue;
+    }
+
+    private HookResult BombBegindefuseHandler(EventBombBegindefuse @event, GameEventInfo info)
+    {
+        var hasKit = @event.Haskit;
+        int progressLength = 20;
+        float updateTimerInterval = 0.1f;
+        var totalTime = hasKit ? 5f : 10f;
+        var start = Server.CurrentTime;
+
+        _defusingTimer?.Kill();
+        _defusingTimer = AddTimer(updateTimerInterval, () =>
+        {
+            var elapsed = Server.CurrentTime - start;
+            var progressRatio = elapsed / totalTime;
+
+            progressRatio = Math.Clamp(progressRatio, 0, 1);
+            var filledCount = Math.Floor(progressRatio * progressLength);
+            char[] progressBar = new char[progressLength];
+
+            for (int i = 0; i < progressLength; i++)
+            {
+                // NOTE:
+                // I intentionally use '<=' here as a UI compensation.
+                // In practice, the final render tick often never happens because
+                // the defuse timer is killed by bomb_defused / abort events before
+                // progressRatio reaches exactly 1.0.
+                // This ensures the progress bar visually reaches 100% before termination.
+                // (Purely visual, no gameplay impact.)
+                progressBar[i] = i <= filledCount ? '█' : '░';
+            }
+
+            var renderHtml = GetDefusingMessageHtml(progressBar);
+
+            Utility.PrintToAllCenterWithHtml(renderHtml);
+        }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
+
+        return HookResult.Continue;
+
+        string GetDefusingMessageHtml(char[] progressBar)
+        {
+            var elapsed = Server.CurrentTime - start;
+            var remainingTime = Math.Max(0, totalTime - elapsed);
+            var seconds = (int)remainingTime;
+            var milliseconds = (int)((remainingTime % 1.0) * 100);
+            var defusingMessage = $"Defusing: {seconds}.{milliseconds:D2}";
+
+            return $"{defusingMessage} <br /> [{new string(progressBar)}]";
+        }
+    }
+
+    private HookResult BombAbortdefuseHandler(EventBombAbortdefuse @event, GameEventInfo info)
+    {
+        _defusingTimer?.Kill();
 
         return HookResult.Continue;
     }
@@ -869,6 +1087,22 @@ public class Main(
 
         return HookResult.Continue;
     }
+
+    private HookResult PlayerBlindHandler(EventPlayerBlind @event, GameEventInfo info)
+    {
+        var player = @event.Userid;
+        if (!Utility.IsPlayerValid(player))
+            return HookResult.Continue;
+
+        var attacker = @event.Attacker;
+        if (!Utility.IsPlayerValid(attacker))
+            return HookResult.Continue;
+
+        if (attacker.TeamNum == player.TeamNum && attacker.UserId != player.UserId)
+            player.PlayerPawn.Value!.BlindUntilTime = Server.CurrentTime;
+
+        return HookResult.Continue;
+    }
     #endregion hook result
 
     #region commands
@@ -1004,6 +1238,7 @@ public class Main(
     private void Initialize(string mapName)
     {
         Server.ExecuteCommand("mp_randomspawn 0");
+        Server.ExecuteCommand($"mp_maxrounds {Config.MaxRounds}");
 
         _roundCount = 0;
         _winStreak = 0;
@@ -1013,7 +1248,7 @@ public class Main(
         _weaponStatus.Clear();
         _randomSpawn = false;
         _currentRoundSecond = 0;
-        _endGameRound = ConVar.Find("mp_maxrounds")!.GetPrimitiveValue<int>();
+        _originalC4Time = ConVar.Find("mp_c4timer")!.GetPrimitiveValue<int>();
 
         SetHumanTeam();
         ResetDefaultWeapon();
@@ -1105,52 +1340,24 @@ public class Main(
 
     private void SetClientModel(CCSPlayerController client)
     {
-        if (!Utility.IsHumanValid(client)) return;
-
-        var playerCache = _playerService.GetPlayerCache(client.SteamID);
-
-        if (playerCache is null)
-        {
-            _logger.LogWarning("Setting model failed, player cache is not found. ID: {steamID}", client.SteamID);
-            return;
-        }
-
-        if (string.IsNullOrEmpty(playerCache.DefaultSkinModelPath))
-        {
-            AddTimer(0.1f, () =>
-            {
-                if (!Utility.IsHumanValid(client))
-                {
-                    _logger.LogWarning("Player {steamId} is no longer valid when updating default skin", client.SteamID);
-                    return;
-                }
-                var playerOriginalModel = client.PlayerPawn.Value!.CBodyComponent?.SceneNode?.GetSkeletonInstance().ModelState.ModelName;
-
-                if (!string.IsNullOrEmpty(playerOriginalModel))
-                {
-                    _playerService.UpdateDefaultSkin(client.SteamID, playerOriginalModel);
-                }
-            });
-        }
-
-        AddTimer(0.15f, () =>
+        Server.NextWorldUpdate(() =>
         {
             if (!Utility.IsHumanValid(client))
                 return;
 
-            var updatedCache = _playerService.GetPlayerCache(client.SteamID);
+            var playerCache = _playerService.GetPlayerCache(client.SteamID);
 
-            if (updatedCache is null)
+            if (playerCache is null)
             {
                 _logger.LogWarning("Player cache not found when setting model for {steamID}", client.SteamID);
                 return;
             }
 
-            var skinName = updatedCache.PlayerSkins.FirstOrDefault(cache => cache.IsActive)?.SkinName ?? string.Empty;
+            var skinName = playerCache.PlayerSkins.FirstOrDefault(cache => cache.IsActive)?.SkinName;
             if (!string.IsNullOrEmpty(skinName))
                 Utility.SetClientModel(client, skinName);
-            else if (!string.IsNullOrEmpty(updatedCache.DefaultSkinModelPath))
-                Utility.SetClientModel(client, updatedCache.DefaultSkinModelPath);
+            else if (!string.IsNullOrEmpty(playerCache.DefaultSkinModelPath))
+                Utility.SetClientModel(client, playerCache.DefaultSkinModelPath);
             else
                 _logger.LogWarning("Cannot set model for {steamID}: both custom skin and default skin are empty", client.SteamID);
         });
@@ -1193,10 +1400,11 @@ public class Main(
         }
     }
 
-    private void BombEventHandler(string message)
+    private void BombEndEventHandler(string message)
     {
         Utility.PrintToAllCenter(message);
         _bombTimer?.Kill();
+        _defusingTimer?.Kill();
     }
 
     private void KillTimer()
@@ -1204,6 +1412,7 @@ public class Main(
         _weaponCheckTimer?.Kill();
         _roundTimer?.Kill();
         _bombTimer?.Kill();
+        _defusingTimer?.Kill();
     }
 
     private void Reigsters()
@@ -1226,6 +1435,9 @@ public class Main(
         RegisterEventHandler<EventBombPlanted>(BombPlantedHandler);
         RegisterEventHandler<EventBombDefused>(BombDefusedHandler);
         RegisterEventHandler<EventBombExploded>(BombExplodedHandler);
+        RegisterEventHandler<EventBombBegindefuse>(BombBegindefuseHandler);
+        RegisterEventHandler<EventBombAbortdefuse>(BombAbortdefuseHandler);
+        RegisterEventHandler<EventPlayerBlind>(PlayerBlindHandler);
 
         AddCommandListener("say", OnPlayerSayCommand);
         AddCommandListener("say_team", OnPlayerSayCommand);
@@ -1244,6 +1456,11 @@ public class Main(
         {
             _logger.LogError(ex, "Failed to initialize SaySoundHelper");
         }
+    }
+
+    private string GetC4CounterMessage()
+    {
+        return $"C4 Counter: {_c4Counter}";
     }
 
     public string GetTargetNameByKeyword(string keyword)

@@ -1,6 +1,5 @@
 ﻿using CounterStrikeSharp.API.Core;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using MyProject.Classes;
 using MyProject.Domains;
 using MyProject.Services.Interfaces;
@@ -8,23 +7,25 @@ using MyProject.Services.Interfaces;
 namespace MyProject.Services
 {
     public class PlayerService(
-        ILogger<PlayerService> logger,
-        ProjectDbContext dbContext
+        IDbContextFactory<ProjectDbContext> dbContextFactory
         ) : IPlayerService
     {
-        private readonly ILogger<PlayerService> _logger = logger;
-        private readonly ProjectDbContext _dbContext = dbContext;
+        private readonly IDbContextFactory<ProjectDbContext> _dbContextFactory = dbContextFactory;
 
-        public string GetDefaultSkin(ulong steamId) => _dbContext.Players.FirstOrDefault(player => player.SteamId == steamId)?.DefaultSkinModelPath ?? throw new NullReferenceException($"Cannot get the default skin SteamID: {steamId}");
         public Player? GetPlayerCache(ulong steamId) => _playerCache.TryGetValue(steamId, out var cache) ? cache : null;
         public IEnumerable<Player> GetAllCaches() => _playerCache.Values;
 
         private static readonly Dictionary<ulong, Player> _playerCache = [];
 
-        public void PlayerJoin(CCSPlayerController client)
+        public void PrepareCache(CCSPlayerController client)
         {
+            if (!Utility.IsHumanValid(client))
+                return;
+
+            using var dbContext = _dbContextFactory.CreateDbContext();
+
             var playerSteamId = client.SteamID;
-            var playerData = _dbContext.Players
+            var playerData = dbContext.Players
                 .Include(x => x.PlayerSkins)
                 .FirstOrDefault(x => x.SteamId == playerSteamId);
 
@@ -36,60 +37,43 @@ namespace MyProject.Services
                     PlayerName = client.PlayerName,
                     IpAddress = client.IpAddress ?? string.Empty,
                     LastTimeConnect = DateTime.Now,
+                    // DefaultSkinModelPath will be populated on first spawn from game scene node
                     DefaultSkinModelPath = string.Empty,
                     Volume = 50,
                     SaySoundVolume = 50,
                     Language = LanguageOption.English
                 };
-                _dbContext.Players.Add(playerData);
+                dbContext.Players.Add(playerData);
             }
             else
             {
+                // Clear DefaultSkinModelPath to force refresh from game scene node on spawn
+                // The persisted DB value is not critical and will be updated on disconnect
+                playerData.DefaultSkinModelPath = string.Empty;
                 playerData.LastTimeConnect = DateTime.Now;
                 playerData.PlayerName = client.PlayerName;
                 playerData.IpAddress = client.IpAddress ?? string.Empty;
             }
 
             _playerCache[client.SteamID] = playerData;
-            _dbContext.SaveChanges();
+            dbContext.SaveChanges();
         }
 
-        public void UpdateDefaultSkin(ulong steamId, string skinPath)
+        public void ClearPlayerCache(ulong steamId)
         {
-            var playerData = _dbContext.Players
-                .FirstOrDefault(x => x.SteamId == steamId);
-            if (playerData is null)
-            {
-                _logger.LogError("Player with SteamID {steamId} not found.", steamId);
-                return;
-            }
-
-            playerData.DefaultSkinModelPath = skinPath;
-
-            if (_playerCache.TryGetValue(steamId, out var cachedPlayer))
-            {
-                cachedPlayer.DefaultSkinModelPath = skinPath;
-            }
-            else
-            {
-                _logger.LogWarning("Player {steamId} not found in cache when updating default skin", steamId);
-            }
-
-            _dbContext.Players.Update(playerData);
-            _dbContext.SaveChanges();
+            _playerCache.Remove(steamId);
         }
 
-        public void ClearPlayerCache()
+        public void ClearPlayerCaches()
         {
             _playerCache.Clear();
         }
 
         public void ResetPlayerSkinFromCache(Player playerCache)
         {
-            foreach (var skin in playerCache.PlayerSkins)
+            foreach (var skin in playerCache.PlayerSkins.Where(s => s.IsActive).ToList())
             {
-                if (skin.IsActive)
-                    skin.IsActive = false;
+                skin.IsActive = false;
             }
         }
 
@@ -100,13 +84,24 @@ namespace MyProject.Services
 
         public void SaveCacheToDB(Player player)
         {
-            _dbContext.Players.Update(player);
-            _dbContext.SaveChanges();
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            dbContext.Players.Update(player);
+            dbContext.SaveChanges();
         }
 
         public void SaveAllCachesToDB()
         {
-            _dbContext.SaveChanges();
+            if (_playerCache.Count == 0)
+                return;
+
+            using var dbContext = _dbContextFactory.CreateDbContext();
+
+            foreach (var player in _playerCache.Values)
+            {
+                dbContext.Players.Update(player);
+            }
+
+            dbContext.SaveChanges();
         }
     }
 }

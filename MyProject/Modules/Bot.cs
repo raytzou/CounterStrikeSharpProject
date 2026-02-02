@@ -13,6 +13,16 @@ namespace MyProject.Modules;
 
 public class Bot(ILogger<Bot> logger) : IBot
 {
+    private enum BossAbilities
+    {
+        FireTorture,
+        Freeze,
+        Flashbang,
+        Explosion,
+        ToxicSmoke,
+        Cursed
+    }
+
     private readonly ILogger<Bot> _logger = logger;
     private int _level = 2;
     private int _respawnTimes = 0;
@@ -40,8 +50,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         await StopBotMoving();
 
         var botTeam = GetBotTeam(mapName);
-        if (botTeam != CsTeam.None)
-            await AddSpecialOrBoss(botTeam);
+        await AddSpecialOrBoss(botTeam);
 
         _level = 2;
 
@@ -68,8 +77,9 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
 
         var botTeam = GetBotTeam(mapName);
-        if (botTeam != CsTeam.None)
-            await FillNormalBotAsync(GetDifficultyLevel(0, 0), botTeam);
+        SetDifficultyLevel(0, 0);
+        SetMaxRespawnTimes();
+        await FillNormalBotAsync(_level, botTeam);
     }
 
     public async Task RoundStartBehavior(string mapName)
@@ -355,7 +365,9 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         if (Main.Instance.RoundCount != Main.Instance.Config.MidBossRound && Main.Instance.RoundCount < Main.Instance.Config.FinalBossRound)
         {
-            await FillNormalBotAsync(GetDifficultyLevel(winStreak, looseStreak), botTeam);
+            SetDifficultyLevel(winStreak, looseStreak);
+            await FillNormalBotAsync(_level, botTeam);
+            SetMaxRespawnTimes();
         }
 
         async Task SetDefaultWeapon()
@@ -450,28 +462,39 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         if (activeAbilityChance <= Main.Instance.Config.BossActiveAbilityChance)
         {
-            var abilityChoice = Random.Shared.Next(1, 8);
+            var availableAbilities = new List<BossAbilities>
+            {
+                BossAbilities.FireTorture,
+                BossAbilities.Freeze,
+                BossAbilities.Flashbang,
+                BossAbilities.Explosion,
+                BossAbilities.ToxicSmoke,
+            };
+
+            if (CanUseCursed())
+                availableAbilities.Add(BossAbilities.Cursed);
+
+            var abilityChoice = availableAbilities[Random.Shared.Next(availableAbilities.Count)];
 
             switch (abilityChoice)
             {
-                case 1:
+                case BossAbilities.FireTorture:
                     FireTorture();
                     break;
-                case 2:
+                case BossAbilities.Freeze:
                     Freeze();
                     break;
-                case 3:
+                case BossAbilities.Flashbang:
                     Flashbang();
                     break;
-                case 4:
+                case BossAbilities.Explosion:
                     Explosion();
                     break;
-                case 5:
+                case BossAbilities.ToxicSmoke:
                     ToxicSmoke();
                     break;
-                case 6:
-                    if (!_isCurseActive)
-                        Cursed();
+                case BossAbilities.Cursed:
+                    Cursed();
                     break;
                 case 7:
                     Invincible();
@@ -703,12 +726,6 @@ public class Bot(ILogger<Bot> logger) : IBot
         {
             if (AppSettings.IsDebug)
                 _logger.LogInformation("Boss actives Cursed");
-            var bossHealth = boss.PlayerPawn.Value!.Health;
-            var maxHealth = IsBoss(boss) && boss.PlayerName.Contains(BotProfile.Boss[0]) ? Main.Instance.Config.MidBossHealth : Main.Instance.Config.FinalBossHealth;
-            var oneThirdHealth = maxHealth / 3;
-
-            if (bossHealth > oneThirdHealth)
-                return;
 
             _isCurseActive = true;
 
@@ -875,6 +892,38 @@ public class Bot(ILogger<Bot> logger) : IBot
                     if (Utility.IsBotValidAndAlive(boss))
                         SetBossInvincible(false);
                 });
+            }
+        }
+
+        bool CanUseCursed()
+        {
+            if (_isCurseActive)
+                return false;
+
+            if (Main.Instance.RoundCount != Main.Instance.Config.FinalBossRound)
+                return false;
+
+            var bossHealth = boss.PlayerPawn.Value!.Health;
+            var maxHealth = Main.Instance.Config.FinalBossHealth;
+            var oneThirdHealth = maxHealth / 3;
+
+            var isLowHealth = bossHealth <= oneThirdHealth;
+            var isPanicking = CheckPanicTimer();
+
+            return isLowHealth || isPanicking;
+
+            bool CheckPanicTimer()
+            {
+                var panicTimer = boss.PlayerPawn.Value.Bot?.PanicTimer;
+
+                if (panicTimer is null)
+                {
+                    _logger.LogWarning("Boss's PanicTimer is null");
+                    return false;
+                }
+
+                return panicTimer.Duration > 0 &&
+                    Server.CurrentTime < panicTimer.Timestamp + panicTimer.Duration;
             }
         }
 
@@ -1087,21 +1136,17 @@ public class Bot(ILogger<Bot> logger) : IBot
         });
     }
 
-    private int GetDifficultyLevel(int winStreak, int looseStreak)
+    private void SetDifficultyLevel(int winStreak, int looseStreak)
     {
-        if (winStreak > 1 && _level < 7)
+        if (winStreak >= 1 && _level < 7)
             _level++;
-        else if (looseStreak > 2 && _level > 1)
+        else if (looseStreak >= 2 && _level > 1)
             _level--;
+    }
 
-        SetMaxRespawnTimes(_level);
-
-        return _level;
-
-        void SetMaxRespawnTimes(int level)
-        {
-            _maxRespawnTimes = (level < 3) ? 100 : (level == 4) ? 120 : 150;
-        }
+    private void SetMaxRespawnTimes()
+    {
+        _maxRespawnTimes = (_level < 3) ? 100 : (_level == 4) ? 120 : 150;
     }
 
     private async Task AddSpecialOrBoss(CsTeam botTeam)
@@ -1284,8 +1329,6 @@ public class Bot(ILogger<Bot> logger) : IBot
                 return;
 
             var botTeam = GetBotTeam(mapName);
-            if (botTeam == CsTeam.None) return;
-
             var weaponToGive = weapon ?? (botTeam == CsTeam.CounterTerrorist ? CsItem.M4A1 : CsItem.AK47);
 
             if (bot.PlayerPawn.Value!.WeaponServices == null)
