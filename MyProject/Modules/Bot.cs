@@ -1373,16 +1373,11 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (!isBossValid)
                 return;
 
-            if (AppSettings.IsDebug)
-            {
-                boss!.PlayerPawn.Value!.ArmorValue = 50;
-            }
-            else
-            {
-                boss!.PlayerPawn.Value!.ArmorValue = currentRound == Main.Instance.Config.MidBossRound ?
-                    Main.Instance.Config.MidBossArmor :
-                    Main.Instance.Config.FinalBossArmor;
-            }
+            boss!.PlayerPawn.Value!.ArmorValue = AppSettings.IsDebug
+                ? 50
+                : (currentRound == Main.Instance.Config.MidBossRound
+                    ? Main.Instance.Config.MidBossArmor
+                    : Main.Instance.Config.FinalBossArmor);
 
             SetBotHelmet(boss, true);
 
