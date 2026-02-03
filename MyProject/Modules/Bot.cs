@@ -854,7 +854,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                     }
 
                     var currentTime = Server.CurrentTime;
-                    if (currentTime - startTime > invincibleDuration)
+                    if (currentTime - startTime >= invincibleDuration)
                         return;
 
                     var humanPlayers = Utility.GetAliveHumans();
