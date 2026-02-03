@@ -1109,7 +1109,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 return;
             }
 
-            var bossPawn = boss.PlayerPawn.Value;
+            var bossPawn = boss.PlayerPawn.Value!;
 
             bossPawn.MoveType = canMove ? MoveType_t.MOVETYPE_WALK : MoveType_t.MOVETYPE_NONE;
             bossPawn.ActualMoveType = canMove ? MoveType_t.MOVETYPE_WALK : MoveType_t.MOVETYPE_NONE;
