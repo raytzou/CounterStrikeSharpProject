@@ -30,6 +30,7 @@ public class Bot(ILogger<Bot> logger) : IBot
     private int _maxRespawnTimes = 20;
     private bool _isCurseActive = false;
     private bool _isBossGuardBreak;
+    private bool _isBossInvincible = false;
     private readonly List<CounterStrikeSharp.API.Modules.Timers.Timer> _damageTimers = new();
 
     private static readonly Regex NormalBotNameRegex = new(@"^\[(?<Grade>[^\]]+)\](?<Group>[^#]+)#(?<Num>\d{1,2})$");
@@ -471,11 +472,13 @@ public class Bot(ILogger<Bot> logger) : IBot
             BossAbilities.Flashbang,
             BossAbilities.Explosion,
             BossAbilities.ToxicSmoke,
-            BossAbilities.Invincible
         };
 
         if (CanUseCursed())
             availableAbilities.Add(BossAbilities.Cursed);
+
+        if (CanUseInvincible())
+            availableAbilities.Add(BossAbilities.Invincible);
 
         var abilityChoice = availableAbilities[Random.Shared.Next(availableAbilities.Count)];
 
@@ -807,6 +810,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (AppSettings.IsDebug)
                 _logger.LogInformation("Boss actives Invincible");
 
+            _isBossInvincible = true;
             Utility.PrintToAllCenter("Boss actives invincible barrier protection!");
 
             SetBossInvincible(true);
@@ -897,6 +901,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                     invincibleTimer?.Kill();
                     if (Utility.IsBotValidAndAlive(boss))
                         SetBossInvincible(false);
+                    _isBossInvincible = false;
                     Utility.PrintToAllCenter("Boss invincible ability ends!");
                 });
             }
@@ -932,6 +937,25 @@ public class Bot(ILogger<Bot> logger) : IBot
                 return panicTimer.Duration > 0 &&
                     Server.CurrentTime < panicTimer.Timestamp + panicTimer.Duration;
             }
+        }
+
+        bool CanUseInvincible()
+        {
+            if (_isBossInvincible)
+            {
+                if (AppSettings.IsDebug)
+                    _logger.LogInformation("Invincible blocked: already active");
+                return false;
+            }
+
+            if (_isBossGuardBreak)
+            {
+                if (AppSettings.IsDebug)
+                    _logger.LogInformation("Invincible blocked: Guard Break is active");
+                return false;
+            }
+
+            return true;
         }
 
         void CreateTimedProjectileAttack(string message, System.Drawing.Color beaconColor, Action<Vector> createProjectileAction, float delayTime = 3.0f)
@@ -1053,6 +1077,13 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             if (_isBossGuardBreak) return;
 
+            if (_isBossInvincible)
+            {
+                if (AppSettings.IsDebug)
+                    _logger.LogInformation("Guard Break blocked: Invincible is active");
+                return;
+            }
+
             _isBossGuardBreak = true;
             Utility.PrintToAllCenter("Boss GUARD BREAK!");
             SetBossMovement(false);
@@ -1097,6 +1128,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         _damageTimers.Clear();
         _isCurseActive = false;
         _isBossGuardBreak = false;
+        _isBossInvincible = false;
     }
 
     private CsTeam GetBotTeam(string mapName)
