@@ -1067,11 +1067,11 @@ public class Bot(ILogger<Bot> logger) : IBot
     {
         Server.NextFrame(() =>
         {
-            if (AppSettings.IsDebug)
-                Server.PrintToChatAll($"boss armor: {boss.PlayerPawn.Value!.ArmorValue}");
             if (!Utility.IsBotValidAndAlive(boss))
                 return;
 
+            if (AppSettings.IsDebug)
+                Server.PrintToChatAll($"boss armor: {boss.PlayerPawn.Value!.ArmorValue}");
             if (boss.PlayerPawn.Value!.ArmorValue > 0)
                 return;
 
