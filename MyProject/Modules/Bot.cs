@@ -813,26 +813,9 @@ public class Bot(ILogger<Bot> logger) : IBot
             _isBossInvincible = true;
             Utility.PrintToAllCenter("Boss actives invincible barrier protection!");
 
-            SetBossInvincible(true);
+            SetBossMovementState(boss, canMove: false, canTakeDamage: false);
             Utility.DrawBeaconOnPlayer(boss, Color.Gray, 200f, 5f, 5f);
             CreateInvincibleBarrier();
-
-            void SetBossInvincible(bool isInvincible)
-            {
-                if (!Utility.IsBotValidAndAlive(boss))
-                {
-                    _logger.LogWarning("Boss is invalid or not alive when setting invincible");
-                    return;
-                }
-
-                var bossPawn = boss.PlayerPawn.Value!;
-
-                bossPawn.MoveType = isInvincible ? MoveType_t.MOVETYPE_NONE : MoveType_t.MOVETYPE_WALK;
-                bossPawn.ActualMoveType = isInvincible ? MoveType_t.MOVETYPE_NONE : MoveType_t.MOVETYPE_WALK;
-                bossPawn.TakesDamage = !isInvincible;
-
-                Utilities.SetStateChanged(bossPawn, "CBaseEntity", "m_MoveType");
-            }
 
             void CreateInvincibleBarrier()
             {
@@ -900,7 +883,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                     _damageTimers.Remove(invincibleTimer);
                     invincibleTimer?.Kill();
                     if (Utility.IsBotValidAndAlive(boss))
-                        SetBossInvincible(false);
+                        SetBossMovementState(boss, canMove: true, canTakeDamage: true);
                     _isBossInvincible = false;
                     Utility.PrintToAllCenter("Boss invincible ability ends!");
                 });
@@ -1086,7 +1069,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             _isBossGuardBreak = true;
             Utility.PrintToAllCenter("Boss GUARD BREAK!");
-            SetBossMovement(false);
+            SetBossMovementState(boss, canMove: false);
             SetBotHelmet(boss, false);
 
             Main.Instance.AddTimer(Main.Instance.Config.BossGuardBreakTime, () =>
@@ -1096,26 +1079,10 @@ public class Bot(ILogger<Bot> logger) : IBot
                 if (!Utility.IsBotValidAndAlive(boss))
                     return;
 
-                SetBossMovement(true);
+                SetBossMovementState(boss, canMove: true);
                 _ = SetBossArmor();
             });
         });
-
-        void SetBossMovement(bool canMove)
-        {
-            if (!Utility.IsBotValidAndAlive(boss))
-            {
-                _logger.LogWarning("Boss is invalid or not alive when setting movement");
-                return;
-            }
-
-            var bossPawn = boss.PlayerPawn.Value!;
-
-            bossPawn.MoveType = canMove ? MoveType_t.MOVETYPE_WALK : MoveType_t.MOVETYPE_NONE;
-            bossPawn.ActualMoveType = canMove ? MoveType_t.MOVETYPE_WALK : MoveType_t.MOVETYPE_NONE;
-
-            Utilities.SetStateChanged(bossPawn, "CBaseEntity", "m_MoveType");
-        }
     }
 
     public void ClearDamageTimer()
@@ -1459,5 +1426,26 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
 
         return true;
+    }
+
+    private void SetBossMovementState(CCSPlayerController boss, bool canMove, bool? canTakeDamage = null)
+    {
+        if (!Utility.IsBotValidAndAlive(boss))
+        {
+            _logger.LogWarning("Boss is invalid or not alive when setting movement state");
+            return;
+        }
+
+        var bossPawn = boss.PlayerPawn.Value!;
+
+        bossPawn.MoveType = canMove ? MoveType_t.MOVETYPE_WALK : MoveType_t.MOVETYPE_NONE;
+        bossPawn.ActualMoveType = canMove ? MoveType_t.MOVETYPE_WALK : MoveType_t.MOVETYPE_NONE;
+
+        if (canTakeDamage.HasValue)
+        {
+            bossPawn.TakesDamage = canTakeDamage.Value;
+        }
+
+        Utilities.SetStateChanged(bossPawn, "CBaseEntity", "m_MoveType");
     }
 }
