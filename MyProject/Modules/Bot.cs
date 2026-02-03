@@ -1384,12 +1384,12 @@ public class Bot(ILogger<Bot> logger) : IBot
                     Main.Instance.Config.FinalBossArmor;
             }
 
+            SetBotHelmet(boss, true);
+
             // Workaround: Force network state sync for ArmorValue and HasHelmet
             // ArmorValue is not a networked property and won't sync automatically.
             // Triggering a zero-damage slap forces the game to recalculate and broadcast armor state to clients.
             Utility.SlapPlayer(boss, 0, false, false);
-
-            SetBotHelmet(boss, true);
 
             if (AppSettings.IsDebug)
             {
