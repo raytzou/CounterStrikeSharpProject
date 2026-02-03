@@ -1067,11 +1067,11 @@ public class Bot(ILogger<Bot> logger) : IBot
     {
         Server.NextFrame(() =>
         {
-            if (AppSettings.IsDebug)
-                Server.PrintToChatAll($"boss armor: {boss.PlayerPawn.Value!.ArmorValue}");
             if (!Utility.IsBotValidAndAlive(boss))
                 return;
 
+            if (AppSettings.IsDebug)
+                Server.PrintToChatAll($"boss armor: {boss.PlayerPawn.Value!.ArmorValue}");
             if (boss.PlayerPawn.Value!.ArmorValue > 0)
                 return;
 
@@ -1109,7 +1109,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 return;
             }
 
-            var bossPawn = boss.PlayerPawn.Value;
+            var bossPawn = boss.PlayerPawn.Value!;
 
             bossPawn.MoveType = canMove ? MoveType_t.MOVETYPE_WALK : MoveType_t.MOVETYPE_NONE;
             bossPawn.ActualMoveType = canMove ? MoveType_t.MOVETYPE_WALK : MoveType_t.MOVETYPE_NONE;
