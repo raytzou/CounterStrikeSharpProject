@@ -469,9 +469,12 @@ public class Bot(ILogger<Bot> logger) : IBot
         if (!Utility.IsBotValidAndAlive(boss))
             return;
 
-        // Check if boss is in GuardBreak state
+        BossAbilities? selectedAbility = null;
+
+        // Critical section: check state, select ability, and set state atomically
         lock (_abilityLock)
         {
+            // Check if boss is in GuardBreak state
             if (_bossState == BossState.GuardBreak)
             {
                 if (AppSettings.IsDebug)
@@ -486,29 +489,33 @@ public class Bot(ILogger<Bot> logger) : IBot
                     _logger.LogInformation("BossBehavior cancelled: Boss is already activating an ability");
                 return;
             }
-        }
 
-        var activeAbilityChance = GetChance();
+            // Probability check inside lock to ensure atomicity
+            var activeAbilityChance = Random.Shared.NextDouble() * 100;
+            if (activeAbilityChance > Main.Instance.Config.BossActiveAbilityChance)
+                return;
 
-        if (activeAbilityChance > Main.Instance.Config.BossActiveAbilityChance)
-            return;
+            // Build available abilities list
+            var availableAbilities = new List<BossAbilities>
+            {
+                BossAbilities.FireTorture,
+                BossAbilities.Freeze,
+                BossAbilities.Flashbang,
+                BossAbilities.Explosion,
+                BossAbilities.ToxicSmoke,
+                BossAbilities.Invincible
+            };
 
-        var availableAbilities = new List<BossAbilities>
-        {
-            BossAbilities.FireTorture,
-            BossAbilities.Freeze,
-            BossAbilities.Flashbang,
-            BossAbilities.Explosion,
-            BossAbilities.ToxicSmoke,
-            BossAbilities.Invincible
-        };
+            if (CanUseCursed())
+                availableAbilities.Add(BossAbilities.Cursed);
 
-        if (CanUseCursed())
-            availableAbilities.Add(BossAbilities.Cursed);
+            // Select ability
+            selectedAbility = availableAbilities[Random.Shared.Next(availableAbilities.Count)];
 
-        var abilityChoice = availableAbilities[Random.Shared.Next(availableAbilities.Count)];
-
-        switch (abilityChoice)
+            // Set state immediately to prevent concurrent activation
+            _bossState = BossState.ActivingAbility;
+        }        // Execute selected ability outside lock to avoid holding lock during ability execution
+        switch (selectedAbility.Value)
         {
             case BossAbilities.FireTorture:
                 FireTorture();
@@ -533,21 +540,10 @@ public class Bot(ILogger<Bot> logger) : IBot
                 break;
         }
 
-        double GetChance()
-        {
-            return Random.Shared.NextDouble() * 100; // Returns a value between 0-100
-        }
-
         void FireTorture()
         {
             if (AppSettings.IsDebug)
                 _logger.LogInformation("Boss actives FireTorture");
-
-            // Set boss state to ActivingAbility
-            lock (_abilityLock)
-            {
-                _bossState = BossState.ActivingAbility;
-            }
 
             CreateTimedProjectileAttack(
                 "The Boss ignites all players!",
@@ -578,11 +574,6 @@ public class Bot(ILogger<Bot> logger) : IBot
         {
             if (AppSettings.IsDebug)
                 _logger.LogInformation("Boss actives Freeze");
-
-            lock (_abilityLock)
-            {
-                _bossState = BossState.ActivingAbility;
-            }
 
             Utility.PrintToAllCenter("The Boss locks the battlefield in ice!");
             var humanPlayers = Utility.GetAliveHumans();
@@ -634,11 +625,6 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (AppSettings.IsDebug)
                 _logger.LogInformation("Boss actives Flashbang");
 
-            lock (_abilityLock)
-            {
-                _bossState = BossState.ActivingAbility;
-            }
-
             CreateTimedProjectileAttack(
                 "The Boss blinds the battlefield!",
                 System.Drawing.Color.Transparent,
@@ -670,11 +656,6 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (AppSettings.IsDebug)
                 _logger.LogInformation("Boss actives Explosion");
 
-            lock (_abilityLock)
-            {
-                _bossState = BossState.ActivingAbility;
-            }
-
             CreateTimedProjectileAttack(
                 "The Boss prepares explosive devastation!",
                 System.Drawing.Color.Orange,
@@ -704,11 +685,6 @@ public class Bot(ILogger<Bot> logger) : IBot
         {
             if (AppSettings.IsDebug)
                 _logger.LogInformation("Boss actives ToxicSmoke");
-
-            lock (_abilityLock)
-            {
-                _bossState = BossState.ActivingAbility;
-            }
 
             Utility.PrintToAllCenter("The Boss releases toxic clouds!");
             var humanPlayers = Utility.GetAliveHumans();
@@ -843,11 +819,6 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (AppSettings.IsDebug)
                 _logger.LogInformation("Boss actives Cursed");
 
-            lock (_abilityLock)
-            {
-                _bossState = BossState.ActivingAbility;
-            }
-
             var humanPlayers = Utility.GetAliveHumans();
 
             if (humanPlayers.Count == 0)
@@ -930,12 +901,13 @@ public class Bot(ILogger<Bot> logger) : IBot
                 _logger.LogInformation("Boss actives Invincible");
 
             if (!Utility.IsBotValidAndAlive(boss))
-                return;
-
-            // Set boss state (already checked in BossBehavior)
-            lock (_abilityLock)
             {
-                _bossState = BossState.ActivingAbility;
+                // Rollback state if boss became invalid
+                lock (_abilityLock)
+                {
+                    _bossState = BossState.None;
+                }
+                return;
             }
 
             Utility.PrintToAllCenter("Boss actives invincible barrier protection!");
@@ -1158,35 +1130,53 @@ public class Bot(ILogger<Bot> logger) : IBot
 
     public void BossArmorDetection(CCSPlayerController boss)
     {
+        // Immediately check and set state to prevent race condition
+        bool shouldScheduleGuardBreak = false;
+
+        lock (_abilityLock)
+        {
+            // Only trigger if boss is in None state
+            if (_bossState != BossState.None)
+            {
+                if (AppSettings.IsDebug)
+                    _logger.LogInformation("Guard Break blocked: boss is in {state} state", _bossState);
+                return;
+            }
+
+            // Set state immediately to prevent concurrent triggers
+            _bossState = BossState.GuardBreak;
+            shouldScheduleGuardBreak = true;
+        }
+
+        if (!shouldScheduleGuardBreak)
+            return;
+
+        // Schedule the actual guard break effect execution
         Server.NextFrame(() =>
         {
             if (!Utility.IsBotValidAndAlive(boss))
+            {
+                // Rollback state if boss became invalid
+                lock (_abilityLock)
+                {
+                    _bossState = BossState.None;
+                }
                 return;
+            }
 
             if (AppSettings.IsDebug)
                 Server.PrintToChatAll($"boss armor: {boss.PlayerPawn.Value!.ArmorValue}");
 
+            // Double-check armor (might have been restored)
             if (boss.PlayerPawn.Value!.ArmorValue > 0)
-                return;
-
-            bool shouldTriggerGuardBreak = false;
-
-            lock (_abilityLock)
             {
-                // Only trigger GuardBreak if boss is in None state
-                if (_bossState == BossState.None)
+                // Rollback state if armor was restored
+                lock (_abilityLock)
                 {
-                    _bossState = BossState.GuardBreak;
-                    shouldTriggerGuardBreak = true;
+                    _bossState = BossState.None;
                 }
-                else if (AppSettings.IsDebug)
-                {
-                    _logger.LogInformation("Guard Break blocked: boss is in {state} state", _bossState);
-                }
-            }
-
-            if (!shouldTriggerGuardBreak)
                 return;
+            }
 
             Utility.PrintToAllCenter("Boss GUARD BREAK!");
             SetBossMovementState(boss, canMove: false);
