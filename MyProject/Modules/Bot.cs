@@ -490,11 +490,6 @@ public class Bot(ILogger<Bot> logger) : IBot
                 return;
             }
 
-            // Probability check inside lock to ensure atomicity
-            var activeAbilityChance = Random.Shared.NextDouble() * 100;
-            if (activeAbilityChance > Main.Instance.Config.BossActiveAbilityChance)
-                return;
-
             // Build available abilities list
             var availableAbilities = new List<BossAbilities>
             {
