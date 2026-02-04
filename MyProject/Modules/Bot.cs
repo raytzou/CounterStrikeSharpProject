@@ -27,8 +27,7 @@ public class Bot(ILogger<Bot> logger) : IBot
     private enum BossState
     {
         None = 0,
-        GuardBreak = 1,
-        ActivingAbility = 2
+        GuardBreak = 1
     }
 
     private readonly ILogger<Bot> _logger = logger;
@@ -40,6 +39,10 @@ public class Bot(ILogger<Bot> logger) : IBot
     // Thread-safe state management for boss
     private readonly object _abilityLock = new();
     private BossState _bossState = BossState.None;
+    private float _lastAbilityTime = 0f;
+    private int _activeAbilityCount = 0;
+    private const int MaxConcurrentAbilities = 3;
+    private const float AbilityCooldown = 1.5f;
 
     private static readonly Regex NormalBotNameRegex = new(@"^\[(?<Grade>[^\]]+)\](?<Group>[^#]+)#(?<Num>\d{1,2})$");
     private static readonly HashSet<string> _specialBots = BotProfile.Special.Values.ToHashSet();
@@ -482,11 +485,21 @@ public class Bot(ILogger<Bot> logger) : IBot
                 return;
             }
 
-            // Check if boss is already activating an ability
-            if (_bossState == BossState.ActivingAbility)
+            // Check concurrent ability limit
+            if (_activeAbilityCount >= MaxConcurrentAbilities)
             {
                 if (AppSettings.IsDebug)
-                    _logger.LogInformation("BossBehavior cancelled: Boss is already activating an ability");
+                    _logger.LogInformation("BossBehavior cancelled: Maximum concurrent abilities ({max}) reached", MaxConcurrentAbilities);
+                return;
+            }
+
+            // Check cooldown to prevent rapid-fire in same frame
+            var currentTime = Server.CurrentTime;
+            if (currentTime - _lastAbilityTime < AbilityCooldown)
+            {
+                if (AppSettings.IsDebug)
+                    _logger.LogInformation("BossBehavior cancelled: Cooldown active (last: {last:F2}s, current: {current:F2}s)", 
+                        _lastAbilityTime, currentTime);
                 return;
             }
 
@@ -507,8 +520,13 @@ public class Bot(ILogger<Bot> logger) : IBot
             // Select ability
             selectedAbility = availableAbilities[Random.Shared.Next(availableAbilities.Count)];
 
-            // Set state immediately to prevent concurrent activation
-            _bossState = BossState.ActivingAbility;
+            // Update counters to prevent concurrent activation
+            _activeAbilityCount++;
+            _lastAbilityTime = currentTime;
+
+            if (AppSettings.IsDebug)
+                _logger.LogInformation("Boss activates {ability} (active: {count}/{max}, cooldown: {cd}s)", 
+                    selectedAbility.Value, _activeAbilityCount, MaxConcurrentAbilities, AbilityCooldown);
         }        // Execute selected ability outside lock to avoid holding lock during ability execution
         switch (selectedAbility.Value)
         {
@@ -546,12 +564,12 @@ public class Bot(ILogger<Bot> logger) : IBot
                 CreateMolotovAtPosition
             );
 
-            // Reset state after ability duration (3s delay + 7s burn)
+            // Decrease ability count after duration (3s delay + 7s burn)
             Main.Instance.AddTimer(10f, () =>
             {
                 lock (_abilityLock)
                 {
-                    _bossState = BossState.None;
+                    _activeAbilityCount--;
                 }
             });
 
@@ -577,7 +595,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 lock (_abilityLock)
                 {
-                    _bossState = BossState.None;
+                    _activeAbilityCount--;
                 }
                 return;
             }
@@ -610,7 +628,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
                 lock (_abilityLock)
                 {
-                    _bossState = BossState.None;
+                    _activeAbilityCount--;
                 }
             });
         }
@@ -627,12 +645,12 @@ public class Bot(ILogger<Bot> logger) : IBot
                 0f
             );
 
-            // Reset state after flashbang effect (instant + 7s blind duration)
+            // Decrease ability count after flashbang effect (instant + 7s blind duration)
             Main.Instance.AddTimer(7f, () =>
             {
                 lock (_abilityLock)
                 {
-                    _bossState = BossState.None;
+                    _activeAbilityCount--;
                 }
             });
 
@@ -657,12 +675,12 @@ public class Bot(ILogger<Bot> logger) : IBot
                 CreateGrenadeAtPosition
             );
 
-            // Reset state after explosion (3s delay + 3s cleanup)
+            // Decrease ability count after explosion (3s delay + 3s cleanup)
             Main.Instance.AddTimer(6f, () =>
             {
                 lock (_abilityLock)
                 {
-                    _bossState = BossState.None;
+                    _activeAbilityCount--;
                 }
             });
 
@@ -687,7 +705,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 lock (_abilityLock)
                 {
-                    _bossState = BossState.None;
+                    _activeAbilityCount--;
                 }
                 return;
             }
@@ -734,12 +752,12 @@ public class Bot(ILogger<Bot> logger) : IBot
                 }
             });
 
-            // Reset state after toxic smoke duration (1s delay + 15s duration)
+            // Decrease ability count after toxic smoke duration (1s delay + 15s duration)
             Main.Instance.AddTimer(16f, () =>
             {
                 lock (_abilityLock)
                 {
-                    _bossState = BossState.None;
+                    _activeAbilityCount--;
                 }
             });
 
@@ -820,7 +838,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 lock (_abilityLock)
                 {
-                    _bossState = BossState.None;
+                    _activeAbilityCount--;
                 }
                 return;
             }
@@ -885,7 +903,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
                 lock (_abilityLock)
                 {
-                    _bossState = BossState.None;
+                    _activeAbilityCount--;
                 }
             });
         }
@@ -897,10 +915,10 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             if (!Utility.IsBotValidAndAlive(boss))
             {
-                // Rollback state if boss became invalid
+                // Rollback counter if boss became invalid
                 lock (_abilityLock)
                 {
-                    _bossState = BossState.None;
+                    _activeAbilityCount--;
                 }
                 return;
             }
@@ -981,7 +999,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
                     lock (_abilityLock)
                     {
-                        _bossState = BossState.None;
+                        _activeAbilityCount--;
                     }
 
                     Utility.PrintToAllCenter("Boss invincible ability ends!");
@@ -1205,10 +1223,12 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         _damageTimers.Clear();
 
-        // Thread-safe cleanup of boss state
+        // Thread-safe cleanup of boss state and counters
         lock (_abilityLock)
         {
             _bossState = BossState.None;
+            _activeAbilityCount = 0;
+            _lastAbilityTime = 0f;
         }
     }
 
