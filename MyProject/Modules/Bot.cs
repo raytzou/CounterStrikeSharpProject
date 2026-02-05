@@ -498,7 +498,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (currentTime - _lastAbilityTime < AbilityCooldown)
             {
                 if (AppSettings.IsDebug)
-                    _logger.LogInformation("BossBehavior cancelled: Cooldown active (last: {last:F2}s, current: {current:F2}s)", 
+                    _logger.LogInformation("BossBehavior cancelled: Cooldown active (last: {last:F2}s, current: {current:F2}s)",
                         _lastAbilityTime, currentTime);
                 return;
             }
@@ -525,7 +525,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             _lastAbilityTime = currentTime;
 
             if (AppSettings.IsDebug)
-                _logger.LogInformation("Boss activates {ability} (active: {count}/{max}, cooldown: {cd}s)", 
+                _logger.LogInformation("Boss activates {ability} (active: {count}/{max}, cooldown: {cd}s)",
                     selectedAbility.Value, _activeAbilityCount, MaxConcurrentAbilities, AbilityCooldown);
         }        // Execute selected ability outside lock to avoid holding lock during ability execution
         switch (selectedAbility.Value)
@@ -1454,7 +1454,25 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (!Utility.IsBotValid(bot))
                 return;
 
-            bot.RemoveWeapons();
+            var botWeapons = bot.PlayerPawn.Value!.WeaponServices?.MyWeapons;
+
+            if (botWeapons == null)
+            {
+                _logger.LogWarning("Bot {botName} MyWeapons is null while Remove Weapon", bot.PlayerName);
+                return;
+            }
+
+            _logger.LogInformation("Removing {botName} weapons", bot.PlayerName);
+
+            foreach (var weapon in botWeapons)
+            {
+                if (weapon == null || !weapon.IsValid || weapon.Value == null || !weapon.Value.IsValid)
+                    return;
+
+                _logger.LogInformation("remove {weapon}", weapon.Value.DesignerName);
+                var weaponValue = weapon.Value;
+                weaponValue.AddEntityIOEvent("Kill", weaponValue, delay: 0.1f);
+            }
         });
     }
 
@@ -1514,15 +1532,15 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             SetBotHelmet(boss, true);
 
-            // Workaround: Force network state sync for ArmorValue and HasHelmet
-            // ArmorValue is not a networked property and won't sync automatically.
-            // Triggering a zero-damage slap forces the game to recalculate and broadcast armor state to clients.
-            Utility.SlapPlayer(boss, 0, false, false);
-
             if (AppSettings.IsDebug)
             {
-                _logger.LogInformation("Boss armor: {armorValue}", boss!.PlayerPawn.Value!.ArmorValue);
-                _logger.LogInformation("Boss has helmet: {bossHelmetBool}", boss.PlayerPawn.Value!.ItemServices?.As<CCSPlayer_ItemServices>().HasHelmet);
+                var bossArmorValue = boss.PlayerPawn.Value.ArmorValue;
+                var bossHasHelmet = boss.PlayerPawn.Value!.ItemServices?.As<CCSPlayer_ItemServices>().HasHelmet;
+
+                Server.PrintToChatAll($"set boss armor {bossArmorValue}");
+                Server.PrintToChatAll($"Boss helmet: {bossHasHelmet}");
+                _logger.LogInformation("Boss armor: {armorValue}", bossArmorValue);
+                _logger.LogInformation("Boss has helmet: {bossHelmetBool}", bossHasHelmet);
             }
         });
     }
