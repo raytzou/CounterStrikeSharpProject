@@ -15,8 +15,8 @@ namespace MyProject.Classes
         public string RushModel = "[Resident Evil 2]Hunk";
         public int MidBossHealth = 10000;
         public int FinalBossHealth = 15000;
-        public int MidBossArmor = 3000;
-        public int FinalBossArmor = 5000;
+        public int MidBossArmor = 500;
+        public int FinalBossArmor = 800;
         public int DisplayMenuInterval = 30;
         public int MaxRounds = 9; // End-game trigger round (mp_maxrounds - 1), not total playable rounds
         public float BossGuardBreakTime = 10;
