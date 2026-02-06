@@ -661,9 +661,6 @@ public class Main(
                     playerPawn.MaxHealth = maxHealth;
                     playerPawn.ArmorValue = armor;
 
-                    Utilities.SetStateChanged(playerPawn, "CBaseEntity", "m_iHealth");
-                    Utilities.SetStateChanged(playerPawn, "CBaseEntity", "m_ArmorValue");
-
                     if (AppSettings.IsDebug)
                     {
                         _logger.LogInformation(
