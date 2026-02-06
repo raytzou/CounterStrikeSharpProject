@@ -1156,6 +1156,14 @@ public class Bot(ILogger<Bot> logger) : IBot
                 return;
             }
 
+            // Prevent Guard Break during any active ability
+            if (_activeAbilityCount > 0)
+            {
+                if (AppSettings.IsDebug)
+                    _logger.LogInformation("Guard Break blocked: {count} abilities are active", _activeAbilityCount);
+                return;
+            }
+
             // Set state immediately to prevent concurrent triggers
             _bossState = BossState.GuardBreak;
             shouldScheduleGuardBreak = true;
@@ -1170,6 +1178,19 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (!Utility.IsBotValidAndAlive(boss))
             {
                 // Rollback state if boss became invalid
+                lock (_abilityLock)
+                {
+                    _bossState = BossState.None;
+                }
+                return;
+            }
+
+            // Additional check: prevent Guard Break if boss is invincible
+            if (!boss.PlayerPawn.Value!.TakesDamage)
+            {
+                if (AppSettings.IsDebug)
+                    _logger.LogInformation("Guard Break blocked: Boss is invincible (TakesDamage = false)");
+                
                 lock (_abilityLock)
                 {
                     _bossState = BossState.None;
