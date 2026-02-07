@@ -842,8 +842,8 @@ public class Main(
 
         if (_bot.IsBoss(victim))
         {
-            _bot.BossBehavior(victim);
             _bot.BossArmorDetection(victim);
+            _bot.BossBehavior(victim);
         }
 
         return HookResult.Continue;
