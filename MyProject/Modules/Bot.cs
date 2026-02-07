@@ -1172,14 +1172,6 @@ public class Bot(ILogger<Bot> logger) : IBot
                 return;
             }
 
-            // Prevent Guard Break during any active ability
-            if (_activeAbilityCount > 0)
-            {
-                if (AppSettings.IsDebug)
-                    _logger.LogInformation("Guard Break blocked: {count} abilities are active", _activeAbilityCount);
-                return;
-            }
-
             // Set state immediately to prevent concurrent triggers
             _bossState = BossState.GuardBreak;
             shouldScheduleGuardBreak = true;
@@ -1206,7 +1198,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 if (AppSettings.IsDebug)
                     _logger.LogInformation("Guard Break blocked: Boss is invincible (TakesDamage = false)");
-                
+
                 lock (_abilityLock)
                 {
                     _bossState = BossState.None;
@@ -1222,7 +1214,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 if (AppSettings.IsDebug)
                     _logger.LogInformation("Guard Break rollback: Boss armor restored to {armor} in NextFrame", boss.PlayerPawn.Value.ArmorValue);
-                
+
                 // Rollback state if armor was restored
                 lock (_abilityLock)
                 {
@@ -1564,9 +1556,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (!isBossValid)
                 return;
 
-            boss!.PlayerPawn.Value!.ArmorValue = AppSettings.IsDebug
-                ? 50
-                : (currentRound == Main.Instance.Config.MidBossRound
+            boss!.PlayerPawn.Value!.ArmorValue = (currentRound == Main.Instance.Config.MidBossRound
                     ? Main.Instance.Config.MidBossArmor
                     : Main.Instance.Config.FinalBossArmor);
 
