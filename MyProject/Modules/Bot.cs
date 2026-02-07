@@ -1147,7 +1147,19 @@ public class Bot(ILogger<Bot> logger) : IBot
 
     public void BossArmorDetection(CCSPlayerController boss)
     {
-        // Immediately check and set state to prevent race condition
+        // Early validation before entering lock
+        if (!Utility.IsBotValidAndAlive(boss))
+            return;
+
+        // Pre-check armor value to avoid unnecessary state changes
+        // This prevents false Guard Break triggers when armor is healthy
+        if (boss.PlayerPawn.Value!.ArmorValue > 0)
+        {
+            if (AppSettings.IsDebug)
+                _logger.LogInformation("Guard Break skipped: Boss armor is {armor} > 0", boss.PlayerPawn.Value.ArmorValue);
+            return;
+        }
+
         bool shouldScheduleGuardBreak = false;
 
         lock (_abilityLock)
@@ -1205,9 +1217,12 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (AppSettings.IsDebug)
                 Server.PrintToChatAll($"boss armor: {boss.PlayerPawn.Value!.ArmorValue}");
 
-            // Double-check armor (might have been restored)
+            // Double-check armor (might have been restored between initial check and NextFrame)
             if (boss.PlayerPawn.Value!.ArmorValue > 0)
             {
+                if (AppSettings.IsDebug)
+                    _logger.LogInformation("Guard Break rollback: Boss armor restored to {armor} in NextFrame", boss.PlayerPawn.Value.ArmorValue);
+                
                 // Rollback state if armor was restored
                 lock (_abilityLock)
                 {
