@@ -556,6 +556,8 @@ public class Bot(ILogger<Bot> logger) : IBot
                     if (!Utility.IsHumanValidAndAlive(player)) continue;
 
                     player.PlayerPawn.Value!.MoveType = MoveType_t.MOVETYPE_NONE;
+                    player.PlayerPawn.Value.ActualMoveType = MoveType_t.MOVETYPE_NONE;
+                    Utilities.SetStateChanged(player.PlayerPawn.Value, "CBaseEntity", "m_MoveType");
                     ApplyScreenOverlay(player.PlayerPawn.Value, 3f);
                     frozenPlayers.Add(player);
                 }
@@ -570,6 +572,8 @@ public class Bot(ILogger<Bot> logger) : IBot
                         if (!Utility.IsHumanValidAndAlive(player)) continue;
 
                         player.PlayerPawn.Value!.MoveType = MoveType_t.MOVETYPE_WALK;
+                        player.PlayerPawn.Value.ActualMoveType = MoveType_t.MOVETYPE_WALK;
+                        Utilities.SetStateChanged(player.PlayerPawn.Value, "CBaseEntity", "m_MoveType");
                     }
                 });
             });
