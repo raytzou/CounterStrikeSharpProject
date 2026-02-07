@@ -661,9 +661,6 @@ public class Main(
                     playerPawn.MaxHealth = maxHealth;
                     playerPawn.ArmorValue = armor;
 
-                    Utilities.SetStateChanged(playerPawn, "CBaseEntity", "m_iHealth");
-                    Utilities.SetStateChanged(playerPawn, "CBaseEntity", "m_ArmorValue");
-
                     if (AppSettings.IsDebug)
                     {
                         _logger.LogInformation(
@@ -836,7 +833,7 @@ public class Main(
     {
         var victim = @event.Userid;
         var attacker = @event.Attacker;
-        if (victim is null || !victim.IsValid || attacker is null || !attacker.IsValid)
+        if (!Utility.IsPlayerValid(victim) || !Utility.IsPlayerValid(attacker))
             return HookResult.Continue;
 
         // Prevent boss from being damaged by their own abilities
@@ -844,7 +841,10 @@ public class Main(
             return HookResult.Handled;
 
         if (_bot.IsBoss(victim))
+        {
+            _bot.BossArmorDetection(victim);
             _bot.BossBehavior(victim);
+        }
 
         return HookResult.Continue;
     }

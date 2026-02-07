@@ -31,6 +31,8 @@ namespace MyProject.Modules.Interfaces
 
         void BossBehavior(CCSPlayerController boss);
 
+        void BossArmorDetection(CCSPlayerController boss);
+
         void ClearDamageTimer();
     }
 }
