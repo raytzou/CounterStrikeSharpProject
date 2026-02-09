@@ -20,15 +20,27 @@ public class Bot(ILogger<Bot> logger) : IBot
         Flashbang,
         Explosion,
         ToxicSmoke,
-        Cursed
+        Cursed,
+        Invincible
+    }
+
+    private enum BossState
+    {
+        None = 0,
+        GuardBreak = 1
     }
 
     private readonly ILogger<Bot> _logger = logger;
     private int _level = 2;
     private int _respawnTimes = 0;
     private int _maxRespawnTimes = 20;
-    private bool _isCurseActive = false;
     private readonly List<CounterStrikeSharp.API.Modules.Timers.Timer> _damageTimers = new();
+
+    // Thread-safe state management for boss
+    private readonly object _abilityLock = new();
+    private BossState _bossState = BossState.None;
+    private float _lastAbilityTime = 0f;
+    private int _activeAbilityCount = 0;
 
     private static readonly Regex NormalBotNameRegex = new(@"^\[(?<Grade>[^\]]+)\](?<Group>[^#]+)#(?<Num>\d{1,2})$");
     private static readonly HashSet<string> _specialBots = BotProfile.Special.Values.ToHashSet();
@@ -237,6 +249,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             var currentRound = Main.Instance.RoundCount;
 
             await SetBossHealth();
+            await SetBossArmor();
             await SetBossWeapon();
             await SetBossAmmo();
 
@@ -310,22 +323,6 @@ public class Bot(ILogger<Bot> logger) : IBot
                         _logger.LogError(ex, "Failed to convert or set weapon ammo");
                     }
                 });
-            }
-
-            bool ValidateBoss(out CCSPlayerController? boss)
-            {
-                boss = currentRound == Main.Instance.Config.MidBossRound ?
-                    Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(BotProfile.Boss[0])) :
-                    Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(BotProfile.Boss[1]));
-
-                if (!Utility.IsBotValid(boss))
-                {
-                    var bossType = currentRound == Main.Instance.Config.MidBossRound ? "Mid Boss" : "Final Boss";
-                    _logger.LogError("Spawn {BossType} failed at round {RoundCount}", bossType, currentRound);
-                    return false;
-                }
-
-                return true;
             }
 
             async Task SetBossHealth()
@@ -472,10 +469,39 @@ public class Bot(ILogger<Bot> logger) : IBot
             _logger.LogInformation("BossBehavior Start");
         if (!Utility.IsBotValidAndAlive(boss))
             return;
-        var activeAbilityChance = GetChance();
 
-        if (activeAbilityChance <= Main.Instance.Config.BossActiveAbilityChance)
+        BossAbilities? selectedAbility = null;
+
+        // Critical section: check state, select ability, and set state atomically
+        lock (_abilityLock)
         {
+            // Check if boss is in GuardBreak state
+            if (_bossState == BossState.GuardBreak)
+            {
+                if (AppSettings.IsDebug)
+                    _logger.LogInformation("BossBehavior cancelled: Boss is in GuardBreak state");
+                return;
+            }
+
+            // Check concurrent ability limit
+            if (_activeAbilityCount >= Main.Instance.Config.MaxConcurrentAbilities)
+            {
+                if (AppSettings.IsDebug)
+                    _logger.LogInformation("BossBehavior cancelled: Maximum concurrent abilities ({max}) reached", MaxConcurrentAbilities);
+                return;
+            }
+
+            // Check cooldown to prevent rapid-fire in same frame
+            var currentTime = Server.CurrentTime;
+            if (currentTime - _lastAbilityTime < Main.Instance.Config.AbilityCooldown)
+            {
+                if (AppSettings.IsDebug)
+                    _logger.LogInformation("BossBehavior cancelled: Cooldown active (last: {last:F2}s, current: {current:F2}s)",
+                        _lastAbilityTime, currentTime);
+                return;
+            }
+
+            // Build available abilities list
             var availableAbilities = new List<BossAbilities>
             {
                 BossAbilities.FireTorture,
@@ -483,50 +509,67 @@ public class Bot(ILogger<Bot> logger) : IBot
                 BossAbilities.Flashbang,
                 BossAbilities.Explosion,
                 BossAbilities.ToxicSmoke,
+                BossAbilities.Invincible
             };
 
             if (CanUseCursed())
                 availableAbilities.Add(BossAbilities.Cursed);
 
-            var abilityChoice = availableAbilities[Random.Shared.Next(availableAbilities.Count)];
+            // Select ability
+            selectedAbility = availableAbilities[Random.Shared.Next(availableAbilities.Count)];
 
-            switch (abilityChoice)
-            {
-                case BossAbilities.FireTorture:
-                    FireTorture();
-                    break;
-                case BossAbilities.Freeze:
-                    Freeze();
-                    break;
-                case BossAbilities.Flashbang:
-                    Flashbang();
-                    break;
-                case BossAbilities.Explosion:
-                    Explosion();
-                    break;
-                case BossAbilities.ToxicSmoke:
-                    ToxicSmoke();
-                    break;
-                case BossAbilities.Cursed:
-                    Cursed();
-                    break;
-            }
-        }
+            // Update counters to prevent concurrent activation
+            _activeAbilityCount++;
+            _lastAbilityTime = currentTime;
 
-        double GetChance()
+            if (AppSettings.IsDebug)
+                _logger.LogInformation("Boss activates {ability} (active: {count}/{max}, cooldown: {cd}s)",
+                    selectedAbility.Value, _activeAbilityCount, Main.Instance.Config.MaxConcurrentAbilities, Main.Instance.Config.AbilityCooldown);
+        }        // Execute selected ability outside lock to avoid holding lock during ability execution
+        switch (selectedAbility.Value)
         {
-            return Random.Shared.NextDouble() * 100; // Returns a value between 0-100
+            case BossAbilities.FireTorture:
+                FireTorture();
+                break;
+            case BossAbilities.Freeze:
+                Freeze();
+                break;
+            case BossAbilities.Flashbang:
+                Flashbang();
+                break;
+            case BossAbilities.Explosion:
+                Explosion();
+                break;
+            case BossAbilities.ToxicSmoke:
+                ToxicSmoke();
+                break;
+            case BossAbilities.Cursed:
+                Cursed();
+                break;
+            case BossAbilities.Invincible:
+                Invincible();
+                break;
         }
 
         void FireTorture()
         {
             if (AppSettings.IsDebug)
                 _logger.LogInformation("Boss actives FireTorture");
+
             CreateTimedProjectileAttack(
                 "The Boss ignites all players!",
                 System.Drawing.Color.Red,
                 CreateMolotovAtPosition
             );
+
+            // Decrease ability count after duration (3s delay + 7s burn)
+            Main.Instance.AddTimer(10f, () =>
+            {
+                lock (_abilityLock)
+                {
+                    _activeAbilityCount--;
+                }
+            });
 
             void CreateMolotovAtPosition(Vector position)
             {
@@ -542,10 +585,18 @@ public class Bot(ILogger<Bot> logger) : IBot
         {
             if (AppSettings.IsDebug)
                 _logger.LogInformation("Boss actives Freeze");
+
             Utility.PrintToAllCenter("The Boss locks the battlefield in ice!");
             var humanPlayers = Utility.GetAliveHumans();
 
-            if (humanPlayers.Count == 0) return;
+            if (humanPlayers.Count == 0)
+            {
+                lock (_abilityLock)
+                {
+                    _activeAbilityCount--;
+                }
+                return;
+            }
 
             var frozenPlayers = new List<CCSPlayerController>();
 
@@ -576,6 +627,11 @@ public class Bot(ILogger<Bot> logger) : IBot
                         Utilities.SetStateChanged(player.PlayerPawn.Value, "CBaseEntity", "m_MoveType");
                     }
                 });
+
+                lock (_abilityLock)
+                {
+                    _activeAbilityCount--;
+                }
             });
         }
 
@@ -583,12 +639,22 @@ public class Bot(ILogger<Bot> logger) : IBot
         {
             if (AppSettings.IsDebug)
                 _logger.LogInformation("Boss actives Flashbang");
+
             CreateTimedProjectileAttack(
                 "The Boss blinds the battlefield!",
                 System.Drawing.Color.Transparent,
                 CreateFlashbangAtPosition,
                 0f
             );
+
+            // Decrease ability count after flashbang effect (instant + 7s blind duration)
+            Main.Instance.AddTimer(7f, () =>
+            {
+                lock (_abilityLock)
+                {
+                    _activeAbilityCount--;
+                }
+            });
 
             void CreateFlashbangAtPosition(Vector position)
             {
@@ -604,11 +670,21 @@ public class Bot(ILogger<Bot> logger) : IBot
         {
             if (AppSettings.IsDebug)
                 _logger.LogInformation("Boss actives Explosion");
+
             CreateTimedProjectileAttack(
                 "The Boss prepares explosive devastation!",
                 System.Drawing.Color.Orange,
                 CreateGrenadeAtPosition
             );
+
+            // Decrease ability count after explosion (3s delay + 3s cleanup)
+            Main.Instance.AddTimer(6f, () =>
+            {
+                lock (_abilityLock)
+                {
+                    _activeAbilityCount--;
+                }
+            });
 
             void CreateGrenadeAtPosition(Vector position)
             {
@@ -624,10 +700,17 @@ public class Bot(ILogger<Bot> logger) : IBot
         {
             if (AppSettings.IsDebug)
                 _logger.LogInformation("Boss actives ToxicSmoke");
+
             Utility.PrintToAllCenter("The Boss releases toxic clouds!");
             var humanPlayers = Utility.GetAliveHumans();
             if (humanPlayers.Count == 0)
+            {
+                lock (_abilityLock)
+                {
+                    _activeAbilityCount--;
+                }
                 return;
+            }
 
             var targetCount = Math.Max(1, humanPlayers.Count / 3);
             var selectedPlayers = humanPlayers
@@ -668,6 +751,15 @@ public class Bot(ILogger<Bot> logger) : IBot
                 foreach (var position in markedPositions)
                 {
                     CreateToxicSmokeAtPosition(position);
+                }
+            });
+
+            // Decrease ability count after toxic smoke duration (1s delay + 15s duration)
+            Main.Instance.AddTimer(16f, () =>
+            {
+                lock (_abilityLock)
+                {
+                    _activeAbilityCount--;
                 }
             });
 
@@ -735,14 +827,6 @@ public class Bot(ILogger<Bot> logger) : IBot
                     toxicTimer?.Kill();
                 });
             }
-
-            float CalculateDistance(Vector pos1, Vector pos2)
-            {
-                var dx = pos1.X - pos2.X;
-                var dy = pos1.Y - pos2.Y;
-                var dz = pos1.Z - pos2.Z;
-                return (float)Math.Sqrt(dx * dx + dy * dy + dz * dz);
-            }
         }
 
         void Cursed()
@@ -750,13 +834,14 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (AppSettings.IsDebug)
                 _logger.LogInformation("Boss actives Cursed");
 
-            _isCurseActive = true;
-
             var humanPlayers = Utility.GetAliveHumans();
 
             if (humanPlayers.Count == 0)
             {
-                _isCurseActive = false;
+                lock (_abilityLock)
+                {
+                    _activeAbilityCount--;
+                }
                 return;
             }
 
@@ -816,16 +901,116 @@ public class Bot(ILogger<Bot> logger) : IBot
             {
                 _damageTimers.Remove(cursedTimer);
                 cursedTimer?.Kill();
-                _isCurseActive = false;
                 Utility.PrintToAllCenter("The curse has been lifted...");
+
+                lock (_abilityLock)
+                {
+                    _activeAbilityCount--;
+                }
             });
+        }
+
+        void Invincible()
+        {
+            if (AppSettings.IsDebug)
+                _logger.LogInformation("Boss actives Invincible");
+
+            if (!Utility.IsBotValidAndAlive(boss))
+            {
+                // Rollback counter if boss became invalid
+                lock (_abilityLock)
+                {
+                    _activeAbilityCount--;
+                }
+                return;
+            }
+
+            Utility.PrintToAllCenter("Boss actives invincible barrier protection!");
+
+            SetBossMovementState(boss, canMove: false, canTakeDamage: false);
+            Utility.DrawBeaconOnPlayer(boss, Color.Gray, 200f, 5f, 5f);
+            CreateInvincibleBarrier();
+
+            void CreateInvincibleBarrier()
+            {
+                if (AppSettings.IsDebug)
+                    _logger.LogInformation("Invincible barrier damage zone");
+
+                const float damageRadius = 200.0f;
+                const int damagePerSecond = 20;
+                const float invincibleDuration = 5.0f;
+
+                var startTime = Server.CurrentTime;
+
+                var invincibleTimer = Main.Instance.AddTimer(1f, () =>
+                {
+                    if (!Utility.IsBotValidAndAlive(boss))
+                    {
+                        _logger.LogWarning("Boss became invalid during Invincible ability");
+                        return;
+                    }
+
+                    var currentTime = Server.CurrentTime;
+                    if (currentTime - startTime >= invincibleDuration)
+                        return;
+
+                    var humanPlayers = Utility.GetAliveHumans();
+                    var bossPos = boss.PlayerPawn.Value!.AbsOrigin;
+
+                    if (bossPos is null)
+                    {
+                        _logger.LogWarning("Boss position is null when using invincible ability");
+                        return;
+                    }
+
+                    foreach (var player in humanPlayers)
+                    {
+                        if (!Utility.IsHumanValidAndAlive(player))
+                            continue;
+
+                        var playerPosition = player.PlayerPawn.Value!.AbsOrigin;
+                        if (playerPosition is null)
+                            continue;
+
+                        var distance = CalculateDistance(playerPosition, bossPos);
+
+                        if (distance <= damageRadius)
+                        {
+                            if (AppSettings.IsDebug)
+                                _logger.LogInformation("{playerName} enters in Protection Barrier", player.PlayerName);
+                            var currentHealth = player.PlayerPawn.Value!.Health;
+                            var newHealth = Math.Max(1, currentHealth - damagePerSecond);
+
+                            player.PlayerPawn.Value!.Health = newHealth;
+                            Utilities.SetStateChanged(player.PlayerPawn.Value!, "CBaseEntity", "m_iHealth");
+                            player.PrintToCenter($"Damage: -{damagePerSecond} HP");
+
+                            ApplyScreenOverlay(player.PlayerPawn.Value, 1f);
+                        }
+                    }
+                }, CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
+
+                _damageTimers.Add(invincibleTimer);
+
+                Main.Instance.AddTimer(invincibleDuration, () =>
+                {
+                    _damageTimers.Remove(invincibleTimer);
+                    invincibleTimer?.Kill();
+                    if (Utility.IsBotValidAndAlive(boss))
+                        SetBossMovementState(boss, canMove: true, canTakeDamage: true);
+
+                    lock (_abilityLock)
+                    {
+                        _activeAbilityCount--;
+                    }
+
+                    Utility.PrintToAllCenter("Boss invincible ability ends!");
+                });
+            }
         }
 
         bool CanUseCursed()
         {
-            if (_isCurseActive)
-                return false;
-
             if (Main.Instance.RoundCount != Main.Instance.Config.FinalBossRound)
                 return false;
 
@@ -948,6 +1133,115 @@ public class Bot(ILogger<Bot> logger) : IBot
                 smokeProjectile.SmokeColor.Z = 0;
             }
         }
+
+        float CalculateDistance(Vector pos1, Vector pos2)
+        {
+            var dx = pos1.X - pos2.X;
+            var dy = pos1.Y - pos2.Y;
+            var dz = pos1.Z - pos2.Z;
+            return (float)Math.Sqrt(dx * dx + dy * dy + dz * dz);
+        }
+    }
+
+    public void BossArmorDetection(CCSPlayerController boss)
+    {
+        // Early validation before entering lock
+        if (!Utility.IsBotValidAndAlive(boss))
+            return;
+
+        // Pre-check armor value to avoid unnecessary state changes
+        // This prevents false Guard Break triggers when armor is healthy
+        if (boss.PlayerPawn.Value!.ArmorValue > 0)
+        {
+            if (AppSettings.IsDebug)
+                _logger.LogInformation("Guard Break skipped: Boss armor is {armor} > 0", boss.PlayerPawn.Value.ArmorValue);
+            return;
+        }
+
+        bool shouldScheduleGuardBreak = false;
+
+        lock (_abilityLock)
+        {
+            // Only trigger if boss is in None state
+            if (_bossState != BossState.None)
+            {
+                if (AppSettings.IsDebug)
+                    _logger.LogInformation("Guard Break blocked: boss is in {state} state", _bossState);
+                return;
+            }
+
+            // Set state immediately to prevent concurrent triggers
+            _bossState = BossState.GuardBreak;
+            shouldScheduleGuardBreak = true;
+        }
+
+        if (!shouldScheduleGuardBreak)
+            return;
+
+        // Schedule the actual guard break effect execution
+        Server.NextFrame(() =>
+        {
+            if (!Utility.IsBotValidAndAlive(boss))
+            {
+                // Rollback state if boss became invalid
+                lock (_abilityLock)
+                {
+                    _bossState = BossState.None;
+                }
+                return;
+            }
+
+            // Additional check: prevent Guard Break if boss is invincible
+            if (!boss.PlayerPawn.Value!.TakesDamage)
+            {
+                if (AppSettings.IsDebug)
+                    _logger.LogInformation("Guard Break blocked: Boss is invincible (TakesDamage = false)");
+
+                lock (_abilityLock)
+                {
+                    _bossState = BossState.None;
+                }
+                return;
+            }
+
+            if (AppSettings.IsDebug)
+                Server.PrintToChatAll($"boss armor: {boss.PlayerPawn.Value!.ArmorValue}");
+
+            // Double-check armor (might have been restored between initial check and NextFrame)
+            if (boss.PlayerPawn.Value!.ArmorValue > 0)
+            {
+                if (AppSettings.IsDebug)
+                    _logger.LogInformation("Guard Break rollback: Boss armor restored to {armor} in NextFrame", boss.PlayerPawn.Value.ArmorValue);
+
+                // Rollback state if armor was restored
+                lock (_abilityLock)
+                {
+                    _bossState = BossState.None;
+                }
+                return;
+            }
+
+            Utility.PrintToAllCenter("Boss GUARD BREAK!");
+            SetBossMovementState(boss, canMove: false);
+            SetBotHelmet(boss, false);
+
+            Main.Instance.AddTimer(Main.Instance.Config.BossGuardBreakTime, () =>
+            {
+                Utility.PrintToAllCenter("Boss Guard has recovered!");
+
+                // Thread-safe state reset
+                lock (_abilityLock)
+                {
+                    _bossState = BossState.None;
+                }
+
+                if (!Utility.IsBotValidAndAlive(boss))
+                    return;
+
+                SetBossMovementState(boss, canMove: true);
+                _ = SetBossArmor();
+            });
+        });
     }
 
     public void ClearDamageTimer()
@@ -958,7 +1252,14 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
 
         _damageTimers.Clear();
-        _isCurseActive = false;
+
+        // Thread-safe cleanup of boss state and counters
+        lock (_abilityLock)
+        {
+            _bossState = BossState.None;
+            _activeAbilityCount = 0;
+            _lastAbilityTime = 0f;
+        }
     }
 
     private CsTeam GetBotTeam(string mapName)
@@ -1183,7 +1484,25 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (!Utility.IsBotValid(bot))
                 return;
 
-            bot.RemoveWeapons();
+            var botWeapons = bot.PlayerPawn.Value!.WeaponServices?.MyWeapons;
+
+            if (botWeapons == null)
+            {
+                _logger.LogWarning("Bot {botName} MyWeapons is null while Remove Weapon", bot.PlayerName);
+                return;
+            }
+
+            _logger.LogInformation("Removing {botName} weapons", bot.PlayerName);
+
+            foreach (var weapon in botWeapons)
+            {
+                if (weapon == null || !weapon.IsValid || weapon.Value == null || !weapon.Value.IsValid)
+                    return;
+
+                _logger.LogInformation("remove {weapon}", weapon.Value.DesignerName);
+                var weaponValue = weapon.Value;
+                weaponValue.AddEntityIOEvent("Kill", weaponValue, delay: 0.1f);
+            }
         });
     }
 
@@ -1224,5 +1543,89 @@ public class Bot(ILogger<Bot> logger) : IBot
                 bot.PlayerPawn.Value!.WeaponServices.PreventWeaponPickup = true;
             });
         });
+    }
+
+    private async Task SetBossArmor()
+    {
+        await Server.NextFrameAsync(() =>
+        {
+            var currentRound = Main.Instance.RoundCount;
+            bool isBossValid = ValidateBoss(out var boss);
+            if (!isBossValid)
+                return;
+
+            boss!.PlayerPawn.Value!.ArmorValue = (currentRound == Main.Instance.Config.MidBossRound
+                    ? Main.Instance.Config.MidBossArmor
+                    : Main.Instance.Config.FinalBossArmor);
+
+            SetBotHelmet(boss, true);
+
+            if (AppSettings.IsDebug)
+            {
+                var bossArmorValue = boss.PlayerPawn.Value.ArmorValue;
+                var bossHasHelmet = boss.PlayerPawn.Value!.ItemServices?.As<CCSPlayer_ItemServices>().HasHelmet;
+
+                Server.PrintToChatAll($"set boss armor {bossArmorValue}");
+                Server.PrintToChatAll($"Boss helmet: {bossHasHelmet}");
+                _logger.LogInformation("Boss armor: {armorValue}", bossArmorValue);
+                _logger.LogInformation("Boss has helmet: {bossHelmetBool}", bossHasHelmet);
+            }
+        });
+    }
+
+    private void SetBotHelmet(CCSPlayerController bot, bool equip)
+    {
+        if (!Utility.IsBotValidAndAlive(bot))
+        {
+            _logger.LogWarning("Bot {botName} is invalid when setting helmet", bot.PlayerName);
+            return;
+        }
+
+        var bossItemServices = bot.PlayerPawn.Value!.ItemServices?.As<CCSPlayer_ItemServices>();
+        if (bossItemServices is null)
+        {
+            _logger.LogWarning("Bot {botName} ItemServices is null when setting helmet", bot.PlayerName);
+            return;
+        }
+
+        bossItemServices.HasHelmet = equip;
+    }
+
+    private bool ValidateBoss(out CCSPlayerController? boss)
+    {
+        var currentRound = Main.Instance.RoundCount;
+        boss = currentRound == Main.Instance.Config.MidBossRound ?
+            Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(BotProfile.Boss[0])) :
+            Utilities.GetPlayers().FirstOrDefault(player => player.PlayerName.Contains(BotProfile.Boss[1]));
+
+        if (!Utility.IsBotValid(boss))
+        {
+            var bossType = currentRound == Main.Instance.Config.MidBossRound ? "Mid Boss" : "Final Boss";
+            _logger.LogError("Spawn {BossType} failed at round {RoundCount}", bossType, currentRound);
+            return false;
+        }
+
+        return true;
+    }
+
+    private void SetBossMovementState(CCSPlayerController boss, bool canMove, bool? canTakeDamage = null)
+    {
+        if (!Utility.IsBotValidAndAlive(boss))
+        {
+            _logger.LogWarning("Boss is invalid or not alive when setting movement state");
+            return;
+        }
+
+        var bossPawn = boss.PlayerPawn.Value!;
+
+        bossPawn.MoveType = canMove ? MoveType_t.MOVETYPE_WALK : MoveType_t.MOVETYPE_NONE;
+        bossPawn.ActualMoveType = canMove ? MoveType_t.MOVETYPE_WALK : MoveType_t.MOVETYPE_NONE;
+
+        if (canTakeDamage.HasValue)
+        {
+            bossPawn.TakesDamage = canTakeDamage.Value;
+        }
+
+        Utilities.SetStateChanged(bossPawn, "CBaseEntity", "m_MoveType");
     }
 }
