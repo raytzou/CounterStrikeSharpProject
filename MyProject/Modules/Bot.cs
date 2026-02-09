@@ -487,7 +487,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (_activeAbilityCount >= Main.Instance.Config.MaxConcurrentAbilities)
             {
                 if (AppSettings.IsDebug)
-                    _logger.LogInformation("BossBehavior cancelled: Maximum concurrent abilities ({max}) reached", MaxConcurrentAbilities);
+                    _logger.LogInformation("BossBehavior cancelled: Maximum concurrent abilities ({max}) reached", Main.Instance.Config.MaxConcurrentAbilities);
                 return;
             }
 
