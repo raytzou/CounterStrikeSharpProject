@@ -41,8 +41,6 @@ public class Bot(ILogger<Bot> logger) : IBot
     private BossState _bossState = BossState.None;
     private float _lastAbilityTime = 0f;
     private int _activeAbilityCount = 0;
-    private const int MaxConcurrentAbilities = 3;
-    private const float AbilityCooldown = 1.5f;
 
     private static readonly Regex NormalBotNameRegex = new(@"^\[(?<Grade>[^\]]+)\](?<Group>[^#]+)#(?<Num>\d{1,2})$");
     private static readonly HashSet<string> _specialBots = BotProfile.Special.Values.ToHashSet();
@@ -486,7 +484,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             }
 
             // Check concurrent ability limit
-            if (_activeAbilityCount >= MaxConcurrentAbilities)
+            if (_activeAbilityCount >= Main.Instance.Config.MaxConcurrentAbilities)
             {
                 if (AppSettings.IsDebug)
                     _logger.LogInformation("BossBehavior cancelled: Maximum concurrent abilities ({max}) reached", MaxConcurrentAbilities);
@@ -495,7 +493,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             // Check cooldown to prevent rapid-fire in same frame
             var currentTime = Server.CurrentTime;
-            if (currentTime - _lastAbilityTime < AbilityCooldown)
+            if (currentTime - _lastAbilityTime < Main.Instance.Config.AbilityCooldown)
             {
                 if (AppSettings.IsDebug)
                     _logger.LogInformation("BossBehavior cancelled: Cooldown active (last: {last:F2}s, current: {current:F2}s)",
@@ -526,7 +524,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
             if (AppSettings.IsDebug)
                 _logger.LogInformation("Boss activates {ability} (active: {count}/{max}, cooldown: {cd}s)",
-                    selectedAbility.Value, _activeAbilityCount, MaxConcurrentAbilities, AbilityCooldown);
+                    selectedAbility.Value, _activeAbilityCount, Main.Instance.Config.MaxConcurrentAbilities, Main.Instance.Config.AbilityCooldown);
         }        // Execute selected ability outside lock to avoid holding lock during ability execution
         switch (selectedAbility.Value)
         {

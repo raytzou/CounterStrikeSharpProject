@@ -20,5 +20,7 @@ namespace MyProject.Classes
         public int DisplayMenuInterval = 30;
         public int MaxRounds = 9; // End-game trigger round (mp_maxrounds - 1), not total playable rounds
         public float BossGuardBreakTime = 5;
+        public int MaxConcurrentAbilities = 3;
+        public float AbilityCooldown = 1.5f;
     }
 }
