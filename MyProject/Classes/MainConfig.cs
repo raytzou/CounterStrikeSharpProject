@@ -13,10 +13,14 @@ namespace MyProject.Classes
         public int FinalBossRound = 8;
         public string EagleEyeModel = "[???]Nano Girl";
         public string RushModel = "[Resident Evil 2]Hunk";
-        public double BossActiveAbilityChance = 20;
         public int MidBossHealth = 10000;
         public int FinalBossHealth = 15000;
+        public int MidBossArmor = 1000;
+        public int FinalBossArmor = 1500;
         public int DisplayMenuInterval = 30;
         public int MaxRounds = 9; // End-game trigger round (mp_maxrounds - 1), not total playable rounds
+        public float BossGuardBreakTime = 5;
+        public int MaxConcurrentAbilities = 3;
+        public float AbilityCooldown = 1.5f;
     }
 }
