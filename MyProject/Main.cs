@@ -481,6 +481,7 @@ public class Main(
             Server.ExecuteCommand("mp_maxrounds 1");
             AddTimer(1f, () =>
             {
+                Utility.PrintToChatAllWithColor("Game Over!");
                 _music.PlayEndGameMusic();
             });
         }
