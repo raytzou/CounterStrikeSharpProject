@@ -1327,12 +1327,12 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (AppSettings.IsDebug)
                 Server.PrintToChatAll($"AddSpecialOrBoss spawn Mid Boss");
 
+            KickBot();
             Server.NextWorldUpdate(() =>
             {
                 var midBossSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Boss[0]) == 1;
                 if (!midBossSpawn)
                 {
-                    KickBot();
                     Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Boss[0]}");
                     Server.ExecuteCommand("bot_quota 1");
                     if (AppSettings.LogBotAdd)
@@ -1348,13 +1348,13 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (AppSettings.IsDebug)
                 Server.PrintToChatAll($"AddSpecialOrBoss spawn Final Boss");
 
+            KickBot();
             Server.NextWorldUpdate(() =>
             {
                 var finalBossSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Boss[1]) == 1;
 
                 if (!finalBossSpawn)
                 {
-                    KickBot();
                     Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Boss[1]}");
                     Server.ExecuteCommand("bot_quota 1");
 
@@ -1371,6 +1371,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (AppSettings.IsDebug)
                 Server.PrintToChatAll($"AddSpecialOrBoss spawn Special");
 
+            KickBot();
             Server.NextWorldUpdate(() =>
             {
                 var specialBotSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Special[0]) == 1 &&
@@ -1379,7 +1380,6 @@ public class Bot(ILogger<Bot> logger) : IBot
 
                 if (!specialBotSpawn)
                 {
-                    KickBot();
                     Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[0]}");
                     Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[1]}");
                     Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[2]}");
