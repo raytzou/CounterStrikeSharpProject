@@ -463,7 +463,6 @@ public class Main(
         RemoveProtectionFromAllPlayers();
         ActivateAllWeaponStatuses();
         StartWeaponCheckTimer();
-        SetPlayerHealth();
 
         if (isBossRound)
         {
@@ -471,7 +470,12 @@ public class Main(
             RemoveHostage();
         }
 
-        if (_roundCount == Config.MaxRounds)
+        if (_roundCount != Config.MaxRounds)
+        {
+            PlayRoundMusic();
+            SetPlayerHealth();
+        }
+        else
         {
             // End Game
             Server.ExecuteCommand("mp_maxrounds 1");
@@ -480,8 +484,6 @@ public class Main(
                 _music.PlayEndGameMusic();
             });
         }
-        else
-            PlayRoundMusic();
 
         return HookResult.Continue;
 
