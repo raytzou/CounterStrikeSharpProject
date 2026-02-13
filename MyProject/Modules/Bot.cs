@@ -377,8 +377,8 @@ public class Bot(ILogger<Bot> logger) : IBot
         if (Main.Instance.RoundCount != Main.Instance.Config.MidBossRound && Main.Instance.RoundCount < Main.Instance.Config.FinalBossRound)
         {
             SetDifficultyLevel(winStreak, looseStreak);
-            await FillNormalBotAsync(_level, botTeam);
             SetMaxRespawnTimes();
+            await FillNormalBotAsync(_level, botTeam);
         }
 
         async Task SetDefaultWeapon()
