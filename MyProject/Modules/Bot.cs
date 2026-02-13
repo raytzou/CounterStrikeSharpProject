@@ -1326,10 +1326,11 @@ public class Bot(ILogger<Bot> logger) : IBot
         {
             if (AppSettings.IsDebug)
                 Server.PrintToChatAll($"AddSpecialOrBoss spawn Mid Boss");
-            var midBossSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Boss[0]) == 1;
-            if (!midBossSpawn)
+
+            Server.NextWorldUpdate(() =>
             {
-                Server.NextWorldUpdate(() =>
+                var midBossSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Boss[0]) == 1;
+                if (!midBossSpawn)
                 {
                     KickBot();
                     Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Boss[0]}");
@@ -1339,46 +1340,51 @@ public class Bot(ILogger<Bot> logger) : IBot
                         _logger.LogInformation("AddSpecialOrBoss()");
                         _logger.LogInformation("bot_add_{team} {difficulty} {boss}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Boss[0]);
                     }
-                });
-            }
+                }
+            });
         }
         else if (Main.Instance.RoundCount == Main.Instance.Config.FinalBossRound)
         {
             if (AppSettings.IsDebug)
                 Server.PrintToChatAll($"AddSpecialOrBoss spawn Final Boss");
-            var finalBossSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Boss[1]) == 1;
-            if (!finalBossSpawn)
+
+            Server.NextWorldUpdate(() =>
             {
-                Server.NextWorldUpdate(() =>
+                var finalBossSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Boss[1]) == 1;
+
+                if (!finalBossSpawn)
                 {
                     KickBot();
                     Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Boss[1]}");
                     Server.ExecuteCommand("bot_quota 1");
+
                     if (AppSettings.LogBotAdd)
                     {
                         _logger.LogInformation("AddSpecialOrBoss()");
                         _logger.LogInformation("bot_add_{team} {difficulty} {boss}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Boss[1]);
                     }
-                });
-            }
+                }
+            });
         }
         else
         {
             if (AppSettings.IsDebug)
                 Server.PrintToChatAll($"AddSpecialOrBoss spawn Special");
-            var specialBotSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Special[0]) == 1 &&
-                Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Special[1]) == 1 &&
-                Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Special[2]) == 1;
 
-            if (!specialBotSpawn)
+            Server.NextWorldUpdate(() =>
             {
-                Server.NextWorldUpdate(() =>
+                var specialBotSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Special[0]) == 1 &&
+                    Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Special[1]) == 1 &&
+                    Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Special[2]) == 1;
+
+                if (!specialBotSpawn)
                 {
                     KickBot();
                     Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[0]}");
                     Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[1]}");
                     Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[2]}");
                     Server.ExecuteCommand("bot_quota 3");
+
                     if (AppSettings.LogBotAdd)
                     {
                         _logger.LogInformation("AddSpecialOrBoss()");
@@ -1386,8 +1392,8 @@ public class Bot(ILogger<Bot> logger) : IBot
                         _logger.LogInformation("bot_add_{team} {difficulty} {special}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Special[1]);
                         _logger.LogInformation("bot_add_{team} {difficulty} {special}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Special[2]);
                     }
-                });
-            }
+                }
+            });
         }
     }
 
