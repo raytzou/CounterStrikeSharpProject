@@ -1399,7 +1399,11 @@ public class Bot(ILogger<Bot> logger) : IBot
 
     private async Task KickBotAsync()
     {
-        await Server.NextFrameAsync(() => Server.ExecuteCommand("bot_kick"));
+        await Server.NextFrameAsync(() =>
+        {
+            Server.ExecuteCommand("bot_kick");
+            Server.ExecuteCommand("bot_quota 0");
+        });
     }
 
     private static async Task KickNormalBotAsync()
