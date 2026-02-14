@@ -101,7 +101,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         if (isBossRound)
             await HandleBossRound();
-        else
+        else if (Main.Instance.RoundCount != Main.Instance.Config.MaxRounds)
             await HandleNormalRound();
 
         async Task SetBotWeapon(string botName, CsItem item)
