@@ -369,7 +369,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         if (Main.Instance.RoundCount > 0)
         {
-            await Server.NextFrameAsync(KickBot);
+            await KickBotAsync();
             await AddSpecialOrBoss(botTeam);
             await SetDefaultWeapon();
             await KickNormalBotAsync();
@@ -1396,9 +1396,9 @@ public class Bot(ILogger<Bot> logger) : IBot
         }
     }
 
-    private static void KickBot()
+    private async Task KickBotAsync()
     {
-        Server.ExecuteCommand("bot_kick");
+        await Server.NextFrameAsync(() => Server.ExecuteCommand("bot_kick"));
     }
 
     private static async Task KickNormalBotAsync()
