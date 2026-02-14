@@ -377,7 +377,6 @@ public class Bot(ILogger<Bot> logger) : IBot
         {
             SetDifficultyLevel(winStreak, looseStreak);
             SetMaxRespawnTimes();
-            await KickBotAsync();
             await AddSpecial(botTeam);
             await FillNormalBotAsync(_level, botTeam);
         }
