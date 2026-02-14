@@ -61,7 +61,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         await StopBotMoving();
 
         var botTeam = GetBotTeam(mapName);
-        AddSpecialOrBoss(botTeam);
+        await AddSpecialOrBoss(botTeam);
 
         _level = 2;
 
@@ -370,7 +370,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         if (Main.Instance.RoundCount > 0)
         {
             await Server.NextFrameAsync(KickBot);
-            AddSpecialOrBoss(botTeam);
+            await AddSpecialOrBoss(botTeam);
             await SetDefaultWeapon();
             await KickNormalBotAsync();
         }
@@ -1318,7 +1318,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         _maxRespawnTimes = (_level < 3) ? 100 : (_level == 4) ? 120 : 150;
     }
 
-    private void AddSpecialOrBoss(CsTeam botTeam)
+    private async Task AddSpecialOrBoss(CsTeam botTeam)
     {
         var team = botTeam == CsTeam.CounterTerrorist ? "ct" : "t";
         if (AppSettings.IsDebug)
@@ -1329,7 +1329,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (AppSettings.IsDebug)
                 Server.PrintToChatAll($"AddSpecialOrBoss spawn Mid Boss");
 
-            Server.NextWorldUpdate(() =>
+            await Server.NextWorldUpdateAsync(() =>
             {
                 var midBossSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Boss[0]) == 1;
                 if (!midBossSpawn)
@@ -1349,7 +1349,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (AppSettings.IsDebug)
                 Server.PrintToChatAll($"AddSpecialOrBoss spawn Final Boss");
 
-            Server.NextWorldUpdate(() =>
+            await Server.NextWorldUpdateAsync(() =>
             {
                 var finalBossSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Boss[1]) == 1;
 
@@ -1371,7 +1371,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (AppSettings.IsDebug)
                 Server.PrintToChatAll($"AddSpecialOrBoss spawn Special");
 
-            Server.NextWorldUpdate(() =>
+            await Server.NextWorldUpdateAsync(() =>
             {
                 var specialBotSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Special[0]) == 1 &&
                     Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Special[1]) == 1 &&
