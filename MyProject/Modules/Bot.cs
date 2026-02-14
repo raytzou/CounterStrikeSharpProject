@@ -1380,28 +1380,29 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         var team = botTeam == CsTeam.CounterTerrorist ? "ct" : "t";
 
-        await Server.NextWorldUpdateAsync(() =>
-        {
-            var specialBotSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Special[0]) == 1 &&
+        var specialBotSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Special[0]) == 1 &&
                 Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Special[1]) == 1 &&
                 Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Special[2]) == 1;
 
-            if (!specialBotSpawn)
+        if (!specialBotSpawn)
+        {
+            await KickBotAsync();
+            await Server.NextWorldUpdateAsync(() =>
             {
                 Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[0]}");
                 Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[1]}");
                 Server.ExecuteCommand($"bot_add_{team} {nameof(BotProfile.Difficulty.expert)} {BotProfile.Special[2]}");
                 Server.ExecuteCommand("bot_quota 3");
+            });
 
-                if (AppSettings.LogBotAdd)
-                {
-                    _logger.LogInformation("AddSpecialOrBoss()");
-                    _logger.LogInformation("bot_add_{team} {difficulty} {special}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Special[0]);
-                    _logger.LogInformation("bot_add_{team} {difficulty} {special}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Special[1]);
-                    _logger.LogInformation("bot_add_{team} {difficulty} {special}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Special[2]);
-                }
+            if (AppSettings.LogBotAdd)
+            {
+                _logger.LogInformation("AddSpecialOrBoss()");
+                _logger.LogInformation("bot_add_{team} {difficulty} {special}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Special[0]);
+                _logger.LogInformation("bot_add_{team} {difficulty} {special}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Special[1]);
+                _logger.LogInformation("bot_add_{team} {difficulty} {special}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Special[2]);
             }
-        });
+        }
     }
 
     private async Task KickBotAsync()
