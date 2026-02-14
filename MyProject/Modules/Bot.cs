@@ -369,7 +369,6 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         if (Main.Instance.RoundCount > 0)
         {
-            await KickBotAsync();
             await AddSpecialOrBoss(botTeam);
             await SetDefaultWeapon();
             await KickNormalBotAsync();
@@ -1329,6 +1328,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (AppSettings.IsDebug)
                 Server.PrintToChatAll($"AddSpecialOrBoss spawn Mid Boss");
 
+            await KickBotAsync();
             await Server.NextWorldUpdateAsync(() =>
             {
                 var midBossSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Boss[0]) == 1;
@@ -1349,6 +1349,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (AppSettings.IsDebug)
                 Server.PrintToChatAll($"AddSpecialOrBoss spawn Final Boss");
 
+            await KickBotAsync();
             await Server.NextWorldUpdateAsync(() =>
             {
                 var finalBossSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Boss[1]) == 1;
