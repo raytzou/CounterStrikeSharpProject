@@ -1372,6 +1372,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (AppSettings.IsDebug)
                 Server.PrintToChatAll($"AddSpecialOrBoss spawn Special");
 
+            await KickBotAsync();
             await Server.NextWorldUpdateAsync(() =>
             {
                 var specialBotSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Special[0]) == 1 &&
