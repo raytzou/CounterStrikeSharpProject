@@ -369,7 +369,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
         if (Main.Instance.RoundCount > 0)
         {
-            KickBot();
+            await Server.NextFrameAsync(KickBot);
             AddSpecialOrBoss(botTeam);
             await SetDefaultWeapon();
             await KickNormalBotAsync();
