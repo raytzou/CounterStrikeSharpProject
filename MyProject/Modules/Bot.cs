@@ -383,7 +383,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         else
         {
             await KickBotAsync();
-            await AddBoss(botTeam);
+            AddBoss(botTeam);
         }
 
         async Task SetDefaultWeapon()
@@ -1322,7 +1322,7 @@ public class Bot(ILogger<Bot> logger) : IBot
         _maxRespawnTimes = (_level < 3) ? 100 : (_level == 4) ? 120 : 150;
     }
 
-    private async Task AddBoss(CsTeam botTeam)
+    private void AddBoss(CsTeam botTeam)
     {
         var team = botTeam == CsTeam.CounterTerrorist ? "ct" : "t";
         if (AppSettings.IsDebug)
@@ -1333,7 +1333,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (AppSettings.IsDebug)
                 Server.PrintToChatAll($"AddBoss spawn Mid Boss");
 
-            await Server.NextWorldUpdateAsync(() =>
+            Main.Instance.AddTimer(1f, () =>
             {
                 var midBossSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Boss[0]) == 1;
                 if (!midBossSpawn)
@@ -1353,7 +1353,7 @@ public class Bot(ILogger<Bot> logger) : IBot
             if (AppSettings.IsDebug)
                 Server.PrintToChatAll($"AddBoss spawn Final Boss");
 
-            await Server.NextWorldUpdateAsync(() =>
+            Main.Instance.AddTimer(1f, () =>
             {
                 var finalBossSpawn = Utilities.GetPlayers().Count(player => player.PlayerName == BotProfile.Boss[1]) == 1;
 
