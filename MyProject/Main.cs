@@ -677,7 +677,13 @@ public class Main(
 
                     playerPawn.Health = health;
                     playerPawn.MaxHealth = maxHealth;
-                    playerPawn.ArmorValue = armor;
+
+                    var playerCurrentArmorValue = playerPawn.ArmorValue;
+
+                    if (playerCurrentArmorValue < armor)
+                    {
+                        playerPawn.ArmorValue = armor;
+                    }
 
                     if (AppSettings.IsDebug)
                     {
