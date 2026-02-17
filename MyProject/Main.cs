@@ -468,6 +468,7 @@ public class Main(
         _currentRoundSecond = 0;
         _isRoundEnd = false;
         BotRoundStartBehavior();
+        DisplayRadar();
 
         if (_warmup) return HookResult.Continue;
 
@@ -742,6 +743,39 @@ public class Main(
 
                 return (finalHealth, finalMaxHealth, finalArmor);
             }
+        }
+
+        void DisplayRadar()
+        {
+            var cvarStr = "sv_disable_radar";
+            var sv_disable_radar = ConVar.Find(cvarStr);
+
+            if (sv_disable_radar == null)
+            {
+                _logger.LogError("Cannot find the cvar: {cvarName}", cvarStr);
+                return;
+            }
+
+            cvarStr = "mp_freezetime";
+
+            var mp_freezetime = ConVar.Find(cvarStr);
+            if (mp_freezetime == null)
+            {
+                _logger.LogError("Cannot find the cvar: {cvarName}", cvarStr);
+                return;
+            }
+
+            var freezeTime = mp_freezetime.GetPrimitiveValue<int>();
+
+            AddTimer(freezeTime, () =>
+            {
+                var isRadarDisabled = sv_disable_radar.GetPrimitiveValue<int>() > 0;
+
+                if (isRadarDisabled)
+                {
+                    sv_disable_radar.SetValue(0);
+                }
+            }, TimerFlags.STOP_ON_MAPCHANGE);
         }
     }
 
