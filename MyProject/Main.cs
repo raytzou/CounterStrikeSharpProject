@@ -6,6 +6,7 @@ using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Entities.Constants;
 using CounterStrikeSharp.API.Modules.Memory;
+using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.UserMessages;
 using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
@@ -303,7 +304,7 @@ public class Main(
                 if (!Utility.IsHumanValid(player))
                     return;
                 _music.PlayWarmupMusic(player);
-            });
+            }, TimerFlags.STOP_ON_MAPCHANGE);
         }
         return HookResult.Continue;
     }
@@ -366,7 +367,7 @@ public class Main(
                 player.PrintToChat($" {ChatColors.Lime}Type {ChatColors.Orange}'!help' {ChatColors.Lime}for more information!");
                 player.PrintToChat($" {ChatColors.Lime}If you have any problem, feel free to contact the admin!");
                 player.PrintToChat($" {ChatColors.Lime}Hope you enjoy here ^^");
-            });
+            }, TimerFlags.STOP_ON_MAPCHANGE);
         }
 
         string? GetPlayerDefaultSkin()
@@ -496,7 +497,7 @@ public class Main(
             {
                 Utility.PrintToChatAllWithColor("Game Over!");
                 _music.PlayEndGameMusic();
-            });
+            }, TimerFlags.STOP_ON_MAPCHANGE);
         }
 
         return HookResult.Continue;
@@ -653,7 +654,7 @@ public class Main(
                         Utility.PrintToChatAllWithColor($"Now is playing: {ChatColors.Lime}{roundMusicName}");
                     }
                 });
-            });
+            }, TimerFlags.STOP_ON_MAPCHANGE);
         }
 
         void SetPlayerHealth()

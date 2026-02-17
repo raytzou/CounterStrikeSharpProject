@@ -1,6 +1,7 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Entities.Constants;
+using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
 using MyProject.Classes;
@@ -454,7 +455,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                                     _logger.LogError("Respawn bot {BotName} lost {Expected}", bot.PlayerName, expectedWeapon);
                                 }
                             }
-                        });
+                        }, TimerFlags.STOP_ON_MAPCHANGE);
                     });
                 }
             }
@@ -574,7 +575,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 {
                     _activeAbilityCount--;
                 }
-            });
+            }, TimerFlags.STOP_ON_MAPCHANGE);
 
             void CreateMolotovAtPosition(Vector position)
             {
@@ -637,7 +638,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 {
                     _activeAbilityCount--;
                 }
-            });
+            }, TimerFlags.STOP_ON_MAPCHANGE);
         }
 
         void Flashbang()
@@ -659,7 +660,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 {
                     _activeAbilityCount--;
                 }
-            });
+            }, TimerFlags.STOP_ON_MAPCHANGE);
 
             void CreateFlashbangAtPosition(Vector position)
             {
@@ -689,7 +690,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 {
                     _activeAbilityCount--;
                 }
-            });
+            }, TimerFlags.STOP_ON_MAPCHANGE);
 
             void CreateGrenadeAtPosition(Vector position)
             {
@@ -757,7 +758,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 {
                     CreateToxicSmokeAtPosition(position);
                 }
-            });
+            }, TimerFlags.STOP_ON_MAPCHANGE);
 
             // Decrease ability count after toxic smoke duration (1s delay + 15s duration)
             Main.Instance.AddTimer(16f, () =>
@@ -766,7 +767,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 {
                     _activeAbilityCount--;
                 }
-            });
+            }, TimerFlags.STOP_ON_MAPCHANGE);
 
             void CreateToxicSmokeAtPosition(Vector position)
             {
@@ -830,7 +831,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 {
                     _damageTimers.Remove(toxicTimer);
                     toxicTimer?.Kill();
-                });
+                }, TimerFlags.STOP_ON_MAPCHANGE);
             }
         }
 
@@ -912,7 +913,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 {
                     _activeAbilityCount--;
                 }
-            });
+            }, TimerFlags.STOP_ON_MAPCHANGE);
         }
 
         void Invincible()
@@ -1010,7 +1011,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                     }
 
                     Utility.PrintToAllCenter("Boss invincible ability ends!");
-                });
+                }, TimerFlags.STOP_ON_MAPCHANGE);
             }
         }
 
@@ -1085,7 +1086,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 {
                     createProjectileAction(position);
                 }
-            });
+            }, TimerFlags.STOP_ON_MAPCHANGE);
         }
 
         void CreateProjectileAtPosition<T>(Vector position, CCSPlayerController attacker, float cleanupTime = 3.0f) where T : CBaseCSGrenadeProjectile
@@ -1245,7 +1246,7 @@ public class Bot(ILogger<Bot> logger) : IBot
 
                 SetBossMovementState(boss, canMove: true);
                 _ = SetBossArmor();
-            });
+            }, TimerFlags.STOP_ON_MAPCHANGE);
         });
     }
 
@@ -1346,7 +1347,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                         _logger.LogInformation("bot_add_{team} {difficulty} {boss}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Boss[0]);
                     }
                 }
-            });
+            }, TimerFlags.STOP_ON_MAPCHANGE);
         }
         else if (Main.Instance.RoundCount == Main.Instance.Config.FinalBossRound)
         {
@@ -1368,7 +1369,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                         _logger.LogInformation("bot_add_{team} {difficulty} {boss}", team, nameof(BotProfile.Difficulty.expert), BotProfile.Boss[1]);
                     }
                 }
-            });
+            }, TimerFlags.STOP_ON_MAPCHANGE);
         }
     }
 
@@ -1451,7 +1452,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 if (pawn == null || !pawn.IsValid) return;
                 pawn.HealthShotBoostExpirationTime = future;
                 Utilities.SetStateChanged(pawn, "CCSPlayerPawn", "m_flHealthShotBoostExpirationTime");
-            });
+            }, TimerFlags.STOP_ON_MAPCHANGE);
 
             if (attempt < 3)
             {
@@ -1466,7 +1467,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                     {
                         ApplyOverlay(attempt + 1);
                     }
-                });
+                }, TimerFlags.STOP_ON_MAPCHANGE);
             }
         }
     }
@@ -1552,7 +1553,7 @@ public class Bot(ILogger<Bot> logger) : IBot
                 }
 
                 bot.PlayerPawn.Value!.WeaponServices.PreventWeaponPickup = true;
-            });
+            }, TimerFlags.STOP_ON_MAPCHANGE);
         });
     }
 
