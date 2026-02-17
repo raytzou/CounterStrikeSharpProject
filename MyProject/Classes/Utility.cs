@@ -529,7 +529,7 @@ namespace MyProject.Classes
                         player.Score = originalScore;
                         Utilities.SetStateChanged(player, "CCSPlayerController", "m_pInGameMoneyServices");
                     }
-                });
+                }, TimerFlags.STOP_ON_MAPCHANGE);
             }
 
             void PlaySlapSound()

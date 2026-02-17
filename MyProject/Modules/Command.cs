@@ -125,7 +125,7 @@ public class Command(
                 Server.ExecuteCommand($"ds_workshop_changelevel {mapName}");
             else if (Utility.MapsInPhysicalDirectory.Contains(mapName))
                 Server.ExecuteCommand($"changelevel {mapName}");
-        });
+        }, TimerFlags.STOP_ON_MAPCHANGE);
     }
 
     public void OnMapsCommand(CCSPlayerController client, CommandInfo command)
@@ -921,7 +921,7 @@ public class Command(
             Main.Instance.AddTimer(0.5f, () =>
             {
                 Utility.PrintToChatWithTeamColor(client, $"{volumeType} volume: {currentVolume}%");
-            });
+            }, TimerFlags.STOP_ON_MAPCHANGE);
             return false;
         }
 
