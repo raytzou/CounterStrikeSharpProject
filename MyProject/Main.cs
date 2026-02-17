@@ -128,6 +128,7 @@ public class Main(
     {
         _logger.LogInformation("Map Start: {mapName}", mapName);
 
+        ClearTimers();
         Initialize(mapName);
         _playerService.ClearPlayerCaches();
 
@@ -142,6 +143,18 @@ public class Main(
                 _logger.LogError("Map Start Behavior error: {error}", ex);
             }
         });
+
+        void ClearTimers()
+        {
+            foreach (var timer in Timers)
+            {
+                timer?.Kill();
+            }
+
+            KillTimer();
+            _bot.ClearDamageTimer();
+            Timers.Clear();
+        }
     }
 
     private void OnMapEnd()
